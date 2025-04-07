@@ -3,14 +3,16 @@
 name: Maven release
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       releaseVersion:
         description: "Release version"
         required: true
+        type: string
       dependencies:
         description: "Dependencies to update in format: 'groupId:artifactId:version,groupId:artifactId:version'"
         required: false
+        type: string
 
 jobs:
   release:
