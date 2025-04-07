@@ -13,6 +13,10 @@ on:
         description: "Dependencies to update in format: 'groupId:artifactId:version,groupId:artifactId:version'"
         required: false
         type: string
+    secrets:
+      GITHUB_TOKEN:
+        description: "token"
+        required: true
 
 jobs:
   release:
