@@ -23,7 +23,6 @@ jobs:
     permissions:
       contents: write
       packages: write
-      pull-requests: write
 
     runs-on: ubuntu-latest
     env:
