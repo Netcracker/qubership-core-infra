@@ -41,8 +41,8 @@ jobs:
           distribution: 'temurin'
           cache: maven
           server-id: github
-#          server-username: MAVEN_USER
-#          server-password: MAVEN_PASSWORD
+          server-username: MAVEN_USER
+          server-password: MAVEN_PASSWORD
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
