@@ -42,7 +42,7 @@ jobs:
           cache: maven
           server-id: github
 #          server-username: MAVEN_USER
-#          server-password: MAVEN_PASSWORD
+          server-password: MAVEN_RELEASE_DEV_TOKEN
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
