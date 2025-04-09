@@ -28,6 +28,7 @@ jobs:
     env:
       MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
       GITHUB_TOKEN: ${{ secrets.github-token }}
+      MAVEN_RELEASE_DEV_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
       MAVEN_USER_TOKEN: "x-access-token"
 
     steps:
