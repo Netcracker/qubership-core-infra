@@ -26,9 +26,9 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      MAVEN_USER: ${{ secrets.MAVEN_USER }}
       MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
       GITHUB_TOKEN: ${{ secrets.github-token }}
+      MAVEN_USER_TOKEN: "x-access-token"
 
     steps:
       - name: Checkout
@@ -41,7 +41,7 @@ jobs:
           distribution: 'temurin'
           cache: maven
           server-id: github
-#          server-username: MAVEN_USER
+          server-username: MAVEN_USER_TOKEN
           server-password: MAVEN_RELEASE_DEV_TOKEN
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
