@@ -76,8 +76,9 @@ jobs:
           for line in $dependencies; do
             IFS=":"
             read -r groupID artifactId version <<< "$line"
-            includes="'""$groupID:$artifactId""'"
-            mvn -B versions:use-dep-version $includes -DdepVersion=$version
+            ga="$groupID:$artifactId"
+            cmd="mvn -B versions:use-dep-version -Dincludes=$ga -DdepVersion=$version"
+            eval "$cmd"
           done
           git add -u
           git commit -m 'updating dependencies before release'
