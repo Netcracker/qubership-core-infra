@@ -7,7 +7,7 @@ on:
     inputs:
       releaseVersion:
         description: "Release version"
-        required: true
+        required: false
         type: string
       dependencies:
         description: |-
