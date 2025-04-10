@@ -82,8 +82,11 @@ jobs:
             cmd="mvn -B versions:update-properties -Dincludes=$ga -Dmaven.version.ignore=^\(?!$version\).+\$"
             eval "$cmd"
           done
-          git add -u
-          git commit -m 'updating dependencies before release'
+          changed=$(git diff --quiet)
+          if [ "$changed" -eq 1 ]; then
+            git add -u
+            git commit -m 'updating dependencies before release'
+          fi
 
       - name: Release
         if: ${{ success() }}
