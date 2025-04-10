@@ -10,7 +10,10 @@ on:
         required: true
         type: string
       dependencies:
-        description: "Dependencies to update in format: 'groupId:artifactId:version,groupId:artifactId:version'"
+        description: |-
+          Dependencies to update in format:
+          <groupId>:<artifactId>:<version>
+          <groupId>:<artifactId>:<version>
         required: false
         type: string
     secrets:
@@ -52,13 +55,8 @@ jobs:
           gpg-private-key: ${{ secrets.maven-gpg-private-key }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
-      - name: Display m2/settings.xml
-        run: cat ~/.m2/settings.xml
-
-      - name: Print env
-        run: printenv
-
       - name: Set up Git
+        # language="shell script"
         run: |-
           git config user.email "actions@github.com"
           git config user.name "actions"
@@ -70,13 +68,22 @@ jobs:
       - name: Update dependencies
         id: update
         if: ${{ inputs.dependencies != '' }}
+        # language="shell script"
         run: |-
-          mvn -B versions:use-dep-version -DincludesList=${{ inputs.dependencies }}
+          dependencies="${{ inputs.dependencies }}"
+          IFS=$'\n'
+          for line in $dependencies; do
+            IFS=":"
+            read -r groupID artifactId version <<< "$line"
+            ga="$groupID:$artifactId"
+            mvn -B versions:use-dep-version -DincludesList=$ga -DdepVersion=$version
+          done
           git add -u
           git commit -m 'updating dependencies before release'
 
       - name: Release
         if: ${{ success() }}
+        # language="shell script"
         run: |-
           mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }} release:perform -DlocalCheckout=true
 
