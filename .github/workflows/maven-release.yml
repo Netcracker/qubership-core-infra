@@ -70,6 +70,7 @@ jobs:
         if: ${{ inputs.dependencies != '' }}
         # language="shell script"
         run: |-
+          set -x
           dependencies="${{ inputs.dependencies }}"
           IFS=$'\n'
           for line in $dependencies; do
