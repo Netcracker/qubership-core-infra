@@ -79,7 +79,7 @@ jobs:
             ga="$groupID:$artifactId"
             cmd="mvn -B versions:use-dep-version -Dincludes=$ga -DdepVersion=$version"
             eval "$cmd"
-            cmd="mvn -B versions:update-properties -Dincludes=$ga -Dmaven.version.ignore=^((?!$version)).+\$"
+            cmd="mvn -B versions:update-properties -Dincludes=$ga -Dmaven.version.ignore=^\(?!$version\).+\$"
             eval "$cmd"
           done
           git add -u
