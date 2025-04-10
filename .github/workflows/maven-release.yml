@@ -15,10 +15,13 @@ on:
         type: string
     secrets:
       maven-token:
-        description: "another token"
+        description: "Maven token"
         required: true
-      github-token:
-        description: "token"
+      maven-gpg-private-key:
+        description: "Maven gpg-private-key"
+        required: true
+      maven-gpg-passphrase:
+        description: "Maven gpg-passphrase"
         required: true
 
 jobs:
@@ -29,10 +32,9 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
-      GITHUB_TOKEN: ${{ secrets.github-token }}
-      MAVEN_RELEASE_DEV_TOKEN: ${{ secrets.maven-token }}
-      MAVEN_USER_TOKEN: "x-access-token"
+      MAVEN_USER: "x-access-token"
+      MAVEN_TOKEN: ${{ secrets.maven-token }}
+      MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
 
     steps:
       - name: Checkout
@@ -45,9 +47,9 @@ jobs:
           distribution: 'temurin'
           cache: maven
           server-id: github
-          server-username: MAVEN_USER_TOKEN
-          server-password: MAVEN_RELEASE_DEV_TOKEN
-          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          server-username: MAVEN_USER
+          server-password: MAVEN_TOKEN
+          gpg-private-key: ${{ secrets.maven-gpg-private-key }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
       - name: Display m2/settings.xml
@@ -57,22 +59,31 @@ jobs:
         run: printenv
 
       - name: Set up Git
-        run: |
+        run: |-
           git config user.email "actions@github.com"
           git config user.name "actions"
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git remote set-url origin https://x-access-token:${{ secrets.MAVEN_TOKEN }}@github.com/${{ github.repository }}
 
       - name: Display git config
         run: git config --list
 
       - name: Update dependencies
+        id: update
         if: ${{ inputs.dependencies != '' }}
-        run: mvn -B versions:use-dep-version -DincludesList=${{ inputs.includesList }}
+        run: |-
+          mvn -B versions:use-dep-version -DincludesList=${{ inputs.includesList }}
+          git add -u
+          git commit -m 'updating dependencies before release'
 
       - name: Release
+        if: ${{ success() }}
         run: |-
           mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }} release:perform -DlocalCheckout=true
 
-      - name: Rollback
-        if: failure()
+#      - name: Rollback 'Update dependencies'
+#        if: ${{ failure() && steps.update.conclusion == 'success' }}
+#        run: mvn -B release:rollback
+
+      - name: Rollback release
+        if: ${{ failure() }}
         run: mvn -B release:rollback
