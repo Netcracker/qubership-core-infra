@@ -76,7 +76,7 @@ jobs:
             IFS=":"
             read -r groupID artifactId version <<< "$line"
             ga="$groupID:$artifactId"
-            mvn -B versions:use-dep-version -DincludesList=$ga -DdepVersion=$version
+            mvn -B versions:use-dep-version -Dincludes=$ga -DdepVersion=$version
           done
           git add -u
           git commit -m 'updating dependencies before release'
