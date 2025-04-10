@@ -71,7 +71,7 @@ jobs:
         id: update
         if: ${{ inputs.dependencies != '' }}
         run: |-
-          mvn -B versions:use-dep-version -DincludesList=${{ inputs.includesList }}
+          mvn -B versions:use-dep-version -DincludesList=${{ inputs.dependencies }}
           git add -u
           git commit -m 'updating dependencies before release'
 
