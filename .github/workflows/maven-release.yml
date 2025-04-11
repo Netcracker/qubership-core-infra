@@ -39,6 +39,9 @@ jobs:
       MAVEN_TOKEN: ${{ secrets.maven-token }}
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
 
+    outputs:
+      gavs: ${{ steps.release.outputs.gavs }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -89,13 +92,14 @@ jobs:
           fi
 
       - name: Release
+        id: release
         if: ${{ success() }}
         # language="shell script"
         run: |-
           set -x
           mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }}
           gavs=`cat 'release.properties' | grep -A 0 'project.rel.' | sed 's/project.rel.//g' | sed 's/\\:/:/g' | sed 's/=/:/g'`
-          echo "GAVS=$gavs" >> $GITHUB_OUTPUT
+          echo "gavs=$gavs" >> $GITHUB_OUTPUT
           echo "$gavs" >> $GITHUB_STEP_SUMMARY
           mvn -B release:perform -DlocalCheckout=true
 
