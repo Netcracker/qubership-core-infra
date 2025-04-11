@@ -93,11 +93,10 @@ jobs:
         # language="shell script"
         run: |-
           set -x
-          mvn -B release:update-versions -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }}
-          gavs=`mvn dependency:tree -DoutputType=dot | grep -A 0 '\[INFO\] digraph' | sed 's/\[INFO\] digraph "//g' | sed 's/" {//g'`
+          mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }}
+          gavs=`cat 'release.properties' | grep -A 0 'project.rel.' | sed 's/project.rel.//g' | sed 's/\:/:/g' | sed 's/=/:/g'`
           echo "GAVS=$gavs" >> $GITHUB_OUTPUT
           echo "$gavs" >> $GITHUB_STEP_SUMMARY
-          mvn -B release:prepare -Dresume=true -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }}
           mvn -B release:perform -DlocalCheckout=true
 
 #      - name: Rollback 'Update dependencies'
