@@ -94,7 +94,8 @@ jobs:
         run: |-
           set -x
           mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }}
-          gavs=`mvn dependency:tree | grep -A 1 '\[INFO\] --- maven-dependency-plugin:' | grep -oE '([^:]+:[^:]+:[^:]+:[^:]+)' | sed 's/\[INFO\] //g'`
+          mvn dependency:tree
+          gavs=`mvn dependency:tree | grep -A 1 '\[INFO\] --- maven-dependency-plugin:' | grep -E '[^:]+:[^:]+:[^:]+:[^:]+' | sed 's/\[INFO\] //g'`
           echo "GAVS=$gavs" >> $GITHUB_OUTPUT
           echo "$gavs" >> $GITHUB_STEP_SUMMARY
           mvn -B release:perform -DlocalCheckout=true
