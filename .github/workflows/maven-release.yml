@@ -98,7 +98,7 @@ jobs:
         run: |-
           set -x
           mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }}
-          gavs=`cat 'release.properties' | grep 'project.rel.' | sed 's/project.rel.//g' | sed 's/\\//g' | sed 's/=/:/g'`
+          gavs=`cat 'release.properties' | grep 'project.rel.' | sed 's/project.rel.//g' | sed 's/\\\\//g' | sed 's/=/:/g'`
           echo "gavs=$gavs" >> $GITHUB_OUTPUT
           echo "$gavs" >> $GITHUB_STEP_SUMMARY
           mvn -B release:perform -DlocalCheckout=true
