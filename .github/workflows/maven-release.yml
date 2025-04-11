@@ -61,6 +61,13 @@ jobs:
           path: ${{ inputs.gavs-cache-path }}
           key: ${{ inputs.gavs-cache-key }}
 
+      - name: Create files
+        if: ${{ inputs.gavs-cache-key == '' }}
+        # language="shell script"
+        run: |-
+          mkdir -p output
+          echo "" > output/gavs.txt
+
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
