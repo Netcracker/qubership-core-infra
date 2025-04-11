@@ -92,7 +92,11 @@ jobs:
         if: ${{ success() }}
         # language="shell script"
         run: |-
-          mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }} release:perform -DlocalCheckout=true
+          mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }}
+          gavs=`mvn dependency:tree | grep -A 1 '\[INFO\] --- maven-dependency-plugin:' | grep -oE '([^:]+:[^:]+:[^:]+:[^:]+)' | sed 's/\[INFO\] //g'`
+          echo "GAVS=$gavs" >> $GITHUB_OUTPUT
+          echo "$gavs" >> $GITHUB_STEP_SUMMARY
+          mvn -B release:perform -DlocalCheckout=true
 
 #      - name: Rollback 'Update dependencies'
 #        if: ${{ failure() && steps.update.conclusion == 'success' }}
