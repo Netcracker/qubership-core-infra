@@ -98,14 +98,21 @@ jobs:
         run: |-
           set -x
           mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }}
+          mvn dependency:tree
           gavs=`cat 'release.properties' | grep -A 0 'project.rel.' | sed 's/project.rel.//g' | sed 's/\\:/:/g' | sed 's/=/:/g'`
           echo "gavs=$gavs" >> $GITHUB_OUTPUT
           echo "$gavs" >> $GITHUB_STEP_SUMMARY
           mvn -B release:perform -DlocalCheckout=true
 
-#      - name: Rollback 'Update dependencies'
-#        if: ${{ failure() && steps.update.conclusion == 'success' }}
-#        run: mvn -B release:rollback
+      - name: Log gavs
+        id: log-gavs
+        if: ${{ success() }}
+        # language="shell script"
+        run: echo '${{ steps.release.outputs.gavs }}'
+
+      #      - name: Rollback 'Update dependencies'
+      #        if: ${{ failure() && steps.update.conclusion == 'success' }}
+      #        run: mvn -B release:rollback
 
       - name: Rollback release
         if: ${{ failure() }}
