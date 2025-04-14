@@ -68,10 +68,10 @@ jobs:
           --field gavs-cache-key=maven-release-output-$runId
           
           WORKFLOW_RUN_ID=""
-          while [[ "WORKFLOW_RUN_ID" == "" ]]; do
+          while [[ -z "WORKFLOW_RUN_ID" ]]; do
             WORKFLOW_RUN_ID=$(gh run list --repo $repo --json name,id | jq -r --arg prefix "[$runId]" '.[] | select(.name | startswith($prefix)) | .id')
             echo "WORKFLOW_RUN_ID: $WORKFLOW_RUN_ID"
-            if [[ "$WORKFLOW_RUN_ID" == "" ]]; then
+            if [[ -z "$WORKFLOW_RUN_ID" ]]; then
               sleep 5
             fi
           done          
