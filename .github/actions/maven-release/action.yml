@@ -32,6 +32,7 @@ runs:
       with:
         repository: '${{ inputs.repository }}'
         ref: "main"
+        token: '${{ inputs.maven-token }}'
 
     - name: Restore GAV cache
       if: ${{ inputs.gavs-cache-key != '' }}
