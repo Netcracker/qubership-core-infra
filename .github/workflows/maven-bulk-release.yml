@@ -11,18 +11,19 @@ on:
           ["Netcracker/repository-1", "Netcracker/repository-2", "Netcracker/repository-3"]
         required: true
         type: string
-      type:
-        description: "Version part to increment"
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
-        default: patch
-      buildGraph:
-        description: if true - builds dependency graph. Graph allows starting per repository release workflows in parallel and in correct order
-        type: boolean
-        default: false
+      pat:
+        description: "Personal access token"
+        type: string
+        required: true
+#      type:
+#        description: "Version part to increment"
+#        type: choice
+#        options:
+#          - patch
+#          - minor
+#          - major
+#        default: patch
+
 
 permissions:
   actions: write
@@ -57,7 +58,7 @@ jobs:
         repository: ${{ fromJson(inputs.repositories) }}
       max-parallel: 1
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ inputs.pat }}
     steps:
       - name: "Run '${{ matrix.repository }}' repository release"
         # language="shell script"
