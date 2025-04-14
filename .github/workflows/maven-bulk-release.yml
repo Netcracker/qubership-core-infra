@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - name: Cache gavs
-        uses: actions/cache@v4
+        uses: actions/cache/save@v4
         with:
           path: output
           key: maven-release-output-${{ github.run_id }}
@@ -46,7 +46,7 @@ jobs:
           mkdir -p output
           echo "" > output/gavs.txt
 
-  bulk-release:
+  release:
     needs: prepare
     runs-on: ubuntu-latest
     strategy:

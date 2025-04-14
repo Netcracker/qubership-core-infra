@@ -41,7 +41,7 @@ runs:
 
     - name: Restore GAV cache
       if: ${{ inputs.gavs-cache-key != '' }}
-      uses: actions/cache@v4
+      uses: actions/cache/restore@v4
       with:
         path: ${{ inputs.gavs-cache-path }}
         key: ${{ inputs.gavs-cache-key }}
