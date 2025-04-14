@@ -107,6 +107,10 @@ runs:
       id: release
       shell: bash
       # language="shell script"
+      env:
+        MAVEN_USER: "x-access-token"
+        MAVEN_TOKEN: ${{ inputs.maven-token }}
+        MAVEN_GPG_PASSPHRASE: ${{ inputs.maven-gpg-passphrase }}
       run: |-
         set -x
         mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }}
