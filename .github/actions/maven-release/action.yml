@@ -134,7 +134,11 @@ runs:
         mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }}
         gavs=`cat 'release.properties' | grep 'project.rel.' | sed 's/project.rel.//g' | sed 's/\\\\//g' | sed 's/=/:/g'`
         all_gavs="${{ env.gavs }}"
-        all_gavs="$all_gavs"$'\n'"$gavs"
+        if [ -z "$all_gavs" ]; then
+          all_gavs="$gavs"
+        else
+          all_gavs="$all_gavs"$'\n'"$gavs"
+        fi        
         echo "gavs=${all_gavs}" >> $GITHUB_ENV
         mvn -B release:perform -DlocalCheckout=true
 
