@@ -165,6 +165,12 @@ runs:
         echo "### Released artifacts:" >> $GITHUB_STEP_SUMMARY
         echo "$gavs" | tr ',' '\n' >> $GITHUB_STEP_SUMMARY
 
+    - name: Save gavs to cache
+      uses: actions/cache/save@v4
+      with:
+        path: output
+        key: maven-release-output-${{ github.run_id }}
+
     - name: Rollback release
       if: ${{ failure() }}
       shell: bash
