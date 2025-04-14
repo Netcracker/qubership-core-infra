@@ -90,7 +90,7 @@ runs:
       # language="shell script"
       run: |
         set -x
-        gavs=$(cat ${{ inputs.gavs-cache-path }}/gavs.txt)
+        gavs=$(tr '\n' ',' < ${{ inputs.gavs-cache-path }}/gavs.txt)
         echo "gavs=${gavs}" >> $GITHUB_ENV
 
     - name: Update dependencies
@@ -102,19 +102,22 @@ runs:
       # language="shell script"
       run: |-
         set -x
-        echo "$gavs" | while IFS= read -r line; do
-          if [ -z "$line" ]; then
+        IFS=','
+        for gav in $gavs; do
+          if [ -z "$gav" ]; then
             echo "Dependencies are empty."
             break
           fi
           IFS=":"
-          read -r groupID artifactId version <<< "$line"
+          read -r groupID artifactId version <<< "$gav"
           ga="$groupID:$artifactId"
           cmd="mvn -B versions:use-dep-version -Dincludes=$ga -DdepVersion=$version"
           eval "$cmd"
           cmd="mvn -B versions:update-properties -Dincludes=$ga -Dmaven.version.ignore=^\(?!$version\).+\$"
           eval "$cmd"
+          IFS=','
         done
+        unset IFS
         
         changed=$(git diff --quiet)
         if [ "$changed" -eq 0 ]; then
@@ -136,11 +139,11 @@ runs:
         set -x
         mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }}
         all_gavs="$gavs"
-        gavs=`cat 'release.properties' | grep 'project.rel.' | sed 's/project.rel.//g' | sed 's/\\\\//g' | sed 's/=/:/g'`
+        gavs=`cat 'release.properties' | grep 'project.rel.' | sed 's/project.rel.//g' | sed 's/\\\\//g' | sed 's/=/:/g' | tr '\n' ','`
         if [ -z "$all_gavs" ]; then
           all_gavs="$gavs"
         else
-          all_gavs="$all_gavs"$'\n'"$gavs"
+          all_gavs="$all_gavs"$','"$gavs"
         fi        
         echo "gavs=${gavs}" >> $GITHUB_ENV
         echo "all_gavs=${all_gavs}" >> $GITHUB_ENV
