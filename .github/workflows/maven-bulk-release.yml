@@ -1,4 +1,4 @@
-# $schema: https://json.schemastore.org/github-workflow.json
+# $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-workflow.json
 
 name: "Maven bulk release"
 
@@ -56,6 +56,11 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: '${{ github.repository }}'
+
       - name: "Run '${{ matrix.repository }}' repository release"
         uses: "./.github/actions/maven-release"
         with:
