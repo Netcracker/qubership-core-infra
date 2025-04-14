@@ -98,6 +98,9 @@ runs:
       working-directory: ${{ inputs.directory }}
       env:
         gavs: ${{ steps.read-gavs.outputs.gavs }}
+        MAVEN_USER: "x-access-token"
+        MAVEN_TOKEN: ${{ inputs.maven-token }}
+        MAVEN_GPG_PASSPHRASE: ${{ inputs.maven-gpg-passphrase }}
       # language="shell script"
       run: |-
         set -x
