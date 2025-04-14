@@ -40,11 +40,12 @@ jobs:
           mkdir -p output
           echo "" > output/gavs.txt
 
-      - name: Cache gavs
-        uses: actions/cache/save@v4
+      - name: Upload clean gavs artifact
+        uses: actions/upload-artifact@v4
         with:
+          name: gavs-${{ github.run_id }}
           path: output/gavs.txt
-          key: maven-release-output-${{ github.run_id }}
+          overwrite: true
 
   release:
     needs: prepare
@@ -67,8 +68,7 @@ jobs:
         with:
           repository: "${{ matrix.repository }}"
           directory: "${{ matrix.repository }}"
-          gavs-cache-path: "output"
-          gavs-cache-key: "maven-release-output-${{ github.run_id }}"
+          artifact-name: "gavs-${{ github.run_id }}"
           maven-token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
           maven-gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           maven-gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}

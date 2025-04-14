@@ -11,12 +11,9 @@ inputs:
   releaseVersion:
     description: "Release version"
     required: false
-  gavs-cache-path:
-    description: "Cache path of Shared bulk release GAV file"
-    default: "output"
-  gavs-cache-key:
-    description: "Cache key of Shared bulk release GAV file"
-    default: ""
+  artifact-name:
+    description: "Shared artifact with GAVs"
+    required: true
   maven-token:
     description: "Maven token"
     required: true
@@ -39,13 +36,11 @@ runs:
         token: '${{ inputs.maven-token }}'
         path: ${{ inputs.directory }}
 
-    - name: Restore GAV cache
-      if: ${{ inputs.gavs-cache-key != '' }}
-      uses: actions/cache/restore@v4
+    - name: Download gavs artifact
+      uses: actions/download-artifact@v4
       with:
+        name: ${{ inputs.artifact-name }}
         path: output/gavs.txt
-        key: ${{ inputs.gavs-cache-key }}
-        fail-on-cache-miss: true
 
 #    - name: Create files
 #      if: ${{ inputs.gavs-cache-key == '' }}
@@ -153,7 +148,7 @@ runs:
         echo "all_gavs=${all_gavs}" >> "$GITHUB_OUTPUT"
         mvn -B release:perform -DlocalCheckout=true -DautoVersionSubmodules=true
 
-    - name: Write released GAVs
+    - name: Write GAVs summary
       shell: bash
       env:
         gavs: ${{ steps.release.outputs.gavs }}
@@ -161,7 +156,7 @@ runs:
       # language="shell script"
       run: |
         set -x
-        path="${{ inputs.gavs-cache-path }}/gavs.txt"
+        path="output/gavs.txt"
         all_gavs=$(echo "$all_gavs" | tr ',' '\n')
         gavs=$(echo "$gavs" | tr ',' '\n')
         echo "$all_gavs" >> $path
@@ -169,11 +164,12 @@ runs:
         echo "### Released artifacts:" >> $GITHUB_STEP_SUMMARY
         echo "$gavs" >> $GITHUB_STEP_SUMMARY
 
-    - name: Save gavs to cache
-      uses: actions/cache/save@v4
+    - name: Upload updated gavs artifact
+      uses: actions/upload-artifact@v4
       with:
+        name: gavs-${{ github.run_id }}
         path: output/gavs.txt
-        key: maven-release-output-${{ github.run_id }}
+        overwrite: true
 
     - name: Rollback release
       if: ${{ failure() }}
