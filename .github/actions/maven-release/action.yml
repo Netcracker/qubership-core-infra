@@ -104,8 +104,7 @@ runs:
         IFS=','
         for gav in $gavs; do
           if [ -z "$gav" ]; then
-            echo "Dependencies are empty."
-            break
+            continue 
           fi
           IFS=":"
           read -r groupID artifactId version <<< "$gav"
