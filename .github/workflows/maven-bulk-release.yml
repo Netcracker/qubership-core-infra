@@ -57,7 +57,7 @@ jobs:
       GH_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
     steps:
       - name: "Run '${{ matrix.repository }}' repository release"
-        uses: "./.github/workflows/maven-release.yml"
+        uses: "./.github/actions/maven-release@main"
         with:
           repository: "${{ matrix.repository }}"
           gavs-cache-path: "output"
