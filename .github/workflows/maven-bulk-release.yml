@@ -9,7 +9,7 @@ on:
         description: |-
           Repositories to release in json format:
           ["Netcracker/repository-1", "Netcracker/repository-2", "Netcracker/repository-3"]
-        required: true
+        required: false
         type: string
         default: |-
           ["Netcracker/qubership-core-release-test-maven-lib-1",
