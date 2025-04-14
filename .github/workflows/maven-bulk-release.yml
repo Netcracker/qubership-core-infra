@@ -11,10 +11,6 @@ on:
           ["Netcracker/repository-1", "Netcracker/repository-2", "Netcracker/repository-3"]
         required: true
         type: string
-      pat:
-        description: "Personal access token"
-        type: string
-        required: true
 #      type:
 #        description: "Version part to increment"
 #        type: choice
@@ -58,15 +54,17 @@ jobs:
         repository: ${{ fromJson(inputs.repositories) }}
       max-parallel: 1
     env:
-      GH_TOKEN: ${{ inputs.pat }}
+      GH_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
     steps:
       - name: "Run '${{ matrix.repository }}' repository release"
         # language="shell script"
         run: |
           set -x
-          WORKFLOW_RUN_ID=`gh workflow run maven-release.yml --repo ${{ matrix.repository }} --ref main \
+          repo="${{ matrix.repository }}"
+          runId="${{ github.run_id }}"
+          WORKFLOW_RUN_ID=$(gh workflow run maven-release.yml --repo $repo --ref main \
           --field gavs-cache-path=output \
-          --field gavs-cache-key=maven-release-output-${{ github.run_id }}`
+          --field gavs-cache-key=maven-release-output-$runId)
           echo "WORKFLOW_RUN_ID=${WORKFLOW_RUN_ID}" >> $GITHUB_ENV
       - name: "Wait for '${{ matrix.repository }}' repository release to complete"
         # language="shell script"
