@@ -68,7 +68,7 @@ jobs:
           --field gavs-cache-path=output \
           --field gavs-cache-key=maven-release-output-${{ github.run_id }}`
           echo "WORKFLOW_RUN_ID=${WORKFLOW_RUN_ID}" >> $GITHUB_ENV
-      - name: Wait for Workflow to Complete
+      - name: "Wait for '${{ matrix.repository }}' repository release to complete"
         # language="shell script"
         run: |
           set -x
