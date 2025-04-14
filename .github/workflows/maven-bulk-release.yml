@@ -11,6 +11,10 @@ on:
           ["Netcracker/repository-1", "Netcracker/repository-2", "Netcracker/repository-3"]
         required: true
         type: string
+        default: |-
+          ["Netcracker/qubership-core-release-test-maven-lib-1",
+          "Netcracker/qubership-core-release-test-maven-lib-2",
+          "Netcracker/qubership-core-release-test-maven-lib-3"]
 #      type:
 #        description: "Version part to increment"
 #        type: choice
