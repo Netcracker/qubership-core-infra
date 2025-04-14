@@ -41,7 +41,6 @@ runs:
       with:
         name: ${{ inputs.artifact-name }}
         repository: "Netcracker/qubership-core-infra"
-#        path: output/gavs.txt
 
 #    - name: Create files
 #      if: ${{ inputs.gavs-cache-key == '' }}
@@ -58,7 +57,7 @@ runs:
       run: |
         set -x
         ls -R
-        gavs=$(cat output/gavs.txt)
+        gavs=$(cat gavs.txt)
         gavs=$(echo "$gavs" | tr '\n' ',')
         gavs=${gavs%,}
         echo "gavs=${gavs}" >> "$GITHUB_OUTPUT"
@@ -158,7 +157,7 @@ runs:
       # language="shell script"
       run: |
         set -x
-        path="output/gavs.txt"
+        path="gavs.txt"
         all_gavs=$(echo "$all_gavs" | tr ',' '\n')
         gavs=$(echo "$gavs" | tr ',' '\n')
         echo "$all_gavs" >> $path
@@ -170,7 +169,7 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: gavs-${{ github.run_id }}
-        path: output/gavs.txt
+        path: gavs.txt
         overwrite: true
 
     - name: Rollback release

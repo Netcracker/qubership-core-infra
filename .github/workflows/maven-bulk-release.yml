@@ -37,14 +37,13 @@ jobs:
     steps:
       - name: Create snared GAVs file
         run: |
-          mkdir -p output
-          echo "" > output/gavs.txt
+          echo "" > gavs.txt
 
       - name: Upload clean gavs artifact
         uses: actions/upload-artifact@v4
         with:
           name: "gavs-${{ github.run_id }}"
-          path: output/gavs.txt
+          path: gavs.txt
           overwrite: true
 
   release:
