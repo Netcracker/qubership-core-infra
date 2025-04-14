@@ -4,6 +4,10 @@ inputs:
   repository:
     description: "Repository in format: Owner/Repository"
     required: true
+  directory:
+    description: "Directory to checkout to"
+    required: false
+    default: "temp"
   releaseVersion:
     description: "Release version"
     required: false
@@ -33,6 +37,7 @@ runs:
         repository: '${{ inputs.repository }}'
         ref: "main"
         token: '${{ inputs.maven-token }}'
+        path: ${{ inputs.directory }}
 
     - name: Restore GAV cache
       if: ${{ inputs.gavs-cache-key != '' }}
@@ -80,6 +85,7 @@ runs:
     - name: Update dependencies
       id: update
       shell: bash
+      working-directory: ${{ inputs.directory }}
       # language="shell script"
       run: |-
         set -x
@@ -106,6 +112,7 @@ runs:
     - name: Release
       id: release
       shell: bash
+      working-directory: ${{ inputs.directory }}
       # language="shell script"
       env:
         MAVEN_USER: "x-access-token"
@@ -123,4 +130,6 @@ runs:
     - name: Rollback release
       if: ${{ failure() }}
       shell: bash
+      working-directory: ${{ inputs.directory }}
+      # language="shell script"
       run: mvn -B release:rollback
