@@ -90,7 +90,8 @@ runs:
       # language="shell script"
       run: |
         set -x
-        gavs=$(tr '\n' ',' < ${{ inputs.gavs-cache-path }}/gavs.txt)
+        gavs=$(cat output/gavs.txt)
+        gavs=$(echo "$gavs" | tr '\n' ',')
         gavs=${gavs%,}
         echo "gavs=${gavs}" >> "$GITHUB_OUTPUT"
 
