@@ -31,6 +31,7 @@ runs:
       uses: actions/checkout@v4
       with:
         repository: '${{ inputs.repository }}'
+        ref: "main"
 
     - name: Restore GAV cache
       if: ${{ inputs.gavs-cache-key != '' }}
