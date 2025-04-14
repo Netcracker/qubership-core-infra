@@ -63,6 +63,7 @@ jobs:
           repo="${{ matrix.repository }}"
           runId="${{ github.run_id }}"
           WORKFLOW_RUN_ID=$(gh workflow run maven-release.yml --repo $repo --ref main \
+          --field run-id=$runId \
           --field gavs-cache-path=output \
           --field gavs-cache-key=maven-release-output-$runId)
           echo "WORKFLOW_RUN_ID=${WORKFLOW_RUN_ID}" >> $GITHUB_ENV
