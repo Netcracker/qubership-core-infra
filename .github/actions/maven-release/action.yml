@@ -45,14 +45,26 @@ runs:
       with:
         path: output/gavs.txt
         key: ${{ inputs.gavs-cache-key }}
+        fail-on-cache-miss: true
 
-    - name: Create files
-      if: ${{ inputs.gavs-cache-key == '' }}
+#    - name: Create files
+#      if: ${{ inputs.gavs-cache-key == '' }}
+#      shell: bash
+#      # language="shell script"
+#      run: |-
+#        mkdir -p ${{ inputs.gavs-cache-path }}
+#        echo "" > ${{ inputs.gavs-cache-path }}/gavs.txt
+
+    - name: Read GAVs
+      id: read-gavs
       shell: bash
       # language="shell script"
-      run: |-
-        mkdir -p ${{ inputs.gavs-cache-path }}
-        echo "" > ${{ inputs.gavs-cache-path }}/gavs.txt
+      run: |
+        set -x
+        gavs=$(cat output/gavs.txt)
+        gavs=$(echo "$gavs" | tr '\n' ',')
+        gavs=${gavs%,}
+        echo "gavs=${gavs}" >> "$GITHUB_OUTPUT"
 
     - name: Set up JDK 21
       uses: actions/setup-java@v4
@@ -83,17 +95,6 @@ runs:
       shell: bash
       working-directory: ${{ inputs.directory }}
       run: git config --list
-
-    - name: Read GAVs
-      id: read-gavs
-      shell: bash
-      # language="shell script"
-      run: |
-        set -x
-        gavs=$(cat output/gavs.txt)
-        gavs=$(echo "$gavs" | tr '\n' ',')
-        gavs=${gavs%,}
-        echo "gavs=${gavs}" >> "$GITHUB_OUTPUT"
 
     - name: Update dependencies
       id: update
