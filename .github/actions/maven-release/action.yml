@@ -160,10 +160,12 @@ runs:
       run: |
         set -x
         path="${{ inputs.gavs-cache-path }}/gavs.txt"
-        
-        echo "$all_gavs" | tr ',' '\n' >> $path
+        all_gavs=$(echo "$all_gavs" | tr ',' '\n')
+        gavs=$(echo "$gavs" | tr ',' '\n')
+        echo "$all_gavs" >> $path
+        cat $path
         echo "### Released artifacts:" >> $GITHUB_STEP_SUMMARY
-        echo "$gavs" | tr ',' '\n' >> $GITHUB_STEP_SUMMARY
+        echo "$gavs" >> $GITHUB_STEP_SUMMARY
 
     - name: Save gavs to cache
       uses: actions/cache/save@v4
