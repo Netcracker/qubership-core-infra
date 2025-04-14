@@ -43,7 +43,7 @@ jobs:
       - name: Cache gavs
         uses: actions/cache/save@v4
         with:
-          path: output/*
+          path: output/gavs.txt
           key: maven-release-output-${{ github.run_id }}
 
   release:
