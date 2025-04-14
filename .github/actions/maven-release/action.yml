@@ -1,0 +1,110 @@
+# $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-action.json
+name: "Maven release"
+inputs:
+  repository:
+    description: "Repository in format: Owner/Repository"
+    required: true
+  releaseVersion:
+    description: "Release version"
+    required: false
+  gavs-cache-path:
+    description: "Cache path of Shared bulk release GAV file"
+    default: "output"
+  gavs-cache-key:
+    description: "Cache key of Shared bulk release GAV file"
+    default: ""
+  maven-token:
+    description: "Maven token"
+    required: true
+  maven-gpg-private-key:
+    description: "Maven gpg-private-key"
+    required: true
+  maven-gpg-passphrase:
+    description: "Maven gpg-passphrase"
+    required: true
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        repository: '${{ inputs.repository }}'
+
+    - name: Restore GAV cache
+      if: ${{ inputs.gavs-cache-key != '' }}
+      uses: actions/cache@v4
+      with:
+        path: ${{ inputs.gavs-cache-path }}
+        key: ${{ inputs.gavs-cache-key }}
+
+    - name: Create files
+      if: ${{ inputs.gavs-cache-key == '' }}
+      # language="shell script"
+      run: |-
+        mkdir -p ${{ inputs.gavs-cache-path }}
+        echo "" > ${{ inputs.gavs-cache-path }}/gavs.txt
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+        server-id: github
+        server-username: MAVEN_USER
+        server-password: MAVEN_TOKEN
+        gpg-private-key: ${{ secrets.maven-gpg-private-key }}
+        gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+    - name: Set up Git
+      # language="shell script"
+      run: |-
+        git config user.email "actions@github.com"
+        git config user.name "actions"
+        git remote set-url origin https://x-access-token:${{ secrets.MAVEN_TOKEN }}@github.com/${{ inputs.repository }}
+
+    - name: Display git config
+      run: git config --list
+
+    - name: Update dependencies
+      id: update
+      # language="shell script"
+      run: |-
+        set -x
+        while IFS= read -r line; do
+          if [ -z "$line" ]; then
+            echo "Dependencies are empty."
+            break
+          fi
+          IFS=":"
+          read -r groupID artifactId version <<< "$line"
+          ga="$groupID:$artifactId"
+          cmd="mvn -B versions:use-dep-version -Dincludes=$ga -DdepVersion=$version"
+          eval "$cmd"
+          cmd="mvn -B versions:update-properties -Dincludes=$ga -Dmaven.version.ignore=^\(?!$version\).+\$"
+          eval "$cmd"
+        done < ${{ inputs.gavs-cache-path }}/gavs.txt
+        
+        changed=$(git diff --quiet)
+        if [ "$changed" -eq 0 ]; then
+          git add -u
+          git commit -m 'updating dependencies before release'
+        fi
+
+    - name: Release
+      id: release
+      # language="shell script"
+      run: |-
+        set -x
+        mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }}
+        gavs=`cat 'release.properties' | grep 'project.rel.' | sed 's/project.rel.//g' | sed 's/\\\\//g' | sed 's/=/:/g'`
+        echo "$gavs" >> "${{ inputs.gavs-cache-path }}/gavs.txt"
+        echo "### Released artifacts:" >> $GITHUB_STEP_SUMMARY
+        echo "$gavs" >> $GITHUB_STEP_SUMMARY
+        mvn -B release:perform -DlocalCheckout=true
+
+    - name: Rollback release
+      if: ${{ failure() }}
+      run: mvn -B release:rollback
