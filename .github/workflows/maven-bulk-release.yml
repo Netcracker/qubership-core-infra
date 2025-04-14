@@ -57,11 +57,15 @@ jobs:
       GH_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
     steps:
       - name: "Run '${{ matrix.repository }}' repository release"
-        uses: "./.github/actions/maven-release@main"
+        uses: "./.github/actions/maven-release"
         with:
           repository: "${{ matrix.repository }}"
           gavs-cache-path: "output"
           gavs-cache-key: "maven-release-output-${{ github.run_id }}"
+          maven-token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+          maven-gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          maven-gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+
 #      - name: "Run '${{ matrix.repository }}' repository release"
 #        # language="shell script"
 #        run: |
