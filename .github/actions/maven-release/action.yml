@@ -91,7 +91,8 @@ runs:
       run: |
         set -x
         gavs=$(tr '\n' ',' < ${{ inputs.gavs-cache-path }}/gavs.txt)
-        echo "gavs=${gavs}" >> $GITHUB_ENV
+        gavs=${gavs%,}
+        echo "gavs=${gavs}" >> "$GITHUB_OUTPUT"
 
     - name: Update dependencies
       id: update
@@ -140,13 +141,14 @@ runs:
         mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }}
         all_gavs="$gavs"
         gavs=`cat 'release.properties' | grep 'project.rel.' | sed 's/project.rel.//g' | sed 's/\\\\//g' | sed 's/=/:/g' | tr '\n' ','`
+        gavs=${gavs%,}
         if [ -z "$all_gavs" ]; then
           all_gavs="$gavs"
         else
           all_gavs="$all_gavs"$','"$gavs"
         fi        
-        echo "gavs=${gavs}" >> $GITHUB_ENV
-        echo "all_gavs=${all_gavs}" >> $GITHUB_ENV
+        echo "gavs=${gavs}" >> "$GITHUB_OUTPUT"
+        echo "all_gavs=${all_gavs}" >> "$GITHUB_OUTPUT"
         mvn -B release:perform -DlocalCheckout=true -DautoVersionSubmodules=true
 
     - name: Write released GAVs
@@ -157,7 +159,8 @@ runs:
       # language="shell script"
       run: |
         set -x
-        echo "$all_gavs" >> "${{ inputs.gavs-cache-path }}/gavs.txt"
+        path="${{ inputs.gavs-cache-path }}/gavs.txt"
+        echo "$all_gavs" >> $path
         echo "### Released artifacts:" >> $GITHUB_STEP_SUMMARY
         echo "$gavs" >> $GITHUB_STEP_SUMMARY
 
