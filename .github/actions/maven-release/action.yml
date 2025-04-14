@@ -119,8 +119,9 @@ runs:
           IFS=','
         done
         
-        changed=$(git diff --quiet)
-        if [ "$changed" -eq 0 ]; then
+        git diff --quiet
+        return_code=$?
+        if [ $return_code -ne 0 ]; then
           git add -u
           git commit -m 'updating dependencies before release'
         fi
