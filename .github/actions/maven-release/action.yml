@@ -72,6 +72,7 @@ runs:
 
     - name: Set up Git
       shell: bash
+      working-directory: ${{ inputs.directory }}
       # language="shell script"
       run: |-
         git config user.email "actions@github.com"
@@ -80,6 +81,7 @@ runs:
 
     - name: Display git config
       shell: bash
+      working-directory: ${{ inputs.directory }}
       run: git config --list
 
     - name: Read GAVs
