@@ -118,7 +118,6 @@ runs:
           eval "$cmd"
           IFS=','
         done
-        unset IFS
         
         changed=$(git diff --quiet)
         if [ "$changed" -eq 0 ]; then
