@@ -56,7 +56,7 @@ runs:
         server-id: github
         server-username: MAVEN_USER
         server-password: MAVEN_TOKEN
-        gpg-private-key: ${{ secrets.maven-gpg-private-key }}
+        gpg-private-key: ${{ inputs.maven-gpg-private-key }}
         gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
     - name: Set up Git
@@ -65,7 +65,7 @@ runs:
       run: |-
         git config user.email "actions@github.com"
         git config user.name "actions"
-        git remote set-url origin https://x-access-token:${{ secrets.MAVEN_TOKEN }}@github.com/${{ inputs.repository }}
+        git remote set-url origin https://x-access-token:${{ inputs.maven-token }}@github.com/${{ inputs.repository }}
 
     - name: Display git config
       shell: bash
