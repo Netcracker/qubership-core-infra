@@ -120,7 +120,10 @@ runs:
         done
         
         git diff --quiet &
+        bg_pid=$!
+        wait $bg_pid
         return_code=$?
+        
         if [ "$return_code" -ne 0 ]; then
           git add -u
           git commit -m 'updating dependencies before release'
