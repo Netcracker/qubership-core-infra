@@ -43,7 +43,7 @@ runs:
       if: ${{ inputs.gavs-cache-key != '' }}
       uses: actions/cache/restore@v4
       with:
-        path: ${{ inputs.gavs-cache-path }}
+        path: output/gavs.txt
         key: ${{ inputs.gavs-cache-key }}
 
     - name: Create files
