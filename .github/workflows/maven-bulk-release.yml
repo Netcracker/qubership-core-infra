@@ -62,10 +62,19 @@ jobs:
           set -x
           repo="${{ matrix.repository }}"
           runId="${{ github.run_id }}"
-          WORKFLOW_RUN_ID=$(gh workflow run maven-release.yml --repo $repo --ref main \
+          gh workflow run maven-release.yml --repo $repo --ref main \
           --field run-id=$runId \
           --field gavs-cache-path=output \
-          --field gavs-cache-key=maven-release-output-$runId)
+          --field gavs-cache-key=maven-release-output-$runId
+          
+          WORKFLOW_RUN_ID=""
+          while [[ "WORKFLOW_RUN_ID" == "" ]]; do
+            WORKFLOW_RUN_ID=$(gh run list --repo $repo --json name,id | jq -r --arg prefix "[$runId]" '.[] | select(.name | startswith($prefix)) | .id')
+            echo "WORKFLOW_RUN_ID: $WORKFLOW_RUN_ID"
+            if [[ "$WORKFLOW_RUN_ID" == "" ]]; then
+              sleep 5
+            fi
+          done          
           echo "WORKFLOW_RUN_ID=${WORKFLOW_RUN_ID}" >> $GITHUB_ENV
       - name: "Wait for '${{ matrix.repository }}' repository release to complete"
         # language="shell script"
