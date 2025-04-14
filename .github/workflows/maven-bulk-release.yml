@@ -43,7 +43,7 @@ jobs:
       - name: Upload clean gavs artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gavs-${{ github.run_id }}
+          name: "gavs-${{ github.run_id }}"
           path: output/gavs.txt
           overwrite: true
 

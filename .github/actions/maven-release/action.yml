@@ -40,6 +40,7 @@ runs:
       uses: actions/download-artifact@v4
       with:
         name: ${{ inputs.artifact-name }}
+        repository: "Netcracker/qubership-core-infra"
 #        path: output/gavs.txt
 
 #    - name: Create files
@@ -56,6 +57,7 @@ runs:
       # language="shell script"
       run: |
         set -x
+        ls -R
         gavs=$(cat output/gavs.txt)
         gavs=$(echo "$gavs" | tr '\n' ',')
         gavs=${gavs%,}
