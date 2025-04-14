@@ -166,7 +166,7 @@ runs:
         gavs=$(echo "$gavs" | tr ',' '\n')
         echo "$all_gavs" >> $path
         cat $path
-        echo "### Released artifacts:" >> $GITHUB_STEP_SUMMARY
+        echo "#### released projects:" >> $GITHUB_STEP_SUMMARY
         echo "$gavs" >> $GITHUB_STEP_SUMMARY
 
     - name: Upload updated gavs artifact
