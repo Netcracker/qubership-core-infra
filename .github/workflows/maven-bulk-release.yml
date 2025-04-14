@@ -51,20 +51,16 @@ jobs:
 
   bulk-release:
     needs: prepare
-    runs-on: ubuntu-latest
+    name:  "Run '${{ matrix.repository }}' repository release"
+    uses: ${{ matrix.repository }}/.github/workflows/maven-release.yml@main
     strategy:
       matrix:
         repository: ${{ fromJson(inputs.repositories) }}
       max-parallel: 1
-    steps:
-      - name: "Run '${{ matrix.repository }}' repository release"
-        uses: ${{ matrix.repository }}/.github/workflows/maven-release.yml@main
-        with:
-          gavs-cache-path: "output"
-          gavs-cache-key: "maven-release-output-${{ github.run_id }}"
-        secrets:
-          MAVEN_RELEASE_DEV_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
-          MAVEN_GPG_PRIVATE_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
-          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-
-
+    with:
+      gavs-cache-path: "output"
+      gavs-cache-key: "maven-release-output-${{ github.run_id }}"
+    secrets:
+      MAVEN_RELEASE_DEV_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+      MAVEN_GPG_PRIVATE_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+      MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
