@@ -1,0 +1,70 @@
+# $schema: https://json.schemastore.org/github-workflow.json
+
+name: "Maven bulk release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      repositories:
+        description: |-
+          Repositories to release in json format:
+          ["Netcracker/repository-1", "Netcracker/repository-2", "Netcracker/repository-3"]
+        required: true
+        type: string
+      type:
+        description: "Version part to increment"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+      buildGraph:
+        description: if true - builds dependency graph. Graph allows starting per repository release workflows in parallel and in correct order
+        type: boolean
+        default: false
+
+permissions:
+  actions: write
+  contents: write
+  packages: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    env:
+      MAVEN_USER: "x-access-token"
+      MAVEN_TOKEN: ${{ secrets.maven-token }}
+      MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
+
+    steps:
+      - name: Cache gavs
+        uses: actions/cache@v4
+        with:
+          path: output
+          key: maven-release-output-${{ github.run_id }}
+
+      - name: Create snared GAVs file
+        run: |
+          mkdir -p output
+          echo "" > output/gavs.txt
+
+  bulk-release:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        repository: ${{ fromJson(inputs.repositories) }}
+      max-parallel: 1
+    steps:
+      - name: "Run '${{ matrix.repository }}' repository release"
+        uses: ${{ matrix.repository }}/.github/workflows/maven-release.yml@main
+        with:
+          gavs-cache-path: "output"
+          gavs-cache-key: "maven-release-output-${{ github.run_id }}"
+        secrets:
+          MAVEN_RELEASE_DEV_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+          MAVEN_GPG_PRIVATE_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+
+

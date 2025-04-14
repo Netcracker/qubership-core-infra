@@ -9,13 +9,6 @@ on:
         description: "Release version"
         required: false
         type: string
-      dependencies:
-        description: |-
-          Dependencies to update in format:
-          <groupId>:<artifactId>:<version>
-          <groupId>:<artifactId>:<version>
-        required: false
-        type: string
       gavs-cache-path:
         type: string
         description: "Cache path of Shared bulk release GAV file"
@@ -65,8 +58,8 @@ jobs:
         if: ${{ inputs.gavs-cache-key == '' }}
         # language="shell script"
         run: |-
-          mkdir -p output
-          echo "" > output/gavs.txt
+          mkdir -p ${{ inputs.gavs-cache-path }}
+          echo "" > ${{ inputs.gavs-cache-path }}/gavs.txt
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -92,13 +85,14 @@ jobs:
 
       - name: Update dependencies
         id: update
-        if: ${{ inputs.dependencies != '' }}
         # language="shell script"
         run: |-
           set -x
-          dependencies="${{ inputs.dependencies }}"
-          IFS=$'\n'
-          for line in $dependencies; do
+          while IFS= read -r line; do
+            if [ -z "$line" ]; then
+              echo "Dependencies are empty."
+              break
+            fi
             IFS=":"
             read -r groupID artifactId version <<< "$line"
             ga="$groupID:$artifactId"
@@ -106,7 +100,8 @@ jobs:
             eval "$cmd"
             cmd="mvn -B versions:update-properties -Dincludes=$ga -Dmaven.version.ignore=^\(?!$version\).+\$"
             eval "$cmd"
-          done
+          done < ${{ inputs.gavs-cache-path }}/gavs.txt
+          
           changed=$(git diff --quiet)
           if [ "$changed" -eq 0 ]; then
             git add -u
@@ -115,14 +110,13 @@ jobs:
 
       - name: Release
         id: release
-        if: ${{ success() }}
         # language="shell script"
         run: |-
           set -x
           mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }}
           gavs=`cat 'release.properties' | grep 'project.rel.' | sed 's/project.rel.//g' | sed 's/\\\\//g' | sed 's/=/:/g'`
           echo "$gavs" >> "${{ inputs.gavs-cache-path }}/gavs.txt"
-          echo "### Release artifacts:\n" >> $GITHUB_STEP_SUMMARY
+          echo "### Released artifacts:" >> $GITHUB_STEP_SUMMARY
           echo "$gavs" >> $GITHUB_STEP_SUMMARY
           mvn -B release:perform -DlocalCheckout=true
 
