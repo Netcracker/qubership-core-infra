@@ -66,9 +66,6 @@ jobs:
           gh workflow run maven-release.yml --repo ${{ matrix.repository }} --ref main \
           --field gavs-cache-path=output \
           --field gavs-cache-key=maven-release-output-${{ github.run_id }} \
-          --field MAVEN_RELEASE_DEV_TOKEN=${{ secrets.MAVEN_RELEASE_DEV_TOKEN }} \
-          --field MAVEN_GPG_PRIVATE_KEY=${{ secrets.MAVEN_GPG_PRIVATE_KEY }} \
-          --field MAVEN_GPG_PASSPHRASE=${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
 #      - name: "Run '${{ matrix.repository }}' repository release"
 #        uses: "${{ matrix.repository }}/.github/workflows/maven-release.yml@main"
