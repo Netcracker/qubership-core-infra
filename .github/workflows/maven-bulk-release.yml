@@ -57,41 +57,47 @@ jobs:
       GH_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
     steps:
       - name: "Run '${{ matrix.repository }}' repository release"
-        # language="shell script"
-        run: |
-          set -x
-          repo="${{ matrix.repository }}"
-          runId="${{ github.run_id }}"
-          gh workflow run maven-release.yml --repo $repo --ref main \
-          --field run-id=$runId \
-          --field gavs-cache-path=output \
-          --field gavs-cache-key=maven-release-output-$runId
-          
-          WORKFLOW_RUN_ID=""
-          while [[ -z "WORKFLOW_RUN_ID" ]]; do
-            WORKFLOW_RUN_ID=$(gh run list --repo $repo --json name,id | jq -r --arg prefix "[$runId]" '.[] | select(.name | startswith($prefix)) | .id')
-            echo "WORKFLOW_RUN_ID: $WORKFLOW_RUN_ID"
-            if [[ -z "$WORKFLOW_RUN_ID" ]]; then
-              sleep 5
-            fi
-          done          
-          echo "WORKFLOW_RUN_ID=${WORKFLOW_RUN_ID}" >> $GITHUB_ENV
-      - name: "Wait for '${{ matrix.repository }}' repository release to complete"
-        # language="shell script"
-        run: |
-          set -x
-          STATUS=""
-          while [[ "$STATUS" != "completed" ]]; do
-            STATUS=$(gh run view $WORKFLOW_RUN_ID --repo ${{ matrix.repository }}  --json status -q .status)
-            echo "Current status: $STATUS"
-            if [[ "$STATUS" == "completed" ]]; then
-              CONCLUSION=$(gh run view $WORKFLOW_RUN_ID --repo ${{ matrix.repository }}  --json conclusion -q .conclusion)
-              echo "Workflow completed with conclusion: $CONCLUSION"
-              if [[ "$CONCLUSION" != "success" ]]; then
-                echo "Workflow failed with conclusion: $CONCLUSION"
-                exit 1
-              fi
-            else
-              sleep 5
-            fi
-          done
+        uses: "./.github/workflows/maven-release.yml"
+        with:
+          repository: "${{ matrix.repository }}"
+          gavs-cache-path: "output"
+          gavs-cache-key: "maven-release-output-${{ github.run_id }}"
+#      - name: "Run '${{ matrix.repository }}' repository release"
+#        # language="shell script"
+#        run: |
+#          set -x
+#          repo="${{ matrix.repository }}"
+#          runId="${{ github.run_id }}"
+#          gh workflow run maven-release.yml --repo $repo --ref main \
+#          --field run-id=$runId \
+#          --field gavs-cache-path=output \
+#          --field gavs-cache-key=maven-release-output-$runId
+#
+#          WORKFLOW_RUN_ID=""
+#          while [[ -z "WORKFLOW_RUN_ID" ]]; do
+#            WORKFLOW_RUN_ID=$(gh run list --repo $repo --json name,id | jq -r --arg prefix "[$runId]" '.[] | select(.name | startswith($prefix)) | .id')
+#            echo "WORKFLOW_RUN_ID: $WORKFLOW_RUN_ID"
+#            if [[ -z "$WORKFLOW_RUN_ID" ]]; then
+#              sleep 5
+#            fi
+#          done
+#          echo "WORKFLOW_RUN_ID=${WORKFLOW_RUN_ID}" >> $GITHUB_ENV
+#      - name: "Wait for '${{ matrix.repository }}' repository release to complete"
+#        # language="shell script"
+#        run: |
+#          set -x
+#          STATUS=""
+#          while [[ "$STATUS" != "completed" ]]; do
+#            STATUS=$(gh run view $WORKFLOW_RUN_ID --repo ${{ matrix.repository }}  --json status -q .status)
+#            echo "Current status: $STATUS"
+#            if [[ "$STATUS" == "completed" ]]; then
+#              CONCLUSION=$(gh run view $WORKFLOW_RUN_ID --repo ${{ matrix.repository }}  --json conclusion -q .conclusion)
+#              echo "Workflow completed with conclusion: $CONCLUSION"
+#              if [[ "$CONCLUSION" != "success" ]]; then
+#                echo "Workflow failed with conclusion: $CONCLUSION"
+#                exit 1
+#              fi
+#            else
+#              sleep 5
+#            fi
+#          done

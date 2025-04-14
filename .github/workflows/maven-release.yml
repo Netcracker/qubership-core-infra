@@ -1,15 +1,14 @@
 # $schema: https://json.schemastore.org/github-workflow.json
 
-name: "[${{ inputs.run-id }}] Maven release"
+name: "Maven release"
 
 on:
   workflow_call:
     inputs:
-      run-id:
+      repository:
+        description: "Repository in format: Owner/Repository"
+        required: true
         type: string
-        required: false
-        description: "Run id of the bulk release"
-        default: ""
       releaseVersion:
         description: "Release version"
         required: false
@@ -51,6 +50,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          repository: '${{ inputs.repository }}'
 
       - name: Restore GAV cache
         if: ${{ inputs.gavs-cache-key != '' }}
@@ -83,7 +84,7 @@ jobs:
         run: |-
           git config user.email "actions@github.com"
           git config user.name "actions"
-          git remote set-url origin https://x-access-token:${{ secrets.MAVEN_TOKEN }}@github.com/${{ github.repository }}
+          git remote set-url origin https://x-access-token:${{ secrets.MAVEN_TOKEN }}@github.com/${{ inputs.repository }}
 
       - name: Display git config
         run: git config --list
