@@ -82,6 +82,15 @@ runs:
       shell: bash
       run: git config --list
 
+    - name: Read GAVs
+      shell: bash
+      # language="shell script"
+      run: |
+        set -x
+        # Read lines and join them with commas
+        gavs=$(paste -sd ',' ${{ inputs.gavs-cache-path }}/gavs.txt)
+        echo "gavs=${gavs}" >> $GITHUB_ENV
+
     - name: Update dependencies
       id: update
       shell: bash
@@ -89,7 +98,7 @@ runs:
       # language="shell script"
       run: |-
         set -x
-        while IFS= read -r line; do
+        echo "${{ env.gavs }}" | while IFS= read -r line; do
           if [ -z "$line" ]; then
             echo "Dependencies are empty."
             break
@@ -101,7 +110,7 @@ runs:
           eval "$cmd"
           cmd="mvn -B versions:update-properties -Dincludes=$ga -Dmaven.version.ignore=^\(?!$version\).+\$"
           eval "$cmd"
-        done < ${{ inputs.gavs-cache-path }}/gavs.txt
+        done
         
         changed=$(git diff --quiet)
         if [ "$changed" -eq 0 ]; then
@@ -113,19 +122,29 @@ runs:
       id: release
       shell: bash
       working-directory: ${{ inputs.directory }}
-      # language="shell script"
       env:
         MAVEN_USER: "x-access-token"
         MAVEN_TOKEN: ${{ inputs.maven-token }}
         MAVEN_GPG_PASSPHRASE: ${{ inputs.maven-gpg-passphrase }}
+      # language="shell script"
       run: |-
         set -x
         mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }}
         gavs=`cat 'release.properties' | grep 'project.rel.' | sed 's/project.rel.//g' | sed 's/\\\\//g' | sed 's/=/:/g'`
+        all_gavs="${{ env.gavs }}"
+        all_gavs="$all_gavs"$'\n'"$gavs"
+        echo "gavs=${all_gavs}" >> $GITHUB_ENV
+        mvn -B release:perform -DlocalCheckout=true
+
+    - name: Write released GAVs
+      shell: bash
+      # language="shell script"
+      run: |
+        set -x
+        gavs="${{ env.gavs }}"
         echo "$gavs" >> "${{ inputs.gavs-cache-path }}/gavs.txt"
         echo "### Released artifacts:" >> $GITHUB_STEP_SUMMARY
         echo "$gavs" >> $GITHUB_STEP_SUMMARY
-        mvn -B release:perform -DlocalCheckout=true
 
     - name: Rollback release
       if: ${{ failure() }}
