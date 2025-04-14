@@ -35,16 +35,16 @@ jobs:
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
 
     steps:
+      - name: Create snared GAVs file
+        run: |
+          mkdir -p output
+          echo "" > output/gavs.txt
+
       - name: Cache gavs
         uses: actions/cache/save@v4
         with:
           path: output
           key: maven-release-output-${{ github.run_id }}
-
-      - name: Create snared GAVs file
-        run: |
-          mkdir -p output
-          echo "" > output/gavs.txt
 
   release:
     needs: prepare
