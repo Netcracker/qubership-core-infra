@@ -192,14 +192,17 @@ runs:
         echo "all_gavs=${all_gavs}" >> "$GITHUB_OUTPUT"
         mvn -B release:perform -DlocalCheckout=true -DautoVersionSubmodules=true
 
+        echo "files after release:"
+        ls -R
+
     - name: Backup maven release files
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: "${{ inputs.backup-artifact-name }}"
-        path: |
-          pom.xml.releaseBackup
-          release.properties
+        path: |-
+          **/pom.xml.releaseBackup
+          **/release.properties
         overwrite: true
 
     - name: Write GAVs summary
