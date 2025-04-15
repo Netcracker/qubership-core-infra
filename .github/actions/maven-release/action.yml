@@ -7,8 +7,8 @@ inputs:
   java-version:
     description: "java version to use for 'actions/setup-java' action"
     required: true
-  maven-properties:
-    description: "maven properties for mvn release plugin"
+  maven-envs:
+    description: "envs in format 'env1=val1,env2=val2' for mvn release plugin"
     required: true
   repository:
     description: "Repository in format: Owner/Repository"
@@ -149,8 +149,19 @@ runs:
       # language="shell script"
       run: |-
         set -x
-        props="${{ inputs.maven-properties }}"
-        mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }} $props
+        mavenEnvs="${{ inputs.maven-envs }}"
+        IFS=','
+        for env in $mavenEnvs; do
+          if [ -z "$env" ]; then
+            continue 
+          fi
+          IFS="="
+          read -r key value <<< "$env"
+          export "$key"="$value"
+          IFS=','
+        done
+
+        mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }}
         all_gavs="$gavs"
         gavs=`cat 'release.properties' | grep 'project.rel.' | sed 's/project.rel.//g' | sed 's/\\\\//g' | sed 's/=/:/g' | tr '\n' ','`
         gavs=${gavs%,}

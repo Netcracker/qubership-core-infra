@@ -19,8 +19,8 @@ on:
           ["Netcracker/qubership-core-release-test-maven-lib-1",
           "Netcracker/qubership-core-release-test-maven-lib-2",
           "Netcracker/qubership-core-release-test-maven-lib-3"]
-      maven-properties:
-        description: "Properties for maven. Used for testing"
+      maven-envs:
+        description: "Envs in format 'env1=val1,env2=val2' for mvn release plugin. Used for testing"
         type: string
 
 #      type:
@@ -79,7 +79,7 @@ jobs:
           directory: "${{ matrix.repository }}"
           java-version: ${{ inputs.java-version }}
           artifact-name: "gavs-${{ github.run_id }}"
-          maven-properties: ${{ inputs.maven-properties }}
+          maven-envs: ${{ inputs.maven-envs }}
           maven-token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
           maven-gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           maven-gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
@@ -106,7 +106,7 @@ jobs:
           run-id: "${{ github.run_id }}"
           repository: "${{ matrix.repository }}"
           directory: "${{ matrix.repository }}"
-          java-version: ${{ inputs.javaVersion }}
+          java-version: ${{ inputs.java-version }}
           artifact-name: "gavs-${{ github.run_id }}"
           maven-token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
           maven-gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
