@@ -20,6 +20,9 @@ inputs:
   artifact-name:
     description: "Shared artifact with GAVs"
     required: true
+  backup-artifact-name:
+    description: "Shared artifact with release backup files"
+    required: true
   maven-token:
     description: "Maven token"
     required: true
@@ -45,7 +48,7 @@ runs:
     - name: Download maven release backup files
       uses: actions/download-artifact@v4
       with:
-        name: "release-backup-${{ inputs.run-id }}-${{ inputs.repository }}"
+        name: "${{ inputs.backup-artifact-name }}"
         repository: "${{ inputs.repository }}"
 
     - name: Set up JDK

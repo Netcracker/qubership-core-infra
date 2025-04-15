@@ -23,6 +23,9 @@ inputs:
   artifact-name:
     description: "Shared artifact with GAVs"
     required: true
+  backup-artifact-name:
+    description: "Shared artifact with release backup files"
+    required: true
   maven-token:
     description: "Maven token"
     required: true
@@ -47,7 +50,7 @@ runs:
     - name: Mandatory upload backup artifact
       uses: actions/upload-artifact@v4
       with:
-        name: "release-backup-${{ inputs.run-id }}-${{ inputs.repository }}"
+        name: "${{ inputs.backup-artifact-name }}"
         path: |
           release-backup
         overwrite: true
@@ -193,7 +196,7 @@ runs:
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: "release-backup-${{ inputs.run-id }}-${{ inputs.repository }}"
+        name: "${{ inputs.backup-artifact-name }}"
         path: |
           pom.xml.releaseBackup
           release.properties

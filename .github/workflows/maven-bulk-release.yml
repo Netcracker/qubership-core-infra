@@ -71,6 +71,16 @@ jobs:
           repository: '${{ github.repository }}'
           ref: "main"
 
+      - name: Format repository name
+        id: format-repo-name
+        shell: bash
+        # language="shell script"
+        run: |
+          set -x
+          repo="${{ matrix.repository }}"
+          repo=$(echo "$repo" | tr '/' '_')
+          echo "repo=${repo}" >> "$GITHUB_OUTPUT"
+
       - name: "Run '${{ matrix.repository }}' repository release"
         uses: "./.github/actions/maven-release"
         with:
@@ -79,6 +89,7 @@ jobs:
           directory: "${{ matrix.repository }}"
           java-version: ${{ inputs.java-version }}
           artifact-name: "gavs-${{ github.run_id }}"
+          backup-artifact-name: "release-backup-${{ github.run_id }}-${{ steps.format-repo-name.outputs.repo }}"
           maven-envs: ${{ inputs.maven-envs }}
           maven-token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
           maven-gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
@@ -100,6 +111,16 @@ jobs:
           repository: '${{ github.repository }}'
           ref: "main"
 
+      - name: Format repository name
+        id: format-repo-name
+        shell: bash
+        # language="shell script"
+        run: |
+          set -x
+          repo="${{ matrix.repository }}"
+          repo=$(echo "$repo" | tr '/' '_')
+          echo "repo=${repo}" >> "$GITHUB_OUTPUT"
+
       - name: "Run '${{ matrix.repository }}' repository release rollback"
         uses: "./.github/actions/maven-release-rollback"
         with:
@@ -108,6 +129,7 @@ jobs:
           directory: "${{ matrix.repository }}"
           java-version: ${{ inputs.java-version }}
           artifact-name: "gavs-${{ github.run_id }}"
+          backup-artifact-name: "release-backup-${{ github.run_id }}-${{ steps.format-repo-name.outputs.repo }}"
           maven-token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
           maven-gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           maven-gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
