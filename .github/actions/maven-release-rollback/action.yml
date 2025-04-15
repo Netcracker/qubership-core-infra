@@ -92,7 +92,7 @@ runs:
       run: git config --list
 
     - name: Rollback release
-      if: ${{ hashFiles('pom.xml.releaseBackup') != '' }}
+#      if: ${{ hashFiles('pom.xml.releaseBackup') != '' }}
       shell: bash
       working-directory: ${{ inputs.directory }}
       env:
