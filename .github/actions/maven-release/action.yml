@@ -169,7 +169,9 @@ runs:
       if: always()
       with:
         name: "release-backup-${{ inputs.run_id }}-${{ inputs.repository }}"
-        path: "*release*"
+        path: |
+          pom.xml.releaseBackup
+          release.properties
         overwrite: true
 
     - name: Write GAVs summary
