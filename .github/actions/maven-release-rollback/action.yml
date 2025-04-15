@@ -51,6 +51,15 @@ runs:
         name: "${{ inputs.backup-artifact-name }}"
         repository: "${{ inputs.repository }}"
 
+    - name: List files after backup-restore
+      shell: bash
+      working-directory: ${{ inputs.directory }}
+      # language="shell script"
+      run: |-
+        set -x
+        echo "files after download-artifact"
+        ls -R        
+
     - name: Set up JDK
       uses: actions/setup-java@v4
       env:
