@@ -65,7 +65,6 @@ runs:
       # language="shell script"
       run: |
         set -x
-        ls -R
         gavs=$(cat gavs.txt)
         gavs=$(echo "$gavs" | tr '\n' ',')
         gavs=${gavs%,}
