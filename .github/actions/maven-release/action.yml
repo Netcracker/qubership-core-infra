@@ -37,6 +37,21 @@ runs:
   using: "composite"
 
   steps:
+    - name: Mandatory file for rollback
+      shell: bash
+      # language="shell script"
+      run: |
+        set -x
+        touch "release-backup"
+
+    - name: Mandatory upload backup artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: "release-backup-${{ inputs.run-id }}-${{ inputs.repository }}"
+        path: |
+          release-backup
+        overwrite: true
+
     - name: Checkout
       uses: actions/checkout@v4
       with:
@@ -178,7 +193,7 @@ runs:
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: "release-backup-${{ inputs.run_id }}-${{ inputs.repository }}"
+        name: "release-backup-${{ inputs.run-id }}-${{ inputs.repository }}"
         path: |
           pom.xml.releaseBackup
           release.properties

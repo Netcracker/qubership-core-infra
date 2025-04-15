@@ -45,7 +45,7 @@ runs:
     - name: Download maven release backup files
       uses: actions/download-artifact@v4
       with:
-        name: "release-backup-${{ inputs.run_id }}-${{ inputs.repository }}"
+        name: "release-backup-${{ inputs.run-id }}-${{ inputs.repository }}"
         repository: "${{ inputs.repository }}"
 
     - name: Set up JDK
