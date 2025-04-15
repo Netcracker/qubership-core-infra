@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       java-version:
-        description: "java-version to use in 'actions/setup-java' action for 'temurin' distribution"
+        description: "java-version to use in 'setup-java' action for 'temurin' distribution"
         type: string
         default: "21"
       repositories:

@@ -169,7 +169,7 @@ runs:
       if: always()
       with:
         name: "release-backup-${{ inputs.run_id }}-${{ inputs.repository }}"
-        path: pom\.xml\.releaseBackup|release\.properties
+        path: "*release*"
         overwrite: true
 
     - name: Write GAVs summary
@@ -194,10 +194,3 @@ runs:
         name: gavs-${{ inputs.run_id }}
         path: gavs.txt
         overwrite: true
-
-    - name: Rollback release
-      if: ${{ failure() }}
-      shell: bash
-      working-directory: ${{ inputs.directory }}
-      # language="shell script"
-      run: mvn -B release:rollback
