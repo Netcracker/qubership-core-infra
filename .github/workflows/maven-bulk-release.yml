@@ -5,6 +5,10 @@ name: "Maven bulk release"
 on:
   workflow_dispatch:
     inputs:
+      java-version:
+        description: "java-version to use in 'actions/setup-java' action for 'temurin' distribution"
+        type: string
+        default: "21"
       repositories:
         description: |-
           Repositories to release in json format:
@@ -15,6 +19,10 @@ on:
           ["Netcracker/qubership-core-release-test-maven-lib-1",
           "Netcracker/qubership-core-release-test-maven-lib-2",
           "Netcracker/qubership-core-release-test-maven-lib-3"]
+      maven-properties:
+        description: "Properties for maven. Used for testing"
+        type: string
+
 #      type:
 #        description: "Version part to increment"
 #        type: choice
@@ -23,7 +31,6 @@ on:
 #          - minor
 #          - major
 #        default: patch
-
 
 permissions:
   actions: write
@@ -56,8 +63,7 @@ jobs:
       matrix:
         repository: ${{ fromJson(inputs.repositories) }}
       max-parallel: 1
-    env:
-      GH_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+      fail-fast: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -68,8 +74,39 @@ jobs:
       - name: "Run '${{ matrix.repository }}' repository release"
         uses: "./.github/actions/maven-release"
         with:
+          run-id: "${{ github.run_id }}"
           repository: "${{ matrix.repository }}"
           directory: "${{ matrix.repository }}"
+          java-version: ${{ inputs.javaVersion }}
+          artifact-name: "gavs-${{ github.run_id }}"
+          maven-properties: ${{ inputs.maven-properties }}
+          maven-token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+          maven-gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          maven-gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+
+  rollback:
+    needs: release
+    runs-on: ubuntu-latest
+    if: failure()
+    strategy:
+      matrix:
+        repository: ${{ fromJson(inputs.repositories) }}
+      max-parallel: 4
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: '${{ github.repository }}'
+          ref: "main"
+
+      - name: "Run '${{ matrix.repository }}' repository release rollback"
+        uses: "./.github/actions/maven-release-rollback"
+        with:
+          run-id: "${{ github.run_id }}"
+          repository: "${{ matrix.repository }}"
+          directory: "${{ matrix.repository }}"
+          java-version: ${{ inputs.javaVersion }}
           artifact-name: "gavs-${{ github.run_id }}"
           maven-token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
           maven-gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}

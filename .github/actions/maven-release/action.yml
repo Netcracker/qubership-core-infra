@@ -1,6 +1,15 @@
 # $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-action.json
 name: "Maven release"
 inputs:
+  run-id:
+    description: "run_id of the bulk release"
+    required: true
+  java-version:
+    description: "java version to use for 'actions/setup-java' action"
+    required: true
+  maven-properties:
+    description: "maven properties for mvn release plugin"
+    required: true
   repository:
     description: "Repository in format: Owner/Repository"
     required: true
@@ -62,14 +71,14 @@ runs:
         gavs=${gavs%,}
         echo "gavs=${gavs}" >> "$GITHUB_OUTPUT"
 
-    - name: Set up JDK 21
+    - name: Set up JDK
       uses: actions/setup-java@v4
       env:
         MAVEN_USER: "x-access-token"
         MAVEN_TOKEN: ${{ inputs.maven-token }}
         MAVEN_GPG_PASSPHRASE: ${{ inputs.maven-gpg-passphrase }}
       with:
-        java-version: '21'
+        java-version: "${{ inputs.java-version }}"
         distribution: 'temurin'
         cache: maven
         server-id: github
@@ -90,6 +99,7 @@ runs:
     - name: Display git config
       shell: bash
       working-directory: ${{ inputs.directory }}
+      # language="shell script"
       run: git config --list
 
     - name: Update dependencies
@@ -140,7 +150,8 @@ runs:
       # language="shell script"
       run: |-
         set -x
-        mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }}
+        props="${{ inputs.maven-properties }}"
+        mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }} $props
         all_gavs="$gavs"
         gavs=`cat 'release.properties' | grep 'project.rel.' | sed 's/project.rel.//g' | sed 's/\\\\//g' | sed 's/=/:/g' | tr '\n' ','`
         gavs=${gavs%,}
@@ -152,6 +163,14 @@ runs:
         echo "gavs=${gavs}" >> "$GITHUB_OUTPUT"
         echo "all_gavs=${all_gavs}" >> "$GITHUB_OUTPUT"
         mvn -B release:perform -DlocalCheckout=true -DautoVersionSubmodules=true
+
+    - name: Backup maven release files
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: "release-backup-${{ inputs.run_id }}-${{ inputs.repository }}"
+        path: pom\.xml\.releaseBackup|release\.properties
+        overwrite: true
 
     - name: Write GAVs summary
       shell: bash
@@ -166,13 +185,13 @@ runs:
         gavs=$(echo "$gavs" | tr ',' '\n')
         echo "$all_gavs" >> $path
         cat $path
-        echo "#### released projects:" >> $GITHUB_STEP_SUMMARY
+        echo "#### released artifacts:" >> $GITHUB_STEP_SUMMARY
         echo "$gavs" >> $GITHUB_STEP_SUMMARY
 
     - name: Upload updated gavs artifact
       uses: actions/upload-artifact@v4
       with:
-        name: gavs-${{ github.run_id }}
+        name: gavs-${{ inputs.run_id }}
         path: gavs.txt
         overwrite: true
 

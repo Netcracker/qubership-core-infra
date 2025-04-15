@@ -1,0 +1,91 @@
+# $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-action.json
+name: "Maven release rollback"
+inputs:
+  run-id:
+    description: "run_id of the bulk release"
+    required: true
+  java-version:
+    description: "java version to use for 'actions/setup-java' action"
+    required: true
+  repository:
+    description: "Repository in format: Owner/Repository"
+    required: true
+  directory:
+    description: "Directory to checkout to"
+    required: false
+    default: "temp"
+  releaseVersion:
+    description: "Release version"
+    required: false
+  artifact-name:
+    description: "Shared artifact with GAVs"
+    required: true
+  maven-token:
+    description: "Maven token"
+    required: true
+  maven-gpg-private-key:
+    description: "Maven gpg-private-key"
+    required: true
+  maven-gpg-passphrase:
+    description: "Maven gpg-passphrase"
+    required: true
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        repository: '${{ inputs.repository }}'
+        ref: "main"
+        token: '${{ inputs.maven-token }}'
+        path: ${{ inputs.directory }}
+
+    - name: Download maven release backup files
+      uses: actions/download-artifact@v4
+      with:
+        name: "release-backup-${{ inputs.run_id }}-${{ inputs.repository }}"
+        repository: "${{ inputs.repository }}"
+
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      env:
+        MAVEN_USER: "x-access-token"
+        MAVEN_TOKEN: ${{ inputs.maven-token }}
+        MAVEN_GPG_PASSPHRASE: ${{ inputs.maven-gpg-passphrase }}
+      with:
+        java-version: "${{ inputs.java-version }}"
+        distribution: 'temurin'
+        cache: maven
+        server-id: github
+        server-username: MAVEN_USER
+        server-password: MAVEN_TOKEN
+        gpg-private-key: ${{ inputs.maven-gpg-private-key }}
+        gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+    - name: Set up Git
+      shell: bash
+      working-directory: ${{ inputs.directory }}
+      # language="shell script"
+      run: |-
+        git config user.email "actions@github.com"
+        git config user.name "actions"
+        git remote set-url origin https://x-access-token:${{ inputs.maven-token }}@github.com/${{ inputs.repository }}
+
+    - name: Display git config
+      shell: bash
+      working-directory: ${{ inputs.directory }}
+      # language="shell script"
+      run: git config --list
+
+    - name: Rollback release
+      if: exists('pom.xml.releaseBackup')
+      shell: bash
+      working-directory: ${{ inputs.directory }}
+      env:
+        MAVEN_USER: "x-access-token"
+        MAVEN_TOKEN: ${{ inputs.maven-token }}
+        MAVEN_GPG_PASSPHRASE: ${{ inputs.maven-gpg-passphrase }}
+      # language="shell script"
+      run: mvn -B release:rollback
