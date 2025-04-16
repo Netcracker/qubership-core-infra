@@ -96,5 +96,6 @@ runs:
         MAVEN_GPG_PASSPHRASE: ${{ inputs.maven-gpg-passphrase }}
       # language="shell script"
       run: |-
-        git fetch
+        set -x
+        git fetch origin
         mvn -B release:rollback
