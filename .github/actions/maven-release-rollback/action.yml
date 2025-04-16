@@ -119,19 +119,23 @@ runs:
         MAVEN_TOKEN: ${{ inputs.maven-token }}
       # language="shell script"
       run: |-
-        set -x
-        # search version id for each package which might got published
         IFS=','
         for gav in ${GAVS}; do
           if [ -z "$gav" ]; then
-            continue 
+            continue
           fi
           IFS=":"
-          read -r groupID artifactId version <<< "$gav"
-          response=$(curl -s "https://api.github.com/orgs/Netcracker/packages/maven/${groupID}.${artifactId}/versions" --header "Authorization: Bearer $MAVEN_TOKEN")
-          packageVersionId=$(jq -r '.[] | select(.name == "'"$version"'") | .id')
+          echo "gav=${gav}"
+          read -r groupID artifactId version <<< "${gav}"
+          echo "groupID=${groupID}"
+          echo "artifactId=${artifactId}"
+          echo "version=${version}"
+          response=$(curl -s "https://api.github.com/orgs/Netcracker/packages/maven/${groupID}.${artifactId}/versions" --header "Authorization: Bearer ${MAVEN_TOKEN}")
+          #  echo "response=${response}"
+          packageVersionId=$(echo "${response}" | jq -r '.[] | select(.name == "'"${version}"'") | .id')
+          echo "packageVersionId=${packageVersionId}"
           if [ -n "${packageVersionId}" ]; then
-              curl --request DELETE "https://api.github.com/orgs/Netcracker/packages/maven/${groupID}.${artifactId}/versions/${packageVersionId}" --header "Authorization: Bearer $MAVEN_TOKEN")
+              curl --request DELETE "https://api.github.com/orgs/Netcracker/packages/maven/${groupID}.${artifactId}/versions/${packageVersionId}" --header "Authorization: Bearer ${MAVEN_TOKEN}")
           fi
           IFS=','
         done
