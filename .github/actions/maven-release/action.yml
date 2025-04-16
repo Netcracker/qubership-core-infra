@@ -219,7 +219,7 @@ runs:
         path="gavs.txt"
         all_gavs=$(echo "${ALL_GAVS}" | tr ',' '\n')
         gavs=$(echo "${GAVS}" | tr ',' '\n')
-        echo "$all_gavs" >> $path
+        echo "$all_gavs" > $path
         cat $path
         echo "#### released artifacts:" >> $GITHUB_STEP_SUMMARY
         echo "$gavs" >> $GITHUB_STEP_SUMMARY
