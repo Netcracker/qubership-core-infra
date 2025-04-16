@@ -44,7 +44,7 @@ runs:
         ref: "main"
         token: '${{ inputs.maven-token }}'
         path: ${{ inputs.directory }}
-        fetch-depth: 5
+        fetch-depth: 0
         fetch-tags: true
 
     - name: Download maven release backup files
@@ -99,6 +99,5 @@ runs:
       # language="shell script"
       run: |-
         set -x
-        git fetch origin
         git tag
         mvn -B release:rollback
