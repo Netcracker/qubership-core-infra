@@ -63,6 +63,13 @@ runs:
         echo "files after download-artifact"
         ls -R        
 
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven
+
     - name: Set up JDK
       uses: actions/setup-java@v4
       env:
