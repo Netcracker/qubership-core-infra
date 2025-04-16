@@ -95,4 +95,6 @@ runs:
         MAVEN_TOKEN: ${{ inputs.maven-token }}
         MAVEN_GPG_PASSPHRASE: ${{ inputs.maven-gpg-passphrase }}
       # language="shell script"
-      run: mvn -B release:rollback
+      run: |-
+        git fetch
+        mvn -B release:rollback

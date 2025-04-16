@@ -69,14 +69,6 @@ runs:
         name: ${{ inputs.artifact-name }}
         repository: "Netcracker/qubership-core-infra"
 
-#    - name: Create files
-#      if: ${{ inputs.gavs-cache-key == '' }}
-#      shell: bash
-#      # language="shell script"
-#      run: |-
-#        mkdir -p ${{ inputs.gavs-cache-path }}
-#        echo "" > ${{ inputs.gavs-cache-path }}/gavs.txt
-
     - name: Read GAVs
       id: read-gavs
       shell: bash
