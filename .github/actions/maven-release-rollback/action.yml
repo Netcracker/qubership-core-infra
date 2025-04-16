@@ -39,7 +39,6 @@ runs:
   steps:
     - name: Checkout
       uses: actions/checkout@v4
-      working-directory: ${{ inputs.directory }}
       with:
         repository: '${{ inputs.repository }}'
         ref: "main"
@@ -48,7 +47,6 @@ runs:
 
     - name: Download maven release backup files
       uses: actions/download-artifact@v4
-      working-directory: ${{ inputs.directory }}
       with:
         name: "${{ inputs.backup-artifact-name }}"
         repository: "${{ inputs.repository }}"
@@ -65,7 +63,6 @@ runs:
 
     - name: Set up JDK
       uses: actions/setup-java@v4
-      working-directory: ${{ inputs.directory }}
       env:
         MAVEN_USER: "x-access-token"
         MAVEN_TOKEN: ${{ inputs.maven-token }}
