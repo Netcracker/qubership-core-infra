@@ -44,6 +44,7 @@ runs:
         ref: "main"
         token: '${{ inputs.maven-token }}'
         path: ${{ inputs.directory }}
+        fetch-depth: 5
         fetch-tags: true
 
     - name: Download maven release backup files
@@ -83,9 +84,9 @@ runs:
       working-directory: ${{ inputs.directory }}
       # language="shell script"
       run: |-
-        /usr/bin/git config user.email "actions@github.com"
-        /usr/bin/git config user.name "actions"
-        /usr/bin/git remote set-url origin https://x-access-token:${{ inputs.maven-token }}@github.com/${{ inputs.repository }}
+        git config user.email "actions@github.com"
+        git config user.name "actions"
+        git remote set-url origin https://x-access-token:${{ inputs.maven-token }}@github.com/${{ inputs.repository }}
 
     - name: Rollback release
 #      if: ${{ hashFiles('pom.xml.releaseBackup') != '' }}
@@ -98,6 +99,6 @@ runs:
       # language="shell script"
       run: |-
         set -x
-        /usr/bin/git fetch origin
-        /usr/bin/git tag
+        git fetch origin
+        git tag
         mvn -B release:rollback
