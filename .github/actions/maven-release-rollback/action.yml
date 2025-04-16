@@ -119,6 +119,7 @@ runs:
         MAVEN_TOKEN: ${{ inputs.maven-token }}
       # language="shell script"
       run: |-
+        set -x
         IFS=','
         for gav in ${GAVS}; do
           if [ -z "$gav" ]; then
