@@ -95,7 +95,7 @@ runs:
       # language="shell script"
       run: |-
         set -x
-        gavs=$(cat "release.properties" | grep "project.rel." | sed 's/project.rel.//' | sed 's/=/:/' | sed 's/\\//' | sed 's/\n/,/' )
+        gavs=$(cat "release.properties" | grep "project.rel." | sed 's/project.rel.//' | sed 's/=/:/' | sed 's/\\//' | tr '\n' ',' )
         gavs=${gavs%,}
         echo "gavs=${gavs}" >> "$GITHUB_OUTPUT"
 
