@@ -83,9 +83,9 @@ runs:
       working-directory: ${{ inputs.directory }}
       # language="shell script"
       run: |-
-        git config user.email "actions@github.com"
-        git config user.name "actions"
-        git remote set-url origin https://x-access-token:${{ inputs.maven-token }}@github.com/${{ inputs.repository }}
+        /usr/bin/git config user.email "actions@github.com"
+        /usr/bin/git config user.name "actions"
+        /usr/bin/git remote set-url origin https://x-access-token:${{ inputs.maven-token }}@github.com/${{ inputs.repository }}
 
     - name: Rollback release
 #      if: ${{ hashFiles('pom.xml.releaseBackup') != '' }}
@@ -98,6 +98,6 @@ runs:
       # language="shell script"
       run: |-
         set -x
-        git fetch origin
-        git tag
+        /usr/bin/git fetch origin
+        /usr/bin/git tag
         mvn -B release:rollback
