@@ -11,14 +11,16 @@ on:
         default: "21"
       repositories:
         description: |-
-          Repositories to release in json format:
-          ["Netcracker/repository-1", "Netcracker/repository-2", "Netcracker/repository-3"]
+          Repositories to release in format:
+          Netcracker/repository-1
+          Netcracker/repository-2
+          Netcracker/repository-3
         required: false
         type: string
         default: |-
-          ["Netcracker/qubership-core-release-test-maven-lib-1",
-          "Netcracker/qubership-core-release-test-maven-lib-2",
-          "Netcracker/qubership-core-release-test-maven-lib-3"]
+          Netcracker/qubership-core-release-test-maven-lib-1
+          Netcracker/qubership-core-release-test-maven-lib-2
+          Netcracker/qubership-core-release-test-maven-lib-3
       maven-envs:
         description: "Envs in format 'env1=val1,env2=val2' for mvn release plugin. Used for testing"
         type: string
@@ -44,6 +46,8 @@ jobs:
       MAVEN_USER: "x-access-token"
       MAVEN_TOKEN: ${{ secrets.maven-token }}
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
+    outputs:
+      repositories: ${{ steps.format-repositories.outputs.json }}
 
     steps:
       - name: Create shared GAVs file
@@ -56,12 +60,34 @@ jobs:
           path: gavs.txt
           overwrite: true
 
+      - name: Format repositories
+        id: format-repositories
+        shell: bash
+        env:
+          REPOSITORIES: ${{ inputs.repositories }}
+        # language="shell script"
+        run: |
+          set -x
+          json=""
+          while IFS= read -r repository; do
+            if [ -z "${repository}" ]; then
+              continue
+            fi
+            if [ -n "${json}" ]; then
+              json="${json},"
+            fi
+            json="${json}"'"'"${repository}"'"'
+          done <<< "${REPOSITORIES}"
+          json="[${json}]"
+          echo "json=${json}"
+          echo "json=${json}" >> "$GITHUB_OUTPUT"
+
   release:
     needs: prepare
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        repository: ${{ fromJson(inputs.repositories) }}
+        repository: ${{ fromJson(needs.prepare.outputs.repositories) }}
       max-parallel: 1
       fail-fast: true
     steps:
