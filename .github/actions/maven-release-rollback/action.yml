@@ -66,9 +66,10 @@ runs:
     - name: Cache Maven dependencies
       uses: actions/cache@v4
       with:
-        path: ~/.m2/repository
+        path: ~/.m2
         key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-maven
+        restore-keys: |
+          ${{ runner.os }}-maven-
 
     - name: Set up JDK
       uses: actions/setup-java@v4
@@ -79,7 +80,6 @@ runs:
       with:
         java-version: "${{ inputs.java-version }}"
         distribution: 'temurin'
-        cache: maven
         server-id: github
         server-username: MAVEN_USER
         server-password: MAVEN_TOKEN
