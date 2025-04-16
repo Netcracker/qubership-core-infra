@@ -98,4 +98,5 @@ runs:
       run: |-
         set -x
         git fetch origin
+        git tag
         mvn -B release:rollback
