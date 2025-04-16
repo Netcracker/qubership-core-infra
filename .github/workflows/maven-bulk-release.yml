@@ -11,15 +11,13 @@ on:
         default: "21"
       repositories:
         description: |-
-          Repositories to release in format:
-          Netcracker/repository-1
-          Netcracker/repository-2
-          Netcracker/repository-3
+          Repositories to release as comma seperated list:
+          Netcracker/repository-1,Netcracker/repository-2,Netcracker/repository-3
         required: false
         type: string
         default: |-
-          Netcracker/qubership-core-release-test-maven-lib-1
-          Netcracker/qubership-core-release-test-maven-lib-2
+          Netcracker/qubership-core-release-test-maven-lib-1,
+          Netcracker/qubership-core-release-test-maven-lib-2,
           Netcracker/qubership-core-release-test-maven-lib-3
       maven-envs:
         description: "Envs in format 'env1=val1,env2=val2' for mvn release plugin. Used for testing"
@@ -69,7 +67,8 @@ jobs:
         run: |
           set -x
           json=""
-          while IFS= read -r repository; do
+          IFS=','
+          for repository in ${REPOSITORIES}; do
             if [ -z "${repository}" ]; then
               continue
             fi
@@ -77,7 +76,7 @@ jobs:
               json="${json},"
             fi
             json="${json}"'"'"${repository}"'"'
-          done <<< "${REPOSITORIES}"
+          done
           json="[${json}]"
           echo "json=${json}"
           echo "json=${json}" >> "$GITHUB_OUTPUT"
