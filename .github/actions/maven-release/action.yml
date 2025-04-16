@@ -42,6 +42,7 @@ runs:
   steps:
     - name: Mandatory file for rollback
       shell: bash
+      working-directory: ${{ inputs.directory }}
       # language="shell script"
       run: |
         set -x
@@ -49,6 +50,7 @@ runs:
 
     - name: Mandatory upload backup artifact
       uses: actions/upload-artifact@v4
+      working-directory: ${{ inputs.directory }}
       with:
         name: "${{ inputs.backup-artifact-name }}"
         path: |
@@ -57,6 +59,7 @@ runs:
 
     - name: Checkout
       uses: actions/checkout@v4
+      working-directory: ${{ inputs.directory }}
       with:
         repository: '${{ inputs.repository }}'
         ref: "main"
@@ -65,6 +68,7 @@ runs:
 
     - name: Download gavs artifact
       uses: actions/download-artifact@v4
+      working-directory: ${{ inputs.directory }}
       with:
         name: ${{ inputs.artifact-name }}
         repository: "Netcracker/qubership-core-infra"
@@ -90,6 +94,7 @@ runs:
 
     - name: Set up JDK
       uses: actions/setup-java@v4
+      working-directory: ${{ inputs.directory }}
       env:
         MAVEN_USER: "x-access-token"
         MAVEN_TOKEN: ${{ inputs.maven-token }}
@@ -218,6 +223,7 @@ runs:
         set -x
         mvn -B release:perform -DlocalCheckout=true -DautoVersionSubmodules=true
 
+        pwd
         echo "files after release:perform"
         ls -R        
 
