@@ -42,7 +42,6 @@ runs:
   steps:
     - name: Mandatory file for rollback
       shell: bash
-      working-directory: ${{ inputs.directory }}
       # language="shell script"
       run: |
         set -x
@@ -113,12 +112,6 @@ runs:
         git config user.email "actions@github.com"
         git config user.name "actions"
         git remote set-url origin https://x-access-token:${{ inputs.maven-token }}@github.com/${{ inputs.repository }}
-
-    - name: Display git config
-      shell: bash
-      working-directory: ${{ inputs.directory }}
-      # language="shell script"
-      run: git config --list
 
     - name: Update dependencies
       id: update
