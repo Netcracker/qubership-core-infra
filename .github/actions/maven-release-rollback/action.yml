@@ -135,7 +135,7 @@ runs:
           packageVersionId=$(echo "${response}" | jq -r '.[] | select(.name == "'"${version}"'") | .id')
           echo "packageVersionId=${packageVersionId}"
           if [ -n "${packageVersionId}" ]; then
-              curl --request DELETE "https://api.github.com/orgs/Netcracker/packages/maven/${groupID}.${artifactId}/versions/${packageVersionId}" --header "Authorization: Bearer ${MAVEN_TOKEN}")
+              curl --request DELETE "https://api.github.com/orgs/Netcracker/packages/maven/${groupID}.${artifactId}/versions/${packageVersionId}" --header "Authorization: Bearer ${MAVEN_TOKEN}"
           fi
           IFS=','
         done
