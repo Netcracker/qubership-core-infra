@@ -1,17 +1,5 @@
 [
   {
-    "name": "Netcracker/qubership-core-utils",
-    "java": "17"
-  },
-  {
-    "name": "Netcracker/qubership-core-error-handling",
-    "java": "17"
-  },
-  {
-    "name": "Netcracker/qubership-core-process-orchestrator",
-    "java": "21"
-  },
-  {
     "name": "Netcracker/qubership-core-context-propagation",
     "java": "17"
   },
