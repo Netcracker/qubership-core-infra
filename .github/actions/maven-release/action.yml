@@ -126,7 +126,6 @@ runs:
         set -x
         
         declare -A includes_map
-        declare -A includesVersioned_map
         
         # Group GAVs by version
         IFS=','
@@ -147,20 +146,11 @@ runs:
           includes_map[$version]+=" ${include}"
         fi
         
-        includeVersioned="-Dincludes=${gav}"
-        
-        if [[ -z ${includesVersioned_map[${version}]} ]]; then
-          includesVersioned_map[$version]="${includeVersioned}"
-        else
-          includesVersioned_map[$version]+=" ${includeVersioned}"
-        fi
-        
         IFS=','
         done
         
         for version in "${!includes_map[@]}"; do
           includes="${includes_map[$version]}"
-          includesVersioned="${includesVersioned_map[$version]}"
           echo "Version: ${version}"
           echo "GAs: ${includes}"
           echo
