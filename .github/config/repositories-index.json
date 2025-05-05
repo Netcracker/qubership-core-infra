@@ -5,7 +5,6 @@
   "Netcracker/qubership-core-context-propagation",
   "Netcracker/qubership-core-microservice-framework-extensions",
   "Netcracker/qubership-core-mongo-evolution",
-  "Netcracker/qubership-core-junit-k8s-extension",
   "Netcracker/qubership-core-restclient",
   "Netcracker/qubership-core-rest-libraries",
   "Netcracker/qubership-core-blue-green-state-monitor",
