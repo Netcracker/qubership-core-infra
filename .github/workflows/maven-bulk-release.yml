@@ -117,7 +117,7 @@ jobs:
     if: failure()
     strategy:
       matrix:
-        repository: ${{ fromJson(inputs.repositories) }}
+        repository: ${{ fromJson(needs.prepare.outputs.repositories) }}
       max-parallel: 4
       fail-fast: false
     steps:
