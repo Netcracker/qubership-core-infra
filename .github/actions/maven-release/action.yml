@@ -166,7 +166,7 @@ runs:
           echo
           cmd="mvn -B versions:use-dep-version ${includes} -DdepVersion=${version} -DforceVersion=true"
           eval "${cmd}"
-          cmd="mvn -B versions:update-properties ${includesVersioned}
+          cmd="mvn -B versions:update-properties ${includesVersioned}"
           eval "${cmd}"
         done
         
