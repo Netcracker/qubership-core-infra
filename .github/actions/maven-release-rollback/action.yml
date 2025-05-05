@@ -128,7 +128,7 @@ runs:
       run: |-
         IFS=','
         for gav in ${GAVS}; do
-          if [ -z "$gav" ]; then
+          if [ -z "${gav}" ]; then
             continue
           fi
           IFS=":"
@@ -137,12 +137,26 @@ runs:
           echo "groupID=${groupID}"
           echo "artifactId=${artifactId}"
           echo "version=${version}"
-          response=$(curl -s "https://api.github.com/orgs/Netcracker/packages/maven/${groupID}.${artifactId}/versions" --header "Authorization: Bearer ${MAVEN_TOKEN}")
-          #  echo "response=${response}"
-          packageVersionId=$(echo "${response}" | jq -r '.[] | select(.name == "'"${version}"'") | .id')
-          echo "packageVersionId=${packageVersionId}"
-          if [ -n "${packageVersionId}" ]; then
-              curl --request DELETE "https://api.github.com/orgs/Netcracker/packages/maven/${groupID}.${artifactId}/versions/${packageVersionId}" --header "Authorization: Bearer ${MAVEN_TOKEN}"
+          url="https://api.github.com/orgs/Netcracker/packages/maven/${groupID}.${artifactId}/versions"
+          echo "url=${url}"
+          response=$(curl -s -o /tmp/response_body -w "%{http_code}" "${url}" --header "Authorization: Bearer ${MAVEN_TOKEN}")
+          http_code=$response
+          response_body=$(< /tmp/response_body)
+          echo "response code: $http_code"
+          echo "response Body: $response_body"
+          
+          if [[ $http_code -eq 200 ]]; then
+            packageVersionId=$(echo "${response_body}" | jq -r '.[] | select(.name == "'"${version}"'") | .id')
+            echo "packageVersionId=${packageVersionId}"
+            if [ -n "${packageVersionId}" ]; then
+                curl --request DELETE "https://api.github.com/orgs/Netcracker/packages/maven/${groupID}.${artifactId}/versions/${packageVersionId}" --header "Authorization: Bearer ${MAVEN_TOKEN}"
+            fi
+          elif [[ $http_code -eq 404 ]]; then
+            echo "package not found"
+            continue
+          else
+            echo "invalid response"
+            exit 1
           fi
           IFS=','
         done
