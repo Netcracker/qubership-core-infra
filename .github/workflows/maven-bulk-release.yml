@@ -8,7 +8,7 @@ on:
       java-version:
         description: "java-version to use in 'setup-java' action for 'temurin' distribution"
         type: string
-        default: "21"
+        default: "17"
       repositoriesIndexFile:
         description: |-
           yaml file with indexed repositories to release
