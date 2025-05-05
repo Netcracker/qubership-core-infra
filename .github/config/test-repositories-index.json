@@ -1,5 +1,14 @@
 [
-  "Netcracker/qubership-core-release-test-maven-lib-1",
-  "Netcracker/qubership-core-release-test-maven-lib-2",
-  "Netcracker/qubership-core-release-test-maven-lib-3"
+  {
+    "name": "Netcracker/qubership-core-release-test-maven-lib-1",
+    "java": "21"
+  },
+  {
+    "name": "Netcracker/qubership-core-release-test-maven-lib-2",
+    "java": "21"
+  },
+  {
+    "name": "Netcracker/qubership-core-release-test-maven-lib-2",
+    "java": "21"
+  }
 ]

@@ -1,19 +1,70 @@
 [
-  "Netcracker/qubership-core-utils",
-  "Netcracker/qubership-core-error-handling",
-  "Netcracker/qubership-core-process-orchestrator",
-  "Netcracker/qubership-core-context-propagation",
-  "Netcracker/qubership-core-microservice-framework-extensions",
-  "Netcracker/qubership-core-mongo-evolution",
-  "Netcracker/qubership-core-restclient",
-  "Netcracker/qubership-core-rest-libraries",
-  "Netcracker/qubership-core-blue-green-state-monitor",
-  "Netcracker/qubership-maas-client",
-  "Netcracker/qubership-maas-client-spring",
-  "Netcracker/qubership-maas-declarative-client-commons",
-  "Netcracker/qubership-maas-declarative-client-spring",
-  "Netcracker/qubership-dbaas-client",
-  "Netcracker/qubership-core-microservice-dependencies",
-  "Netcracker/qubership-core-microservice-framework",
-  "Netcracker/qubership-core-springboot-starter"
+  {
+    "name": "Netcracker/qubership-core-utils",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-core-error-handling",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-core-process-orchestrator",
+    "java": "21"
+  },
+  {
+    "name": "Netcracker/qubership-core-context-propagation",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-core-microservice-framework-extensions",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-core-mongo-evolution",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-core-restclient",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-core-rest-libraries",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-core-blue-green-state-monitor",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-maas-client",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-maas-client-spring",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-maas-declarative-client-commons",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-maas-declarative-client-spring",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-dbaas-client",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-core-microservice-dependencies",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-core-microservice-framework",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-core-springboot-starter",
+    "java": "17"
+  }
 ]
