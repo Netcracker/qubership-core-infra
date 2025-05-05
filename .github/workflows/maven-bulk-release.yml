@@ -11,6 +11,10 @@ on:
         required: false
         type: string
         default: ".github/config/repositories-index.json"
+      rollbackOnError:
+        description: "Perform rollback for all released repositories if release of another repository has failed"
+        type: boolean
+        default: true
       maven-envs:
         description: "Envs in format 'env1=val1,env2=val2' for mvn release plugin. Used for testing"
         type: string
@@ -110,7 +114,7 @@ jobs:
   rollback:
     needs: [prepare, release]
     runs-on: ubuntu-latest
-    if: failure()
+    if: failure() && inputs.rollbackOnError
     strategy:
       matrix:
         repository: ${{ fromJson(needs.prepare.outputs.repositories) }}
