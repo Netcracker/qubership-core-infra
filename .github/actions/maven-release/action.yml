@@ -126,6 +126,7 @@ runs:
         set -x
         
         declare -A includes_map
+        declare -A includesVersioned_map
         
         # Group GAVs by version
         IFS=','
@@ -138,23 +139,27 @@ runs:
         #  echo "groupID: ${groupID}"
         #  echo "artifactId: ${artifactId}"
         #  echo "version: ${version}"
-          include="-Dincludes=${groupID}:${artifactId}"
+        include="-Dincludes=${groupID}:${artifactId}"
+        includeVersioned="-Dincludes=${gav}"
          if [[ -z ${includes_map[${version}]} ]]; then
             includes_map[$version]="${include}"
+            includesVersioned_map[$version]="${includeVersioned}"
           else
             includes_map[$version]+=" ${include}"
+            includesVersioned_map[$version]+="${includeVersioned}"
           fi
         IFS=','
         done
         
         for version in "${!includes_map[@]}"; do
           includes="${includes_map[$version]}"
+          includesVersioned="${includesVersioned_map[$version]}"
           echo "Version: ${version}"
           echo "GAs: ${includes}"
           echo
           cmd="mvn -B versions:use-dep-version ${includes} -DdepVersion=${version} -DforceVersion=true"
           eval "${cmd}"
-          cmd="mvn -B versions:update-properties ${includes} -Dmaven.version.ignore=^\(?!${version}\).+\$"
+          cmd="mvn -B versions:update-properties ${includesVersioned}
           eval "${cmd}"
         done
         
