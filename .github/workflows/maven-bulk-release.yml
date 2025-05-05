@@ -68,7 +68,7 @@ jobs:
         # language="shell script"
         run: |
           set -x
-          json=$(cat "${REPOSITORIES_INDEX_FILE}" | tr -d '\n' | tr -d 'https://github.com/')
+          json=$(cat "${REPOSITORIES_INDEX_FILE}" | tr -d '\n' | tr -d 'https://github.com/' | tr -d ' ')
           echo "json=${json}"
           echo "json=${json}" >> "$GITHUB_OUTPUT"
 
