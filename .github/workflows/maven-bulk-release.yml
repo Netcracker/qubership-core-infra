@@ -129,17 +129,17 @@ jobs:
         # language="shell script"
         run: |
           set -x
-          repo="${{ matrix.repository }}"
+          repo="${{ matrix.repository.name }}"
           repo=$(echo "$repo" | tr '/' '_')
           echo "repo=${repo}" >> "$GITHUB_OUTPUT"
 
-      - name: "Run '${{ matrix.repository }}' repository release rollback"
+      - name: "Run '${{ matrix.repository.name }}' repository release rollback"
         uses: "./.github/actions/maven-release-rollback"
         with:
           run-id: "${{ github.run_id }}"
-          repository: "${{ matrix.repository }}"
-          directory: "${{ matrix.repository }}"
-          java-version: ${{ inputs.java-version }}
+          repository: "${{ matrix.repository.name }}"
+          directory: "${{ matrix.repository.name }}"
+          java-version: ${{ matrix.repository.name.java }}
           artifact-name: "gavs-${{ github.run_id }}"
           backup-artifact-name: "release-backup-${{ github.run_id }}-${{ steps.format-repo-name.outputs.repo }}"
           maven-token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
