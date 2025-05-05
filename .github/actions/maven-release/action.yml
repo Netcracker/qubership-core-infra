@@ -152,7 +152,7 @@ runs:
           echo "Version: ${version}"
           echo "GAs: ${includes}"
           echo
-          cmd="mvn -B versions:use-dep-version ${includes} -DdepVersion=${version}"
+          cmd="mvn -B versions:use-dep-version ${includes} -DdepVersion=${version} -DforceVersion=true"
           eval "${cmd}"
           cmd="mvn -B versions:update-properties ${includes} -Dmaven.version.ignore=^\(?!${version}\).+\$"
           eval "${cmd}"
