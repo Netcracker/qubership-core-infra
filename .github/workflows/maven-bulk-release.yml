@@ -112,7 +112,7 @@ jobs:
           maven-gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
   rollback:
-    needs: release
+    needs: [prepare, release]
     runs-on: ubuntu-latest
     if: failure()
     strategy:
