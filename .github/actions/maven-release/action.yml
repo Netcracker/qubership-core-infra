@@ -140,14 +140,21 @@ runs:
         #  echo "artifactId: ${artifactId}"
         #  echo "version: ${version}"
         include="-Dincludes=${groupID}:${artifactId}"
+        
+        if [[ -z ${includes_map[${version}]} ]]; then
+          includes_map[$version]="${include}"
+        else
+          includes_map[$version]+=" ${include}"
+        fi
+        
         includeVersioned="-Dincludes=${gav}"
-         if [[ -z ${includes_map[${version}]} ]]; then
-            includes_map[$version]="${include}"
-            includesVersioned_map[$version]="${includeVersioned}"
-          else
-            includes_map[$version]+=" ${include}"
-            includesVersioned_map[$version]+="${includeVersioned}"
-          fi
+        
+        if [[ -z ${includesVersioned_map[${version}]} ]]; then
+          includesVersioned_map[$version]="${includeVersioned}"
+        else
+          includesVersioned_map[$version]+=" ${includeVersioned}"
+        fi
+        
         IFS=','
         done
         
