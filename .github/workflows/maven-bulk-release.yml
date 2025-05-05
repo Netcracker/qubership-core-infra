@@ -67,6 +67,7 @@ jobs:
           REPOSITORIES_INDEX_FILE: ${{ inputs.repositoriesIndexFile }}
         # language="shell script"
         run: |
+          set -x
           json=$(cat "${REPOSITORIES_INDEX_FILE}" | tr '\n' '')
           echo "json=${json}"
           echo "json=${json}" >> "$GITHUB_OUTPUT"
