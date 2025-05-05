@@ -117,26 +117,45 @@ runs:
       shell: bash
       working-directory: ${{ inputs.directory }}
       env:
-        gavs: ${{ steps.read-gavs.outputs.gavs }}
+        GAVS: ${{ steps.read-gavs.outputs.gavs }}
         MAVEN_USER: "x-access-token"
         MAVEN_TOKEN: ${{ inputs.maven-token }}
         MAVEN_GPG_PASSPHRASE: ${{ inputs.maven-gpg-passphrase }}
       # language="shell script"
       run: |-
         set -x
+        
+        declare -A includes_map
+        
+        # Group GAVs by version
         IFS=','
-        for gav in $gavs; do
-          if [ -z "$gav" ]; then
-            continue 
+        for gav in ${GAVS}; do
+          if [ -z "${gav}" ]; then
+            continue
           fi
           IFS=":"
-          read -r groupID artifactId version <<< "$gav"
-          ga="$groupID:$artifactId"
-          cmd="mvn -B versions:use-dep-version -Dincludes=$ga -DdepVersion=$version"
-          eval "$cmd"
-          cmd="mvn -B versions:update-properties -Dincludes=$ga -Dmaven.version.ignore=^\(?!$version\).+\$"
-          eval "$cmd"
-          IFS=','
+          read -r groupID artifactId version <<< "${gav}"
+        #  echo "groupID: ${groupID}"
+        #  echo "artifactId: ${artifactId}"
+        #  echo "version: ${version}"
+          include="-Dincludes=${groupID}:${artifactId}"
+         if [[ -z ${includes_map[${version}]} ]]; then
+            includes_map[$version]="${include}"
+          else
+            includes_map[$version]+=" ${include}"
+          fi
+        IFS=','
+        done
+        
+        for version in "${!includes_map[@]}"; do
+          includes="${includes_map[$version]}"
+          echo "Version: ${version}"
+          echo "GAs: ${includes}"
+          echo
+          cmd="mvn -B versions:use-dep-version ${includes} -DdepVersion=${version}"
+          eval "${cmd}"
+          cmd="mvn -B versions:update-properties ${includes} -Dmaven.version.ignore=^\(?!${version}\).+\$"
+          eval "${cmd}"
         done
         
         git diff --quiet &
