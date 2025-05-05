@@ -68,9 +68,7 @@ jobs:
         # language="shell script"
         run: |
           set -x
-          jsonCat=$(cat "${REPOSITORIES_INDEX_FILE}")
-          echo "jsonCat=${jsonCat}"
-          json=$(cat "${REPOSITORIES_INDEX_FILE}" | tr '\n' '')
+          json=$(cat "${REPOSITORIES_INDEX_FILE}" | tr -d '\n')
           echo "json=${json}"
           echo "json=${json}" >> "$GITHUB_OUTPUT"
 
