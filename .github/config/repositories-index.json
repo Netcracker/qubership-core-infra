@@ -1,4 +1,5 @@
 [
-  "https://github.com/Netcracker/qubership-core-utils",
-  "https://github.com/Netcracker/qubership-core-error-handling"
+  "Netcracker/qubership-core-release-test-maven-lib-1",
+  "Netcracker/qubership-core-release-test-maven-lib-2",
+  "Netcracker/qubership-core-release-test-maven-lib-3"
 ]
