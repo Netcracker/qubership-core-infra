@@ -9,16 +9,12 @@ on:
         description: "java-version to use in 'setup-java' action for 'temurin' distribution"
         type: string
         default: "21"
-      repositories:
+      repositoriesIndexFile:
         description: |-
-          Repositories to release as comma seperated list:
-          Netcracker/repository-1,Netcracker/repository-2,Netcracker/repository-3
+          yaml file with indexed repositories to release
         required: false
         type: string
-        default: |-
-          Netcracker/qubership-core-release-test-maven-lib-1,
-          Netcracker/qubership-core-release-test-maven-lib-2,
-          Netcracker/qubership-core-release-test-maven-lib-3
+        default: ".github/config/repositories-index.json"
       maven-envs:
         description: "Envs in format 'env1=val1,env2=val2' for mvn release plugin. Used for testing"
         type: string
@@ -48,6 +44,12 @@ jobs:
       repositories: ${{ steps.format-repositories.outputs.json }}
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: "main"
+          token: '${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}'
+
       - name: Create shared GAVs file
         run: touch gavs.txt
 
@@ -62,22 +64,10 @@ jobs:
         id: format-repositories
         shell: bash
         env:
-          REPOSITORIES: ${{ inputs.repositories }}
+          REPOSITORIES_INDEX_FILE: ${{ inputs.repositoriesIndexFile }}
         # language="shell script"
         run: |
-          set -x
-          json=""
-          IFS=','
-          for repository in ${REPOSITORIES}; do
-            if [ -z "${repository}" ]; then
-              continue
-            fi
-            if [ -n "${json}" ]; then
-              json="${json},"
-            fi
-            json="${json}"'"'"${repository}"'"'
-          done
-          json="[${json}]"
+          json=$(cat ${REPOSITORIES_INDEX_FILE})
           echo "json=${json}"
           echo "json=${json}" >> "$GITHUB_OUTPUT"
 
