@@ -209,7 +209,7 @@ runs:
       # language="shell script"
       run: |-
         set -x
-        mvn -B release:perform -DlocalCheckout=true -DautoVersionSubmodules=true -Darguments="-Dmaven.test.skip=true"
+        mvn -B release:perform -DlocalCheckout=true -DautoVersionSubmodules=true
 
         pwd
         echo "files after release:perform"
