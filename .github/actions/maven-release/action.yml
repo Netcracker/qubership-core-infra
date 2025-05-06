@@ -157,7 +157,7 @@ runs:
           echo "cmd: ${cmd}"
           eval "${cmd}"
         
-          cmd="mvn -B versions:update-properties ${includes} -DnewVersion=[${version}]"
+          cmd="mvn -B versions:update-properties ${includes} -DnewVersion=[${version}] -DallowDowngrade=true"
           echo "cmd: ${cmd}"
           eval "${cmd}"
         done
