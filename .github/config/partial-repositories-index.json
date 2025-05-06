@@ -1,0 +1,34 @@
+[
+  {
+    "name": "Netcracker/qubership-maas-client",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-maas-client-spring",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-maas-declarative-client-commons",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-maas-declarative-client-spring",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-dbaas-client",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-core-microservice-dependencies",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-core-microservice-framework",
+    "java": "17"
+  },
+  {
+    "name": "Netcracker/qubership-core-springboot-starter",
+    "java": "17"
+  }
+]
