@@ -123,7 +123,7 @@ runs:
         MAVEN_GPG_PASSPHRASE: ${{ inputs.maven-gpg-passphrase }}
       # language="shell script"
       run: |-
-        set -x
+        # set -x
         
         declare -A includes_map
         
@@ -152,11 +152,13 @@ runs:
         for version in "${!includes_map[@]}"; do
           includes="${includes_map[$version]}"
           echo "Version: ${version}"
-          echo "GAs: ${includes}"
-          echo
+        
           cmd="mvn -B versions:use-dep-version ${includes} -DdepVersion=${version} -DforceVersion=true"
+          echo "cmd: ${cmd}"
           eval "${cmd}"
+        
           cmd="mvn -B versions:update-properties ${includes} -Dmaven.version.ignore=^\(?!${version}\).+\$"
+          echo "cmd: ${cmd}"
           eval "${cmd}"
         done
         
