@@ -138,12 +138,12 @@ runs:
         #  echo "groupID: ${groupID}"
         #  echo "artifactId: ${artifactId}"
         #  echo "version: ${version}"
-        include="-Dincludes=${groupID}:${artifactId}"
+        include="${groupID}:${artifactId}"
         
         if [[ -z ${includes_map[${version}]} ]]; then
-          includes_map[$version]="${include}"
+          includes_map[$version]="-Dincludes=${include}"
         else
-          includes_map[$version]+=" ${include}"
+          includes_map[$version]+=",${include}"
         fi
         
         IFS=','
