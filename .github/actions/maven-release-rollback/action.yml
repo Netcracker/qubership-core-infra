@@ -181,8 +181,11 @@ runs:
           echo "artifactId=${artifactId}"
           echo "version=${version}"
           groupPath=$(echo ${groupID} | tr '.' '/')
-          m2Path="~/.m2/repository/${groupPath}/${artifactId}/${version}"
-          echo "m2Path=${m2Path}"
-          rm -rf "${m2Path}"
+          m2VersionPath="~/.m2/repository/${groupPath}/${artifactId}/${version}"
+          m2ArtifactPath="~/.m2/repository/${groupPath}/${artifactId}"
+          echo "m2VersionPath=${m2VersionPath}"
+          ls -lf "${m2ArtifactPath}"
+          rm -rf "${m2VersionPath}"
+          ls -lf "${m2ArtifactPath}"
         IFS=','
         done
