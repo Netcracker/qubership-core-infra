@@ -160,3 +160,28 @@ runs:
           fi
           IFS=','
         done
+
+    - name: Remove artifacts from .m2
+      shell: bash
+      working-directory: ${{ inputs.directory }}
+      env:
+        GAVS: ${{ steps.get-modules.outputs.gavs }}
+        MAVEN_TOKEN: ${{ inputs.maven-token }}
+      # language="shell script"
+      run: |-
+        IFS=','
+        for gav in ${GAVS}; do
+          if [ -z "${gav}" ]; then
+          continue
+          fi
+          IFS=":"
+          echo "gav=${gav}"
+          read -r groupID artifactId version <<< "${gav}"
+          echo "groupID=${groupID}"
+          echo "artifactId=${artifactId}"
+          echo "version=${version}"
+          groupPath=$(echo ${groupID} | tr '.' '/')
+          echo "version=${version}"
+          rm -rf "~/.m2/repository/${groupPath}/${artifactId}/${version}"
+        IFS=','
+        done
