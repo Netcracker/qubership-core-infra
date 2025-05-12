@@ -195,7 +195,7 @@ runs:
           IFS=','
         done
 
-        mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -DreleaseVersion=${{ inputs.releaseVersion }}
+        mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -Darguments="surefire.rerunFailingTestsCount=2" -DreleaseVersion=${{ inputs.releaseVersion }}
         all_gavs="${GAVS}"
         cat 'release.properties'
         gavs=`cat 'release.properties' | grep 'project.rel.' | sed 's/project.rel.//g' | sed 's/\\\\//g' | sed 's/=/:/g' | tr '\n' ','`
@@ -207,9 +207,6 @@ runs:
         fi        
         echo "gavs=${gavs}" >> "$GITHUB_OUTPUT"
         echo "all_gavs=${all_gavs}" >> "$GITHUB_OUTPUT"
-
-        echo "files after release:prepare"
-        ls -R
 
     - name: Backup maven release files
       uses: actions/upload-artifact@v4
@@ -233,10 +230,6 @@ runs:
       run: |-
         set -x
         mvn -B release:perform -DlocalCheckout=true -DautoVersionSubmodules=true
-
-        pwd
-        echo "files after release:perform"
-        ls -R        
 
     - name: Write GAVs summary
       shell: bash
