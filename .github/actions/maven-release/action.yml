@@ -195,7 +195,7 @@ runs:
           IFS=','
         done
 
-        mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -Darguments="surefire.rerunFailingTestsCount=2" -DreleaseVersion=${{ inputs.releaseVersion }}
+        mvn -B release:prepare -Dresume=false -DautoVersionSubmodules=true -Darguments="-Dsurefire.rerunFailingTestsCount=2" -DreleaseVersion=${{ inputs.releaseVersion }}
         all_gavs="${GAVS}"
         cat 'release.properties'
         gavs=`cat 'release.properties' | grep 'project.rel.' | sed 's/project.rel.//g' | sed 's/\\\\//g' | sed 's/=/:/g' | tr '\n' ','`
