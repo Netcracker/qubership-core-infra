@@ -66,25 +66,5 @@
   {
     "name": "Netcracker/qubership-core-springboot-starter",
     "java": "17"
-  },
-  {
-    "name": "Netcracker/qubership-core-context-propagation-quarkus",
-    "java": "17"
-  },
-  {
-    "name": "Netcracker/qubership-core-quarkus-extensions",
-    "java": "17"
-  },
-  {
-    "name": "Netcracker/qubership-core-blue-green-state-monitor-quarkus",
-    "java": "17"
-  },
-  {
-    "name": "Netcracker/qubership-maas-client-quarkus",
-    "java": "17"
-  },
-  {
-    "name": "Netcracker/qubership-maas-declarative-client-quarkus",
-    "java": "17"
   }
 ]
