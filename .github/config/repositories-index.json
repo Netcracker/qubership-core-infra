@@ -1,6 +1,6 @@
 [
   {
-    "name": "Netcracker/qubership-core-blue-green-state-monitor-quarkus",
+    "name": "Netcracker/qubership-maas-client-quarkus",
     "java": "17"
   }
 ]
