@@ -1,6 +1,6 @@
 [
   {
-    "name": "Netcracker/qubership-core-quarkus-extensions",
+    "name": "Netcracker/qubership-core-blue-green-state-monitor-quarkus",
     "java": "17"
   }
 ]
