@@ -552,7 +552,8 @@ public class ReleaseRunner {
         try {
             try (Git git = Git.open(repositoryDirPath.toFile())) {
                 List<DiffEntry> diff = git.diff().call();
-                if (diff.stream().anyMatch(d -> d.getChangeType() == DiffEntry.ChangeType.MODIFY && d.getNewPath().endsWith("/pom.xml"))) {
+                if (diff.stream().anyMatch(d -> d.getChangeType() == DiffEntry.ChangeType.MODIFY &&
+                                                Arrays.asList(d.getNewPath().split("/")).contains("pom.xml"))) {
                     git.add().setUpdate(true).call();
                     git.commit().setMessage("updating dependencies before release").call();
                 }
