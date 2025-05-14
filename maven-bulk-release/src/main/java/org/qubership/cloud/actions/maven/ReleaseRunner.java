@@ -568,7 +568,7 @@ public class ReleaseRunner {
         Path repositoryDirPath = Paths.get(baseDir, repositoryInfo.getDir());
         Path outputFilePath = Paths.get(repositoryDirPath.toString(), "release-prepare-output.log");
         List<String> cmd = List.of("mvn", "-B", "release:prepare", "-Dresume=false", "-DautoVersionSubmodules=true",
-                "\"-Darguments=-Dsurefire.rerunFailingTestsCount=2 -DskipTest=true\"",
+                "\"-Darguments=-Dsurefire.rerunFailingTestsCount=2 -DskipTests\"",
                 "-DpushChanges=false", "\"-DpreparationGoals=clean install\"");
         log.info("Cmd: '{}' started", String.join(" ", cmd));
         try {
