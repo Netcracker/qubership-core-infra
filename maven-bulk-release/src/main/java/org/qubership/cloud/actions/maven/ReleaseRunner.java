@@ -552,7 +552,7 @@ public class ReleaseRunner {
         try {
             try (Git git = Git.open(repositoryDirPath.toFile())) {
                 List<DiffEntry> diff = git.diff().call();
-                if (!diff.isEmpty()) {
+                if (diff.stream().anyMatch(d -> d.getChangeType() == DiffEntry.ChangeType.MODIFY && d.getNewPath().endsWith("/pom.xml"))) {
                     git.add().setUpdate(true).call();
                     git.commit().setMessage("updating dependencies before release").call();
                 }
@@ -567,8 +567,8 @@ public class ReleaseRunner {
     List<GAV> releasePrepare(String baseDir, RepositoryInfo repositoryInfo) {
         Path repositoryDirPath = Paths.get(baseDir, repositoryInfo.getDir());
         Path outputFilePath = Paths.get(repositoryDirPath.toString(), "release-prepare-output.log");
-        List<String> cmd = List.of("mvn", "-B","release:prepare ", "-Dresume=false", "-DautoVersionSubmodules=true",
-        "\"-Darguments=-Dsurefire.rerunFailingTestsCount=2 -DskipTest=true\"",
+        List<String> cmd = List.of("mvn", "-B", "release:prepare", "-Dresume=false", "-DautoVersionSubmodules=true",
+                "\"-Darguments=-Dsurefire.rerunFailingTestsCount=2 -DskipTest=true\"",
                 "-DpushChanges=false", "\"-DpreparationGoals=clean install\"");
         log.info("Cmd: '{}' started", String.join(" ", cmd));
         try {
@@ -580,7 +580,7 @@ public class ReleaseRunner {
                 @Override
                 public void write(int b) throws IOException {
                     baos.write(b);
-                    byte[] byteArray = new byte[]{(byte)b};
+                    byte[] byteArray = new byte[]{(byte) b};
                     Files.write(outputFilePath, byteArray, StandardOpenOption.APPEND);
                 }
             };
