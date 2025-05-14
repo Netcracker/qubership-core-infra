@@ -71,10 +71,10 @@ public class ReleaseRunner {
 
         return dependencyGraph.entrySet().stream().flatMap(entry -> {
             int level = entry.getKey();
-            log.info("Processing level #{}, repositories:\n{}", level, String.join("\n", entry.getValue().stream().map(Repository::getUrl).toList()));
+            log.info("Processing level {}, repositories:\n{}", level+1, String.join("\n", entry.getValue().stream().map(Repository::getUrl).toList()));
             List<RepositoryInfo> reposInfoList = entry.getValue();
-//            int threads = reposInfoList.size();
-            int threads = 1;
+            int threads = reposInfoList.size();
+//            int threads = 1;
             try (ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
                 Set<GAV> gavList = dependenciesGavs.entrySet().stream().map(e -> new GAV(e.getKey().getGroupId(), e.getKey().getArtifactId(), e.getValue())).collect(Collectors.toSet());
                 List<GAV> gavs = reposInfoList.stream()
@@ -501,7 +501,7 @@ public class ReleaseRunner {
     }
 
     void updatePropertyInPom(PomHolder pom, String name, String version) {
-        Pattern propertiesPattern = Pattern.compile("(?s)<properties>(.+)</properties>");
+        Pattern propertiesPattern = Pattern.compile("(?s)<properties>(.+?)</properties>");
         Pattern propertyPattern = Pattern.compile(MessageFormat.format("<{0}>(.+)</{0}>", name));
         String pomContent = pom.getPom();
         Matcher matcher = propertiesPattern.matcher(pomContent);
