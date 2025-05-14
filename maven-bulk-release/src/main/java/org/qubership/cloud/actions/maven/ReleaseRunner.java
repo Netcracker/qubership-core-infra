@@ -3,12 +3,15 @@ package org.qubership.cloud.actions.maven;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.dataformat.xml.XmlFactory;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import dev.failsafe.RetryPolicy;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.FetchResult;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.jgrapht.Graph;
@@ -17,6 +20,7 @@ import org.qubership.cloud.actions.maven.model.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.http.HttpClient;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -38,16 +42,15 @@ import java.util.stream.Stream;
 @Slf4j
 public class ReleaseRunner {
     HttpClient httpClient = HttpClient.newBuilder().build();
-    ObjectMapper objectMapper = new ObjectMapper();
+    ObjectMapper yamlMapper = new ObjectMapper(new XmlFactory());
     XmlMapper xmlMapper = new XmlMapper();
     static Pattern propertyPattern = Pattern.compile("\\$\\{(.*?)}");
 
-    String gitUsername;
-    String gitPassword;
+    UsernamePasswordCredentialsProvider credentialsProvider;
 
     public ReleaseRunner(String gitUsername, String gitPassword) {
-        this.gitUsername = gitUsername;
-        this.gitPassword = gitPassword;
+        credentialsProvider = new UsernamePasswordCredentialsProvider(gitUsername, gitPassword);
+        CredentialsProvider.setDefault(credentialsProvider);
     }
 
     RetryPolicy<Object> RETRY_POLICY = RetryPolicy.builder()
@@ -61,8 +64,8 @@ public class ReleaseRunner {
                         lastFailure.getClass().getSimpleName() + " - " + lastFailure.getMessage());
             }).build();
 
-    public List<GAV> prepare(String baseDir, List<String> repositories, Predicate<GA> dependenciesFilter, List<String> dependencies) {
-        List<GAV> dependenciesGavs = dependencies.stream().map(GAV::new).collect(Collectors.toList());
+    public List<GAV> prepare(String baseDir, List<String> repositories, Predicate<GA> dependenciesFilter, Collection<String> dependencies) {
+        Map<GA, String> dependenciesGavs = dependencies.stream().map(GAV::new).collect(Collectors.toMap(gav -> new GA(gav.getGroupId(), gav.getArtifactId()), GAV::getVersion));
         // build dependency graph
         Map<Integer, List<RepositoryInfo>> dependencyGraph = buildDependencyGraph(baseDir, repositories, dependenciesFilter);
 
@@ -72,8 +75,9 @@ public class ReleaseRunner {
             List<RepositoryInfo> reposInfoList = entry.getValue();
 //            try (ExecutorService executorService = Executors.newFixedThreadPool(reposInfoList.size())) {
             try (ExecutorService executorService = Executors.newFixedThreadPool(1)) {
+                Set<GAV> gavList = dependenciesGavs.entrySet().stream().map(e -> new GAV(e.getKey().getGroupId(), e.getKey().getArtifactId(), e.getValue())).collect(Collectors.toSet());
                 List<GAV> gavs = reposInfoList.stream()
-                        .map(repo -> executorService.submit(() -> prepare(baseDir, repo, dependenciesGavs)))
+                        .map(repo -> executorService.submit(() -> prepare(baseDir, repo, gavList)))
                         .toList()
                         .stream()
                         .flatMap(future -> {
@@ -86,7 +90,7 @@ public class ReleaseRunner {
                                 throw new RuntimeException(e);
                             }
                         }).toList();
-                dependenciesGavs.addAll(gavs);
+                gavs.forEach(gav -> dependenciesGavs.put(new GA(gav.getGroupId(), gav.getArtifactId()), gav.getVersion()));
                 return gavs.stream();
             }
         }).toList();
@@ -166,8 +170,6 @@ public class ReleaseRunner {
                         });
             }
             // clone
-            UsernamePasswordCredentialsProvider credentialsProvider = new UsernamePasswordCredentialsProvider(this.gitUsername, this.gitPassword);
-            UsernamePasswordCredentialsProvider.setDefault(credentialsProvider);
             try (Git git = Git.cloneRepository()
                     .setCredentialsProvider(credentialsProvider)
                     .setURI(repository.getUrl())
@@ -196,7 +198,7 @@ public class ReleaseRunner {
             process.getInputStream().transferTo(baos);
             process.getErrorStream().transferTo(baos);
             process.waitFor();
-            log.info("Cmd: '{}' ended with code: {}", String.join(" ", cmd), process.exitValue());
+            log.info("Cmd: '{}' ended with code: {}, output: {}", String.join(" ", cmd), process.exitValue(), baos);
             if (process.exitValue() != 0) {
                 throw new RuntimeException(String.format("Failed to execute cmd, error: %s", baos));
             }
@@ -322,26 +324,13 @@ public class ReleaseRunner {
         }
     }
 
-    List<GAV> prepare(String baseDir, RepositoryInfo repository, List<GAV> dependencies) {
+    List<GAV> prepare(String baseDir, RepositoryInfo repository, Collection<GAV> dependencies) {
         updateDependencies(baseDir, repository, dependencies);
         return releasePrepare(baseDir, repository);
     }
 
-    void updateDependencies(String baseDir, RepositoryInfo repositoryInfo, List<GAV> dependencies) {
-        Path repositoryDirPath = Paths.get(baseDir, repositoryInfo.getDir());
-        Set<GAV> moduleDependencies = repositoryInfo.getModuleDependencies();
-        Map<String, Set<GA>> versionsToGA = dependencies.stream()
-//                .filter(gav-> moduleDependencies.stream()
-//                        .anyMatch(mGav-> Objects.equals(gav.getGroupId(), mGav.getGroupId()) &&
-//                                         Objects.equals(gav.getArtifactId(), mGav.getArtifactId())))
-                .collect(Collectors.toMap(GAV::getVersion,
-                        gav -> Set.of(new GA(gav.getGroupId(), gav.getArtifactId())),
-                        (l1, l2) -> Stream.concat(l1.stream(), l2.stream()).collect(Collectors.toSet())));
+    void updateDependencies(String baseDir, RepositoryInfo repositoryInfo, Collection<GAV> dependencies) {
         updateDepVersionsNew(baseDir, repositoryInfo, dependencies);
-//        versionsToGA.forEach((version, gas) -> {
-//            useDepVersion(repositoryDirPath, version, gas);
-//            updateProperties(repositoryDirPath, version, gas);
-//        });
         // check all versions were updated
         String effectivePomContent = getEffectivePom(baseDir, repositoryInfo);
         Predicate<GA> filter = ga -> dependencies.stream().anyMatch(gav -> gav.getGroupId().equals(ga.getGroupId()) && gav.getArtifactId().equals(ga.getArtifactId()));
@@ -359,6 +348,7 @@ public class ReleaseRunner {
         if (!missedDependencies.isEmpty()) {
             throw new RuntimeException("Failed to update dependencies: " + missedDependencies.stream().map(GAV::toString).collect(Collectors.joining("\n")));
         }
+        commitUpdatedDependenciesIfAny(baseDir, repositoryInfo);
     }
 
     Function<JsonNode, GA> gaFunction = node -> {
@@ -373,7 +363,7 @@ public class ReleaseRunner {
         return new GA(artifactId, groupId);
     };
 
-    void updateDepVersionsNew(String baseDir, RepositoryInfo repositoryInfo, List<GAV> dependencies) {
+    void updateDepVersionsNew(String baseDir, RepositoryInfo repositoryInfo, Collection<GAV> dependencies) {
         Path repositoryDirPath = Paths.get(baseDir, repositoryInfo.getDir());
         List<PomHolder> poms = getPoms(repositoryDirPath);
         List<PomHolder> organizedPomHolders = poms.stream()
@@ -423,15 +413,12 @@ public class ReleaseRunner {
             }
         };
         BiConsumer<PomHolder, JsonNode> propFunction = (holder, node) -> {
-            Set<Map.Entry<String, JsonNode>> properties = node.properties();
-            if (!properties.isEmpty()) {
-                Map<String, JsonNode> props = properties.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-                props.forEach((propertyName, propertyValue) -> {
-                    if (propertiesToDependencies.containsKey(propertyName)) {
-                        propertiesToPropertiesNodes.computeIfAbsent(propertyName, k -> new HashSet<>()).add(holder);
-                    }
-                });
-            }
+            Map<String, JsonNode> props = node.properties().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            props.forEach((propertyName, propertyValue) -> {
+                if (propertiesToDependencies.containsKey(propertyName)) {
+                    propertiesToPropertiesNodes.computeIfAbsent(propertyName, k -> new HashSet<>()).add(holder);
+                }
+            });
         };
         Function<JsonNode, List<JsonNode>> nodeToListFunction = d -> {
             List<JsonNode> nodes = new ArrayList<>();
@@ -492,67 +479,127 @@ public class ReleaseRunner {
         Pattern groupIdPattern = Pattern.compile("<groupId>(.+)</groupId>");
         Pattern artifactIdPattern = Pattern.compile("<artifactId>(.+)</artifactId>");
         Pattern versionPattern = Pattern.compile("<version>(.+)</version>");
-        Matcher matcher = dependencyPattern.matcher(pom.getPom());
-        String updatedPom = matcher.replaceAll(mr -> {
-            String dependency = mr.group();
-            String dependencyContent = mr.group(1);
+        String pomContent = pom.getPom();
+        Matcher matcher = dependencyPattern.matcher(pomContent);
+
+        Map<String, String> properties = new HashMap<>();
+        while (matcher.find()) {
+            String dependency = matcher.group();
+            String dependencyContent = matcher.group(1);
             Matcher groupIdMatcher = groupIdPattern.matcher(dependencyContent);
             Matcher artifactIdMatcher = artifactIdPattern.matcher(dependencyContent);
             Matcher versionMatcher = versionPattern.matcher(dependencyContent);
-            if (groupIdMatcher.matches() && artifactIdMatcher.matches() && versionMatcher.matches()) {
-                String groupId = groupIdMatcher.group(1);
-                String artifactId = artifactIdMatcher.group(1);
+            if (groupIdMatcher.find() && artifactIdMatcher.find() && versionMatcher.find()) {
+                String groupId = autoResolveReferencedValue(pom, groupIdMatcher.group(1), properties);
+                String artifactId = autoResolveReferencedValue(pom, artifactIdMatcher.group(1), properties);
                 String version = versionMatcher.group(1);
-                if (Objects.equals(groupId, gav.getGroupId()) && Objects.equals(artifactId, gav.getArtifactId())) {
-                    dependency = dependency.replace(version, gav.getVersion());
+                if (groupId.equals(gav.getGroupId()) && artifactId.equals(gav.getArtifactId())) {
+                    pomContent = pomContent.replace(dependency, dependency.replace(version, gav.getVersion()));
                 }
             }
-            return dependency;
-        });
-        pom.setPom(updatedPom);
+        }
+        pom.setPom(pomContent);
+    }
+
+    String autoResolveReferencedValue(PomHolder pom, String value, Map<String, String> properties) {
+        Pattern referencePattern = Pattern.compile("\\$\\{([^<>]+)}");
+        Matcher referenceMatcher = referencePattern.matcher(value);
+        if (referenceMatcher.find()) {
+            // find groupId among properties
+            String prop = referenceMatcher.group(1);
+            if (properties.isEmpty()) properties.putAll(getProperties(pom));
+            String valueFromProperty = properties.get(prop);
+            if (valueFromProperty == null)
+                throw new IllegalArgumentException("Failed to find value for reference: " + value);
+            value = valueFromProperty;
+        }
+        return value;
+    }
+
+    Map<String, String> getProperties(PomHolder ph) {
+        Map<String, String> properties = new HashMap<>();
+        PomHolder pomHolderWithProperties = ph;
+        while (pomHolderWithProperties != null) {
+            JsonNode pomWithProperties = pomHolderWithProperties.getPomNode();
+            properties.putAll(Optional.ofNullable(pomWithProperties.get("properties"))
+                    .map(node -> node.properties().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().asText())))
+                    .orElse(new HashMap<>()));
+            pomHolderWithProperties = pomHolderWithProperties.getParent();
+        }
+        return properties;
     }
 
     void updatePropertyInPom(PomHolder pom, String name, String version) {
         Pattern propertiesPattern = Pattern.compile("(?s)<properties>(.+)</properties>");
         Pattern propertyPattern = Pattern.compile(MessageFormat.format("<{0}>(.+)</{0}>", name));
-        Matcher matcher = propertiesPattern.matcher(pom.getPom());
-        String updatedPom = matcher.replaceAll(mr -> {
-            String properties = mr.group();
-            String propertiesContent = mr.group(1);
-            String updatedPropertiesContent = propertyPattern.matcher(propertiesContent)
-                    .replaceAll(m -> MessageFormat.format("<{0}>{1}</{0}>", name, version));
-            properties = properties.replace(propertiesContent, updatedPropertiesContent);
-            return properties;
-        });
-        pom.setPom(updatedPom);
+        String pomContent = pom.getPom();
+        Matcher matcher = propertiesPattern.matcher(pomContent);
+        while (matcher.find()) {
+            String properties = matcher.group();
+            String propertiesContent = matcher.group(1);
+            Matcher propMatcher = propertyPattern.matcher(propertiesContent);
+            String newVersionTag = MessageFormat.format("<{0}>{1}</{0}>", name, version);
+            while (propMatcher.find()) {
+                String oldVersionTag = propMatcher.group();
+                pomContent = pomContent.replace(properties, properties.replace(oldVersionTag, newVersionTag));
+            }
+        }
+        pom.setPom(pomContent);
+    }
+
+    void commitUpdatedDependenciesIfAny(String baseDir, RepositoryInfo repository) {
+        Path repositoryDirPath = Paths.get(baseDir, repository.getDir());
+        try {
+            try (Git git = Git.open(repositoryDirPath.toFile())) {
+                List<DiffEntry> diff = git.diff().call();
+                if (!diff.isEmpty()) {
+                    git.add().setUpdate(true).call();
+                    git.commit().setMessage("updating dependencies before release").call();
+                }
+            } catch (GitAPIException e) {
+                throw new RuntimeException(e);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     List<GAV> releasePrepare(String baseDir, RepositoryInfo repositoryInfo) {
-//        Path repositoryDirPath = Paths.get(baseDir, repositoryInfo.getDir());
-//        List<String> cmd = List.of("mvn", "release:prepare", "-Dresume=false", "-Darguments=\"-Dsurefire.rerunFailingTestsCount=2\"", "-DpushChanges=false");
-//        log.info("Cmd: '{}' started", String.join(" ", cmd));
-//        try {
-//            Process process = new ProcessBuilder(cmd).directory(repositoryDirPath.toFile()).start();
-//            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//            OutputStream umbrellaOutStream = new OutputStream() {
-//                @Override
-//                public void write(int b) throws IOException {
-//                    baos.write(b);
-//                    System.out.write(b);
-//                }
-//            };
-//            process.getInputStream().transferTo(umbrellaOutStream);
-//            process.getErrorStream().transferTo(umbrellaOutStream);
-//            process.waitFor();
-//            log.info("Cmd: '{}' ended with code: {}", String.join(" ", cmd), process.exitValue());
-//            if (process.exitValue() != 0) {
-//                throw new RuntimeException(String.format("Failed to execute cmd, error:"));
-//            }
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
+        Path repositoryDirPath = Paths.get(baseDir, repositoryInfo.getDir());
+        Path outputFilePath = Paths.get(repositoryDirPath.toString(), "release-prepare-output.log");
+        List<String> cmd = List.of("mvn", "-B","release:prepare ", "-Dresume=false", "-DautoVersionSubmodules=true",
+        "\"-Darguments=-Dsurefire.rerunFailingTestsCount=2 -DskipTest=true\"",
+                "-DpushChanges=false", "\"-DpreparationGoals=clean install\"");
+        log.info("Cmd: '{}' started", String.join(" ", cmd));
+        try {
+            Files.writeString(outputFilePath, "", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
-        return List.of();
+            Process process = new ProcessBuilder(cmd).directory(repositoryDirPath.toFile()).start();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            OutputStream umbrellaOutStream = new OutputStream() {
+                @Override
+                public void write(int b) throws IOException {
+                    baos.write(b);
+                    byte[] byteArray = new byte[]{(byte)b};
+                    Files.write(outputFilePath, byteArray, StandardOpenOption.APPEND);
+                }
+            };
+            process.getInputStream().transferTo(umbrellaOutStream);
+            process.getErrorStream().transferTo(umbrellaOutStream);
+            process.waitFor();
+            log.info("Cmd: '{}' ended with code: {}, output: {}", String.join(" ", cmd), process.exitValue(), baos);
+            if (process.exitValue() != 0) {
+                throw new RuntimeException(String.format("Failed to execute cmd, error: %s", baos));
+            }
+            return Files.readString(Paths.get(repositoryDirPath.toString(), "release.properties")).lines()
+                    .filter(l -> l.startsWith("project.rel."))
+                    .map(l -> l.replace("project.rel.", "")
+                            .replace("\\", "")
+                            .replace("=", ":"))
+                    .map(GAV::new).toList();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     void releasePerform(Repository repository) {
