@@ -64,7 +64,7 @@ public class ReleaseRunner {
                         lastFailure.getClass().getSimpleName() + " - " + lastFailure.getMessage());
             }).build();
 
-    public List<GAV> prepare(String baseDir, List<String> repositories, Predicate<GA> dependenciesFilter, Collection<String> dependencies) {
+    public List<GAV> prepare(String baseDir, List<String> repositories, Predicate<GA> dependenciesFilter, Collection<String> dependencies, boolean runTests) {
         Map<GA, String> dependenciesGavs = dependencies.stream().map(GAV::new).collect(Collectors.toMap(gav -> new GA(gav.getGroupId(), gav.getArtifactId()), GAV::getVersion));
         // build dependency graph
         Map<Integer, List<RepositoryInfo>> dependencyGraph = buildDependencyGraph(baseDir, repositories, dependenciesFilter);
@@ -73,11 +73,12 @@ public class ReleaseRunner {
             int level = entry.getKey();
             log.info("Processing level #{}, repositories:\n{}", level, String.join("\n", entry.getValue().stream().map(Repository::getUrl).toList()));
             List<RepositoryInfo> reposInfoList = entry.getValue();
-//            try (ExecutorService executorService = Executors.newFixedThreadPool(reposInfoList.size())) {
-            try (ExecutorService executorService = Executors.newFixedThreadPool(1)) {
+//            int threads = reposInfoList.size();
+            int threads = 1;
+            try (ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
                 Set<GAV> gavList = dependenciesGavs.entrySet().stream().map(e -> new GAV(e.getKey().getGroupId(), e.getKey().getArtifactId(), e.getValue())).collect(Collectors.toSet());
                 List<GAV> gavs = reposInfoList.stream()
-                        .map(repo -> executorService.submit(() -> prepare(baseDir, repo, gavList)))
+                        .map(repo -> executorService.submit(() -> prepare(baseDir, repo, gavList, runTests)))
                         .toList()
                         .stream()
                         .flatMap(future -> {
@@ -198,7 +199,7 @@ public class ReleaseRunner {
             process.getInputStream().transferTo(baos);
             process.getErrorStream().transferTo(baos);
             process.waitFor();
-            log.info("Cmd: '{}' ended with code: {}, output: {}", String.join(" ", cmd), process.exitValue(), baos);
+            log.info("Cmd: '{}' ended with code: {}", String.join(" ", cmd), process.exitValue());
             if (process.exitValue() != 0) {
                 throw new RuntimeException(String.format("Failed to execute cmd, error: %s", baos));
             }
@@ -324,9 +325,9 @@ public class ReleaseRunner {
         }
     }
 
-    List<GAV> prepare(String baseDir, RepositoryInfo repository, Collection<GAV> dependencies) {
+    List<GAV> prepare(String baseDir, RepositoryInfo repository, Collection<GAV> dependencies, boolean runTests) {
         updateDependencies(baseDir, repository, dependencies);
-        return releasePrepare(baseDir, repository);
+        return releasePrepare(baseDir, repository, runTests);
     }
 
     void updateDependencies(String baseDir, RepositoryInfo repositoryInfo, Collection<GAV> dependencies) {
@@ -475,7 +476,7 @@ public class ReleaseRunner {
     }
 
     void updateVersionInDependency(PomHolder pom, GAV gav) {
-        Pattern dependencyPattern = Pattern.compile("(?s)<dependency>(.+)</dependency>");
+        Pattern dependencyPattern = Pattern.compile("(?s)<dependency>(.*?)</dependency>");
         Pattern groupIdPattern = Pattern.compile("<groupId>(.+)</groupId>");
         Pattern artifactIdPattern = Pattern.compile("<artifactId>(.+)</artifactId>");
         Pattern versionPattern = Pattern.compile("<version>(.+)</version>");
@@ -565,11 +566,16 @@ public class ReleaseRunner {
         }
     }
 
-    List<GAV> releasePrepare(String baseDir, RepositoryInfo repositoryInfo) {
+    List<GAV> releasePrepare(String baseDir, RepositoryInfo repositoryInfo, boolean runTests) {
         Path repositoryDirPath = Paths.get(baseDir, repositoryInfo.getDir());
         Path outputFilePath = Paths.get(repositoryDirPath.toString(), "release-prepare-output.log");
+
+        List<String> arguments = new ArrayList<>();
+        arguments.add("surefire.rerunFailingTestsCount=2");
+        if (!runTests) arguments.add("skipTests");
+
         List<String> cmd = List.of("mvn", "-B", "release:prepare", "-Dresume=false", "-DautoVersionSubmodules=true",
-                "\"-Darguments=-Dsurefire.rerunFailingTestsCount=2 -DskipTests\"",
+                String.format("\"-Darguments=%s\"", String.join(" ", arguments.stream().map(arg -> "-D" + arg).toList())),
                 "-DpushChanges=false", "\"-DpreparationGoals=clean install\"");
         log.info("Cmd: '{}' started", String.join(" ", cmd));
         try {
