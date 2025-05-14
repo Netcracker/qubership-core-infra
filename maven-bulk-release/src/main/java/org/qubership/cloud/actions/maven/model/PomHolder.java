@@ -10,6 +10,7 @@ import java.util.List;
 @Data
 public class PomHolder {
     Path path;
+    String relativePath;
     PomHolder parent;
     JsonNode pomNode;
     String pom;

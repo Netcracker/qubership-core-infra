@@ -102,8 +102,8 @@ public class ReleaseRunner {
             List<RepositoryInfo> repositoryInfoList = repositories.stream().map(RepositoryInfo::new)
                     .map(repositoryInfo -> executorService.submit(() -> {
                         gitCheckout(baseDir, repositoryInfo);
-                        String effectivePomContent = getEffectivePom(baseDir, repositoryInfo);
-                        resolveDependencies(repositoryInfo, effectivePomContent, dependenciesFilter);
+                        List<PomHolder> poms = getPoms(baseDir, repositoryInfo);
+                        resolveDependencies(repositoryInfo, poms, dependenciesFilter);
                         return repositoryInfo;
                     })).toList()
                     .stream()
@@ -209,7 +209,8 @@ public class ReleaseRunner {
         }
     }
 
-    List<PomHolder> getPoms(Path repositoryDirPath) {
+    List<PomHolder> getPoms(String baseDir, RepositoryInfo repositoryInfo) {
+        Path repositoryDirPath = Paths.get(baseDir, repositoryInfo.getDir());
         List<PomHolder> poms = new ArrayList<>();
         try {
             Files.walkFileTree(repositoryDirPath, new FileVisitor<>() {
@@ -225,6 +226,7 @@ public class ReleaseRunner {
                         PomHolder pomHolder = new PomHolder();
                         String content = Files.readString(file);
                         pomHolder.setPath(file);
+                        pomHolder.setRelativePath(file.toString().substring(repositoryDirPath.toString().length() + 1));
                         pomHolder.setPom(content);
                         pomHolder.setPomNode(xmlMapper.readTree(content));
                         poms.add(pomHolder);
@@ -245,73 +247,56 @@ public class ReleaseRunner {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        return poms;
+        return poms.stream()
+                .peek(pom -> {
+                    GA ga = pomGAFunction.apply(pom.getPomNode());
+                    pom.setGa(ga);
+                    JsonNode parent = pom.getPomNode().get("parent");
+                    if (parent != null) {
+                        String groupId = parent.get("groupId").asText();
+                        String artifactId = parent.get("artifactId").asText();
+                        poms.stream().filter(ph -> {
+                            GA phGa = pomGAFunction.apply(ph.getPomNode());
+                            return Objects.equals(phGa.getGroupId(), groupId) && Objects.equals(phGa.getArtifactId(), artifactId);
+                        }).findFirst().ifPresent(pom::setParent);
+                    }
+                })
+                // start with leaf poms
+                .sorted(Comparator.<PomHolder>comparingInt(p -> p.getParentsFlatList().size()).reversed())
+                .toList();
     }
 
-    void resolveDependencies(RepositoryInfo repositoryInfo, String effectivePomContent, Predicate<GA> dependenciesFilter) {
+    void resolveDependencies(RepositoryInfo repositoryInfo, List<PomHolder> poms, Predicate<GA> dependenciesFilter) {
         repositoryInfo.getModules().clear();
         repositoryInfo.getModuleDependencies().clear();
         try {
-            JsonNode effectivePom = xmlMapper.readTree(effectivePomContent);
-            JsonNode projects = effectivePom.get("project");
-            List<JsonNode> projectList;
-            if (projects == null) {
-                projectList = Collections.singletonList(effectivePom);
-            } else if (projects instanceof ArrayNode projectsArrayNode) {
-                projectList = new ArrayList<>(projectsArrayNode.size());
-                for (JsonNode project : projectsArrayNode) {
-                    projectList.add(project);
-                }
-            } else {
-                projectList = Collections.singletonList(projects);
-            }
-            for (JsonNode project : projectList) {
-                String projectGroupId = project.get("groupId").asText();
-                String projectArtifactId = project.get("artifactId").asText();
+            for (PomHolder pomHolder : poms) {
+                Map<String, String> properties = new HashMap<>();
+                JsonNode project = pomHolder.getPomNode();
+                GA projectGA = pomGAFunction.apply(project);
+                String projectGroupId = autoResolveReferencedValue(pomHolder, projectGA.getGroupId(), properties);
+                String projectArtifactId = autoResolveReferencedValue(pomHolder, projectGA.getArtifactId(), properties);
                 GA moduleGA = new GA(projectGroupId, projectArtifactId);
                 repositoryInfo.getModules().add(moduleGA);
             }
-            for (JsonNode project : projectList) {
-                if (project.get("dependencyManagement") instanceof JsonNode dependencyManagement &&
-                    dependencyManagement.get("dependencies") instanceof JsonNode dependenciesMap) {
-                    List<JsonNode> dependencyList;
-                    if (dependenciesMap.get("dependency") instanceof ArrayNode dependencyArrayNode) {
-                        dependencyList = new ArrayList<>(dependencyArrayNode.size());
-                        for (JsonNode dependency : dependencyArrayNode) {
-                            dependencyList.add(dependency);
-                        }
-                    } else if (dependenciesMap.get("dependency") instanceof JsonNode dependencyNode) {
-                        dependencyList = Collections.singletonList(dependencyNode);
-                    } else {
-                        dependencyList = Collections.emptyList();
-                    }
-                    for (JsonNode dependency : dependencyList) {
-                        String groupId = dependency.get("groupId").asText();
-                        String artifactId = dependency.get("artifactId").asText();
-                        String version = dependency.get("version").asText();
-                        GAV dependencyGAV = new GAV(groupId, artifactId, version);
-                        GA dependencyGA = new GA(groupId, artifactId);
-                        if (dependenciesFilter.test(dependencyGA) && !repositoryInfo.getModules().contains(dependencyGA)) {
-                            repositoryInfo.getModuleDependencies().add(dependencyGAV);
-                        }
-                    }
-                }
-                if (project.get("dependencies") instanceof JsonNode dependenciesMap) {
-                    List<JsonNode> dependencyList;
-                    if (dependenciesMap.get("dependency") instanceof ArrayNode dependencyArrayNode) {
-                        dependencyList = new ArrayList<>(dependencyArrayNode.size());
-                        for (JsonNode dependency : dependencyArrayNode) {
-                            dependencyList.add(dependency);
-                        }
-                    } else if (dependenciesMap.get("dependency") instanceof JsonNode dependencyNode) {
-                        dependencyList = Collections.singletonList(dependencyNode);
-                    } else {
-                        dependencyList = Collections.emptyList();
-                    }
-                    for (JsonNode dependency : dependencyList) {
-                        String groupId = dependency.get("groupId").asText();
-                        String artifactId = dependency.get("artifactId").asText();
-                        String version = dependency.get("version").asText();
+            for (PomHolder pomHolder : poms) {
+                JsonNode project = pomHolder.getPomNode();
+                Map<String, String> properties = new HashMap<>();
+                List<JsonNode> dependencyManagementNodes = Optional.ofNullable(project.get("dependencyManagement"))
+                        .map(dm -> dm.get("dependencies"))
+                        .map(d -> d.get("dependency"))
+                        .map(nodeToListFunction)
+                        .orElse(List.of());
+                List<JsonNode> dependenciesNodes = Optional.ofNullable(project.get("dependencies"))
+                        .map(d -> d.get("dependency"))
+                        .map(nodeToListFunction)
+                        .orElse(List.of());
+                List<JsonNode> allDependenciesNodes = Stream.concat(dependencyManagementNodes.stream(), dependenciesNodes.stream()).toList();
+                for (JsonNode dependency : allDependenciesNodes) {
+                    String groupId = autoResolveReferencedValue(pomHolder, Optional.ofNullable(dependency.get("groupId")).map(JsonNode::asText).orElse(null), properties);
+                    String artifactId = autoResolveReferencedValue(pomHolder, Optional.ofNullable(dependency.get("artifactId")).map(JsonNode::asText).orElse(null), properties);
+                    String version = autoResolveReferencedValue(pomHolder, Optional.ofNullable(dependency.get("version")).map(JsonNode::asText).orElse(null), properties);
+                    if (Stream.of(groupId, artifactId, version).allMatch(Objects::nonNull)) {
                         GAV dependencyGAV = new GAV(groupId, artifactId, version);
                         GA dependencyGA = new GA(groupId, artifactId);
                         if (dependenciesFilter.test(dependencyGA) && !repositoryInfo.getModules().contains(dependencyGA)) {
@@ -333,9 +318,9 @@ public class ReleaseRunner {
     void updateDependencies(String baseDir, RepositoryInfo repositoryInfo, Collection<GAV> dependencies) {
         updateDepVersionsNew(baseDir, repositoryInfo, dependencies);
         // check all versions were updated
-        String effectivePomContent = getEffectivePom(baseDir, repositoryInfo);
+        List<PomHolder> poms = getPoms(baseDir, repositoryInfo);
         Predicate<GA> filter = ga -> dependencies.stream().anyMatch(gav -> gav.getGroupId().equals(ga.getGroupId()) && gav.getArtifactId().equals(ga.getArtifactId()));
-        resolveDependencies(repositoryInfo, effectivePomContent, filter);
+        resolveDependencies(repositoryInfo, poms, filter);
         Set<GAV> updatedModuleDependencies = repositoryInfo.getModuleDependencies();
         Set<GAV> missedDependencies = updatedModuleDependencies.stream()
                 .filter(gav -> {
@@ -352,7 +337,7 @@ public class ReleaseRunner {
         commitUpdatedDependenciesIfAny(baseDir, repositoryInfo);
     }
 
-    Function<JsonNode, GA> gaFunction = node -> {
+    Function<JsonNode, GA> pomGAFunction = node -> {
         String groupId = node.get("artifactId").asText();
         String artifactId = Optional.ofNullable(node.get("groupId")).map(JsonNode::asText).orElseGet(() -> {
             // get groupIg from parent tag
@@ -364,26 +349,20 @@ public class ReleaseRunner {
         return new GA(artifactId, groupId);
     };
 
+    Function<JsonNode, List<JsonNode>> nodeToListFunction = d -> {
+        List<JsonNode> nodes = new ArrayList<>();
+        if (d instanceof ArrayNode arrayNodes) {
+            for (JsonNode arrayNode : arrayNodes) {
+                nodes.add(arrayNode);
+            }
+        } else {
+            nodes.add(d);
+        }
+        return nodes;
+    };
+
     void updateDepVersionsNew(String baseDir, RepositoryInfo repositoryInfo, Collection<GAV> dependencies) {
-        Path repositoryDirPath = Paths.get(baseDir, repositoryInfo.getDir());
-        List<PomHolder> poms = getPoms(repositoryDirPath);
-        List<PomHolder> organizedPomHolders = poms.stream()
-                .peek(pom -> {
-                    GA ga = gaFunction.apply(pom.getPomNode());
-                    pom.setGa(ga);
-                    JsonNode parent = pom.getPomNode().get("parent");
-                    if (parent != null) {
-                        String groupId = parent.get("groupId").asText();
-                        String artifactId = parent.get("artifactId").asText();
-                        poms.stream().filter(ph -> {
-                            GA phGa = gaFunction.apply(ph.getPomNode());
-                            return Objects.equals(phGa.getGroupId(), groupId) && Objects.equals(phGa.getArtifactId(), artifactId);
-                        }).findFirst().ifPresent(pom::setParent);
-                    }
-                })
-                // start with leaf poms
-                .sorted(Comparator.<PomHolder>comparingInt(p -> p.getParentsFlatList().size()).reversed())
-                .toList();
+        List<PomHolder> poms = getPoms(baseDir, repositoryInfo);
         Map<String, List<GAV>> propertiesToDependencies = new HashMap<>();
         Map<String, Set<PomHolder>> propertiesToPropertiesNodes = new HashMap<>();
         BiConsumer<PomHolder, JsonNode> depFunction = (holder, dependency) -> {
@@ -395,21 +374,20 @@ public class ReleaseRunner {
             String version = Optional.ofNullable(dependency.get("version")).map(JsonNode::asText).orElse(null);
             GA dependencyGA = new GA(groupId, artifactId);
             GAV newGav = dependencies.stream()
+                    // exclude our's own modules
+                    .filter(gav -> repositoryInfo.getModules().stream().noneMatch(ga -> Objects.equals(ga.getGroupId(), gav.getGroupId()) && Objects.equals(ga.getArtifactId(), gav.getArtifactId())))
                     .filter(gav -> Objects.equals(gav.getGroupId(), dependencyGA.getGroupId()) &&
                                    Objects.equals(gav.getArtifactId(), dependencyGA.getArtifactId()))
                     .findFirst().orElse(null);
             if (version != null && newGav != null) {
-                String newGavVersion = newGav.getVersion();
-                if (!version.equals(newGavVersion)) {
-                    Matcher matcher = propertyPattern.matcher(version);
-                    if (matcher.matches()) {
-                        String propertyName = matcher.group(1);
-                        List<GAV> dependenciesList = propertiesToDependencies.computeIfAbsent(propertyName, k -> new ArrayList<>());
-                        dependenciesList.add(newGav);
-                    } else {
-                        // update a hard-coded version right away
-                        updateVersionInDependency(holder, newGav);
-                    }
+                Matcher matcher = propertyPattern.matcher(version);
+                if (matcher.matches()) {
+                    String propertyName = matcher.group(1);
+                    List<GAV> dependenciesList = propertiesToDependencies.computeIfAbsent(propertyName, k -> new ArrayList<>());
+                    dependenciesList.add(newGav);
+                } else {
+                    // update a hard-coded version right away
+                    updateVersionInDependency(holder, newGav);
                 }
             }
         };
@@ -421,18 +399,7 @@ public class ReleaseRunner {
                 }
             });
         };
-        Function<JsonNode, List<JsonNode>> nodeToListFunction = d -> {
-            List<JsonNode> nodes = new ArrayList<>();
-            if (d instanceof ArrayNode arrayNodes) {
-                for (JsonNode arrayNode : arrayNodes) {
-                    nodes.add(arrayNode);
-                }
-            } else {
-                nodes.add(d);
-            }
-            return nodes;
-        };
-        organizedPomHolders.forEach(ph -> {
+        poms.forEach(ph -> {
             Optional.ofNullable(ph.getPomNode().get("dependencyManagement"))
                     .map(dm -> dm.get("dependencies"))
                     .map(d -> d.get("dependency"))
@@ -466,7 +433,7 @@ public class ReleaseRunner {
                 propertyNodes.forEach(pom -> updatePropertyInPom(pom, propertyName, version));
             });
         }
-        organizedPomHolders.forEach(pom -> {
+        poms.forEach(pom -> {
             try {
                 Files.writeString(pom.getPath(), pom.getPom(), StandardOpenOption.TRUNCATE_EXISTING);
             } catch (IOException e) {
@@ -503,16 +470,19 @@ public class ReleaseRunner {
     }
 
     String autoResolveReferencedValue(PomHolder pom, String value, Map<String, String> properties) {
+        if (value == null) return null;
         Pattern referencePattern = Pattern.compile("\\$\\{([^<>]+)}");
         Matcher referenceMatcher = referencePattern.matcher(value);
         if (referenceMatcher.find()) {
-            // find groupId among properties
+            // find reference among properties
             String prop = referenceMatcher.group(1);
             if (properties.isEmpty()) properties.putAll(getProperties(pom));
             String valueFromProperty = properties.get(prop);
-            if (valueFromProperty == null)
-                throw new IllegalArgumentException("Failed to find value for reference: " + value);
-            value = valueFromProperty;
+            if (valueFromProperty != null) {
+                return valueFromProperty;
+            } else {
+                return value;
+            }
         }
         return value;
     }
@@ -572,11 +542,16 @@ public class ReleaseRunner {
 
         List<String> arguments = new ArrayList<>();
         arguments.add("surefire.rerunFailingTestsCount=2");
-        if (!runTests) arguments.add("skipTests");
+        if (!runTests) {
+            arguments.add("skipTests");
+        }
 
-        List<String> cmd = List.of("mvn", "-B", "release:prepare", "-Dresume=false", "-DautoVersionSubmodules=true",
-                String.format("\"-Darguments=%s\"", String.join(" ", arguments.stream().map(arg -> "-D" + arg).toList())),
-                "-DpushChanges=false", "\"-DpreparationGoals=clean install\"");
+        List<String> cmd = List.of("mvn", "-B", "release:prepare",
+                "-Dresume=false", "-DautoVersionSubmodules=true",
+                warpPropertyInQuotes(String.format("-Darguments=%s", String.join(" ", arguments.stream().map(arg -> "-D" + arg).toList()))),
+                "-DpushChanges=false",
+                warpPropertyInQuotes("-DtagNameFormat=@{project.version}"),
+                warpPropertyInQuotes("-DpreparationGoals=clean install"));
         log.info("Cmd: '{}' started", String.join(" ", cmd));
         try {
             Files.writeString(outputFilePath, "", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
@@ -607,6 +582,10 @@ public class ReleaseRunner {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    String warpPropertyInQuotes(String prop) {
+        return String.format("\"%s\"", prop);
     }
 
     void releasePerform(Repository repository) {
