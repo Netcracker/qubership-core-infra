@@ -1,6 +1,5 @@
 package org.qubership.cloud.actions.maven;
 
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.DependencyManagement;
@@ -9,21 +8,19 @@ import org.apache.maven.model.Parent;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.MergeResult;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.TextProgressMonitor;
 import org.eclipse.jgit.transport.CredentialsProvider;
-import org.eclipse.jgit.transport.FetchResult;
+import org.eclipse.jgit.transport.TagOpt;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.SimpleDirectedGraph;
+import org.jgrapht.nio.dot.DOTExporter;
 import org.qubership.cloud.actions.maven.model.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.MessageFormat;
@@ -40,9 +37,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 @Slf4j
 public class ReleaseRunner {
-    XmlMapper xmlMapper = new XmlMapper();
     static Pattern propertyPattern = Pattern.compile("\\$\\{(.*?)}");
 
     UsernamePasswordCredentialsProvider credentialsProvider;
@@ -52,10 +50,14 @@ public class ReleaseRunner {
         CredentialsProvider.setDefault(credentialsProvider);
     }
 
-    public List<Release> prepareRelease(String baseDir, List<String> repositories, Predicate<GA> dependenciesFilter, Collection<String> dependencies, VersionIncrementType versionIncrementType, boolean runTests, boolean deploy) {
-        Map<GA, String> dependenciesGavs = dependencies.stream().map(GAV::new).collect(Collectors.toMap(gav -> new GA(gav.getGroupId(), gav.getArtifactId()), GAV::getVersion));
+    public Result release(Config config) {
+        Result result = new Result();
+        Map<GA, String> dependenciesGavs = config.getDependencies().stream().map(GAV::new).collect(Collectors.toMap(gav -> new GA(gav.getGroupId(), gav.getArtifactId()), GAV::getVersion));
         // build dependency graph
-        Map<Integer, List<RepositoryInfo>> dependencyGraph = buildDependencyGraph(baseDir, repositories, dependenciesFilter);
+        Map<Integer, List<RepositoryInfo>> dependencyGraph = buildDependencyGraph(config);
+        String dot = generateDotFile(dependencyGraph);
+        result.setDependenciesDot(dot);
+
         List<Release> allReleases = dependencyGraph.entrySet().stream().flatMap(entry -> {
             int level = entry.getKey();
             log.info("Processing level {}/{}, repositories:\n{}", level + 1, dependencyGraph.size(), String.join("\n", entry.getValue().stream().map(Repository::getUrl).toList()));
@@ -65,7 +67,7 @@ public class ReleaseRunner {
             try (ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
                 Set<GAV> gavList = dependenciesGavs.entrySet().stream().map(e -> new GAV(e.getKey().getGroupId(), e.getKey().getArtifactId(), e.getValue())).collect(Collectors.toSet());
                 List<Release> releases = reposInfoList.stream()
-                        .map(repo -> executorService.submit(() -> prepareRelease(baseDir, repo, gavList, versionIncrementType, runTests)))
+                        .map(repo -> executorService.submit(() -> release(config, repo, gavList)))
                         .toList()
                         .stream()
                         .map(future -> {
@@ -84,10 +86,10 @@ public class ReleaseRunner {
             }
         }).toList();
 
-        if (deploy) {
+        if (config.isRunDeploy()) {
             try (ExecutorService executorService = Executors.newFixedThreadPool(4)) {
                 allReleases.stream()
-                        .map(release -> executorService.submit(() -> performRelease(baseDir, release)))
+                        .map(release -> executorService.submit(() -> performRelease(config, release)))
                         .toList()
                         .forEach(future -> {
                             try {
@@ -99,10 +101,14 @@ public class ReleaseRunner {
                         });
             }
         }
-        return allReleases;
+        result.setReleases(allReleases);
+        return result;
     }
 
-    Map<Integer, List<RepositoryInfo>> buildDependencyGraph(String baseDir, List<String> repositories, Predicate<GA> dependenciesFilter) {
+    Map<Integer, List<RepositoryInfo>> buildDependencyGraph(Config config) {
+        String baseDir = config.getBaseDir();
+        List<String> repositories = config.getRepositories();
+        Predicate<GA> dependenciesFilter = config.getDependenciesFilter();
         try (ExecutorService executorService = Executors.newFixedThreadPool(5)) {
             List<RepositoryInfo> repositoryInfoList = repositories.stream().map(RepositoryInfo::new)
                     .map(repositoryInfo -> executorService.submit(() -> {
@@ -138,6 +144,7 @@ public class ReleaseRunner {
             for (RepositoryInfo repositoryInfo : repositoryInfoList) {
                 repositoryInfo.getRepoDependenciesFlatSet().forEach(ri -> graph.addEdge(ri.getUrl(), repositoryInfo.getUrl()));
             }
+
             List<RepositoryInfo> independentRepos = repositoryInfoList.stream().filter(ri -> graph.incomingEdgesOf(ri.getUrl()).isEmpty()).toList();
             List<RepositoryInfo> dependentRepos = repositoryInfoList.stream().filter(ri -> !graph.incomingEdgesOf(ri.getUrl()).isEmpty()).collect(Collectors.toList());
             Map<Integer, List<RepositoryInfo>> groupedReposMap = new TreeMap<>();
@@ -175,16 +182,17 @@ public class ReleaseRunner {
                             }
                         });
             }
-            // clone
             try (Git git = Git.cloneRepository()
                     .setCredentialsProvider(credentialsProvider)
                     .setURI(repository.getUrl())
                     .setDirectory(repositoryDirPath.toFile())
+                    .setDepth(1)
+                    .setBranch("HEAD")
+                    .setCloneAllBranches(false)
+                    .setTagOption(TagOpt.FETCH_TAGS)
+                    .setProgressMonitor(new TextProgressMonitor(new PrintWriter(new OutputStreamWriter(System.out, UTF_8))))
                     .call()) {
-                // fetch
-                FetchResult fetchResult = git.fetch().call();
-                // merge
-                MergeResult mergeResult = git.merge().include(fetchResult.getAdvertisedRef("refs/heads/main")).call();
+//                git.fetch().call();
             } catch (GitAPIException e) {
                 throw new RuntimeException(e);
             }
@@ -311,11 +319,12 @@ public class ReleaseRunner {
         }
     }
 
-    Release prepareRelease(String baseDir, RepositoryInfo repository, Collection<GAV> dependencies, VersionIncrementType versionIncrementType, boolean runTests) {
+    Release release(Config config, RepositoryInfo repository, Collection<GAV> dependencies) {
+        String baseDir = config.getBaseDir();
         List<PomHolder> poms = getPoms(baseDir, repository);
         updateDependencies(baseDir, repository, poms, dependencies);
-        String releaseVersion = calculateReleaseVersion(repository, poms, versionIncrementType);
-        return releasePrepare(baseDir, repository, releaseVersion, runTests);
+        String releaseVersion = calculateReleaseVersion(repository, poms, config.getVersionIncrementType());
+        return releasePrepare(baseDir, repository, releaseVersion, config.isRunTests());
     }
 
     String calculateReleaseVersion(RepositoryInfo repository, List<PomHolder> poms, VersionIncrementType versionIncrementType) {
@@ -561,7 +570,7 @@ public class ReleaseRunner {
 
         List<String> arguments = new ArrayList<>();
         if (runTests) {
-            arguments.add("surefire.rerunFailingTestsCount=2");
+//            arguments.add("surefire.rerunFailingTestsCount=2");
         } else {
             arguments.add("skipTests");
         }
@@ -615,8 +624,9 @@ public class ReleaseRunner {
         return String.format("\"%s\"", prop);
     }
 
-    void performRelease(String baseDir, Release release) {
+    void performRelease(Config config, Release release) {
         try {
+            String baseDir = config.getBaseDir();
             RepositoryInfo repository = release.getRepository();
             String releaseVersion = release.getReleaseVersion();
             Path repositoryDirPath = Paths.get(baseDir, repository.getDir());
@@ -677,6 +687,27 @@ public class ReleaseRunner {
                 throw new RuntimeException(String.format("Failed to execute cmd, error: %s", baos));
             }
         } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    String generateDotFile(Map<Integer, List<RepositoryInfo>> dependencyGraph) {
+        Graph<String, StringEdge> graph = new SimpleDirectedGraph<>(StringEdge.class);
+        List<RepositoryInfo> repositoryInfoList = dependencyGraph.values().stream().flatMap(Collection::stream).toList();
+        for (RepositoryInfo repositoryInfo : repositoryInfoList) {
+            graph.addVertex(repositoryInfo.getUrl());
+        }
+        for (RepositoryInfo repositoryInfo : repositoryInfoList) {
+            repositoryInfo.getRepoDependencies().forEach(ri -> graph.addEdge(ri.getUrl(), repositoryInfo.getUrl()));
+        }
+        Function<String, String> vertexIdProvider = vertex -> {
+            return String.format("\"%s\"", vertex.replace("https://github.com/Netcracker/", ""));
+        };
+        DOTExporter<String, StringEdge> exporter = new DOTExporter<>(vertexIdProvider);
+        try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
+            exporter.exportGraph(graph, stream);
+            return stream.toString();
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
