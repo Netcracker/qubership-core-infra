@@ -198,13 +198,13 @@ public class ReleaseRunner {
         try {
             Files.deleteIfExists(Path.of(repositoryDirPath.toString(), "effective-pom.xml"));
             List<String> cmd = List.of("mvn", "help:effective-pom", "-Doutput=effective-pom.xml");
-            log.info("Cmd: '{}' started", String.join(" ", cmd));
+            log.info("Repository: {}\nCmd: '{}' started", repository.getUrl(), String.join(" ", cmd));
             Process process = new ProcessBuilder(cmd).directory(repositoryDirPath.toFile()).start();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             process.getInputStream().transferTo(baos);
             process.getErrorStream().transferTo(baos);
             process.waitFor();
-            log.info("Cmd: '{}' ended with code: {}", String.join(" ", cmd), process.exitValue());
+            log.info("Repository: {}\nCmd: '{}' ended with code: {}", repository.getUrl(), String.join(" ", cmd), process.exitValue());
             if (process.exitValue() != 0) {
                 throw new RuntimeException(String.format("Failed to execute cmd, error: %s", baos));
             }
@@ -575,7 +575,7 @@ public class ReleaseRunner {
                 warpPropertyInQuotes(String.format("-Darguments=%s", String.join(" ", arguments.stream().map(arg -> "-D" + arg).toList()))),
                 warpPropertyInQuotes("-DtagNameFormat=@{project.version}"),
                 warpPropertyInQuotes("-DpreparationGoals=clean install"));
-        log.info("Cmd: '{}' started", String.join(" ", cmd));
+        log.info("Repository: {}\nCmd: '{}' started", repositoryInfo.getUrl(), String.join(" ", cmd));
         try {
             Files.writeString(outputFilePath, "", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
@@ -592,7 +592,8 @@ public class ReleaseRunner {
             process.getInputStream().transferTo(umbrellaOutStream);
             process.getErrorStream().transferTo(umbrellaOutStream);
             process.waitFor();
-            log.info("Cmd: '{}' ended with code: {}, output: {}", String.join(" ", cmd), process.exitValue(), baos);
+            log.info("Repository: {}\nCmd: '{}' ended with code: {}, output: {}",
+                    repositoryInfo.getUrl(), String.join(" ", cmd), process.exitValue(), baos);
             if (process.exitValue() != 0) {
                 throw new RuntimeException(String.format("Failed to execute cmd, error: %s", baos));
             }
@@ -640,9 +641,10 @@ public class ReleaseRunner {
             if (tagOpt.isEmpty()) {
                 throw new IllegalStateException(String.format("git tag: %s not found", releaseVersion));
             }
-            git.push().setRemote("origin")
-//                    .add(tagOpt.get().getName())
-                    .setCredentialsProvider(credentialsProvider)
+            git.push().setCredentialsProvider(credentialsProvider)
+                    .setRemote("origin")
+                    .setPushAll()
+                    .setPushTags()
                     .call();
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -656,7 +658,7 @@ public class ReleaseRunner {
             arguments.add("skipTests");
             List<String> cmd = List.of("mvn", "-B", "release:perform", "-DlocalCheckout=true", "-DautoVersionSubmodules=true",
                     warpPropertyInQuotes(String.format("-Darguments=%s", String.join(" ", arguments.stream().map(arg -> "-D" + arg).toList()))));
-            log.info("Cmd: '{}' started", String.join(" ", cmd));
+            log.info("Repository: {}\nCmd: '{}' started", repositoryInfo.getUrl(), String.join(" ", cmd));
 
             Process process = new ProcessBuilder(cmd).directory(repositoryDirPath.toFile()).start();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -671,7 +673,8 @@ public class ReleaseRunner {
             process.getInputStream().transferTo(umbrellaOutStream);
             process.getErrorStream().transferTo(umbrellaOutStream);
             process.waitFor();
-            log.info("Cmd: '{}' ended with code: {}, output: {}", String.join(" ", cmd), process.exitValue(), baos);
+            log.info("Repository: {}\nCmd: '{}' ended with code: {}, output: {}",
+                    repositoryInfo.getUrl(), String.join(" ", cmd), process.exitValue(), baos);
             if (process.exitValue() != 0) {
                 throw new RuntimeException(String.format("Failed to execute cmd, error: %s", baos));
             }
