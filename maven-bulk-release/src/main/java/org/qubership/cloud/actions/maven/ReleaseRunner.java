@@ -695,6 +695,7 @@ public class ReleaseRunner {
             Release release = new Release();
             release.setRepository(repositoryInfo);
             release.setReleaseVersion(releaseVersion);
+            release.setJavaVersion(javaVersion);
             release.setGavs(gavs);
             return release;
         } catch (Exception e) {
@@ -716,7 +717,7 @@ public class ReleaseRunner {
             Files.writeString(outputFilePath, "", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
             pushChanges(baseDir, repository, releaseVersion);
-            releaseDeploy(baseDir, repository, outputFilePath);
+            releaseDeploy(baseDir, repository, outputFilePath, config, release.getJavaVersion());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -741,7 +742,7 @@ public class ReleaseRunner {
         }
     }
 
-    void releaseDeploy(String baseDir, RepositoryInfo repositoryInfo, Path outputFilePath) {
+    void releaseDeploy(String baseDir, RepositoryInfo repositoryInfo, Path outputFilePath, Config config, String javaVersion) {
         try {
             Path repositoryDirPath = Paths.get(baseDir, repositoryInfo.getDir());
             List<String> arguments = new ArrayList<>();
@@ -750,7 +751,12 @@ public class ReleaseRunner {
                     warpPropertyInQuotes(String.format("-Darguments=%s", String.join(" ", arguments.stream().map(arg -> "-D" + arg).toList()))));
             log.info("Repository: {}\nCmd: '{}' started", repositoryInfo.getUrl(), String.join(" ", cmd));
 
-            Process process = new ProcessBuilder(cmd).directory(repositoryDirPath.toFile()).start();
+            ProcessBuilder processBuilder = new ProcessBuilder(cmd).directory(repositoryDirPath.toFile());
+            String javaHome = config.getJavaVersionToJavaHomeEnv().get(javaVersion);
+            if (javaHome != null) {
+                processBuilder.environment().put("JAVA_HOME", javaHome);
+            }
+            Process process = processBuilder.start();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             OutputStream umbrellaOutStream = new OutputStream() {
                 @Override
