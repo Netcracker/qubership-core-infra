@@ -1,20 +1,19 @@
 package org.qubership.cloud.actions.maven.model;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import org.apache.maven.model.Model;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 public class PomHolder {
     Path path;
-    String relativePath;
     PomHolder parent;
-    JsonNode pomNode;
+    Model model;
     String pom;
-    GA ga;
 
     public List<PomHolder> getParentsFlatList() {
         List<PomHolder> parents = new ArrayList<>();
@@ -25,9 +24,13 @@ public class PomHolder {
         return parents;
     }
 
+    public String getVersion() {
+        return Optional.ofNullable(model.getVersion()).orElseGet(() -> model.getParent().getVersion());
+    }
+
     @Override
     public String toString() {
-        return String.format("%s", pomNode.get("artifactId").asText());
+        return String.format("%s", model.getArtifactId());
     }
 
 }

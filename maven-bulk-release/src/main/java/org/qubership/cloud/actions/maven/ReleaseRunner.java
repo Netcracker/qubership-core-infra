@@ -1,16 +1,18 @@
 package org.qubership.cloud.actions.maven;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.dataformat.xml.XmlFactory;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import dev.failsafe.RetryPolicy;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.maven.model.Dependency;
+import org.apache.maven.model.DependencyManagement;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.Parent;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.FetchResult;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -18,14 +20,13 @@ import org.jgrapht.Graph;
 import org.jgrapht.graph.SimpleDirectedGraph;
 import org.qubership.cloud.actions.maven.model.*;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.http.HttpClient;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.MessageFormat;
-import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -41,8 +42,6 @@ import java.util.stream.Stream;
 
 @Slf4j
 public class ReleaseRunner {
-    HttpClient httpClient = HttpClient.newBuilder().build();
-    ObjectMapper yamlMapper = new ObjectMapper(new XmlFactory());
     XmlMapper xmlMapper = new XmlMapper();
     static Pattern propertyPattern = Pattern.compile("\\$\\{(.*?)}");
 
@@ -53,37 +52,25 @@ public class ReleaseRunner {
         CredentialsProvider.setDefault(credentialsProvider);
     }
 
-    RetryPolicy<Object> RETRY_POLICY = RetryPolicy.builder()
-            .handle(AssertionError.class, Exception.class)
-            .withMaxRetries(5)
-            .withDelay(Duration.ofSeconds(1))
-            .onRetry(e -> {
-                Throwable lastFailure = e.getLastException();
-                log.info("Retry #{} after: {} ms, lastFailure: {}",
-                        e.getAttemptCount(), e.getElapsedAttemptTime().toMillis(),
-                        lastFailure.getClass().getSimpleName() + " - " + lastFailure.getMessage());
-            }).build();
-
-    public List<GAV> prepare(String baseDir, List<String> repositories, Predicate<GA> dependenciesFilter, Collection<String> dependencies, boolean runTests) {
+    public List<Release> prepareRelease(String baseDir, List<String> repositories, Predicate<GA> dependenciesFilter, Collection<String> dependencies, VersionIncrementType versionIncrementType, boolean runTests, boolean deploy) {
         Map<GA, String> dependenciesGavs = dependencies.stream().map(GAV::new).collect(Collectors.toMap(gav -> new GA(gav.getGroupId(), gav.getArtifactId()), GAV::getVersion));
         // build dependency graph
         Map<Integer, List<RepositoryInfo>> dependencyGraph = buildDependencyGraph(baseDir, repositories, dependenciesFilter);
-
-        return dependencyGraph.entrySet().stream().flatMap(entry -> {
+        List<Release> allReleases = dependencyGraph.entrySet().stream().flatMap(entry -> {
             int level = entry.getKey();
-            log.info("Processing level {}, repositories:\n{}", level+1, String.join("\n", entry.getValue().stream().map(Repository::getUrl).toList()));
+            log.info("Processing level {}, repositories:\n{}", level + 1, String.join("\n", entry.getValue().stream().map(Repository::getUrl).toList()));
             List<RepositoryInfo> reposInfoList = entry.getValue();
             int threads = reposInfoList.size();
 //            int threads = 1;
             try (ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
                 Set<GAV> gavList = dependenciesGavs.entrySet().stream().map(e -> new GAV(e.getKey().getGroupId(), e.getKey().getArtifactId(), e.getValue())).collect(Collectors.toSet());
-                List<GAV> gavs = reposInfoList.stream()
-                        .map(repo -> executorService.submit(() -> prepare(baseDir, repo, gavList, runTests)))
+                List<Release> releases = reposInfoList.stream()
+                        .map(repo -> executorService.submit(() -> prepareRelease(baseDir, repo, gavList, versionIncrementType, runTests)))
                         .toList()
                         .stream()
-                        .flatMap(future -> {
+                        .map(future -> {
                             try {
-                                return future.get().stream();
+                                return future.get();
                             } catch (InterruptedException e) {
                                 Thread.currentThread().interrupt();
                                 throw new RuntimeException(e);
@@ -91,10 +78,28 @@ public class ReleaseRunner {
                                 throw new RuntimeException(e);
                             }
                         }).toList();
-                gavs.forEach(gav -> dependenciesGavs.put(new GA(gav.getGroupId(), gav.getArtifactId()), gav.getVersion()));
-                return gavs.stream();
+                releases.stream().flatMap(r -> r.getGavs().stream())
+                        .forEach(gav -> dependenciesGavs.put(new GA(gav.getGroupId(), gav.getArtifactId()), gav.getVersion()));
+                return releases.stream();
             }
         }).toList();
+
+        if (deploy) {
+            try (ExecutorService executorService = Executors.newFixedThreadPool(4)) {
+                allReleases.stream()
+                        .map(release -> executorService.submit(() -> performRelease(baseDir, release)))
+                        .toList()
+                        .forEach(future -> {
+                            try {
+                                future.get();
+                            } catch (Exception e) {
+                                if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+                                throw new RuntimeException(e);
+                            }
+                        });
+            }
+        }
+        return allReleases;
     }
 
     Map<Integer, List<RepositoryInfo>> buildDependencyGraph(String baseDir, List<String> repositories, Predicate<GA> dependenciesFilter) {
@@ -226,9 +231,14 @@ public class ReleaseRunner {
                         PomHolder pomHolder = new PomHolder();
                         String content = Files.readString(file);
                         pomHolder.setPath(file);
-                        pomHolder.setRelativePath(file.toString().substring(repositoryDirPath.toString().length() + 1));
                         pomHolder.setPom(content);
-                        pomHolder.setPomNode(xmlMapper.readTree(content));
+                        try {
+                            MavenXpp3Reader mavenReader = new MavenXpp3Reader();
+                            Model model = mavenReader.read(new ByteArrayInputStream(content.getBytes()));
+                            pomHolder.setModel(model);
+                        } catch (XmlPullParserException e) {
+                            throw new RuntimeException(e);
+                        }
                         poms.add(pomHolder);
                     }
                     return FileVisitResult.CONTINUE;
@@ -249,15 +259,13 @@ public class ReleaseRunner {
         }
         return poms.stream()
                 .peek(pom -> {
-                    GA ga = pomGAFunction.apply(pom.getPomNode());
-                    pom.setGa(ga);
-                    JsonNode parent = pom.getPomNode().get("parent");
+                    Parent parent = pom.getModel().getParent();
                     if (parent != null) {
-                        String groupId = parent.get("groupId").asText();
-                        String artifactId = parent.get("artifactId").asText();
+                        String groupId = parent.getGroupId();
+                        String artifactId = parent.getArtifactId();
                         poms.stream().filter(ph -> {
-                            GA phGa = pomGAFunction.apply(ph.getPomNode());
-                            return Objects.equals(phGa.getGroupId(), groupId) && Objects.equals(phGa.getArtifactId(), artifactId);
+                            Model phModel = ph.getModel();
+                            return Objects.equals(phModel.getGroupId(), groupId) && Objects.equals(phModel.getArtifactId(), artifactId);
                         }).findFirst().ifPresent(pom::setParent);
                     }
                 })
@@ -272,7 +280,7 @@ public class ReleaseRunner {
         try {
             for (PomHolder pomHolder : poms) {
                 Map<String, String> properties = new HashMap<>();
-                JsonNode project = pomHolder.getPomNode();
+                Model project = pomHolder.getModel();
                 GA projectGA = pomGAFunction.apply(project);
                 String projectGroupId = autoResolveReferencedValue(pomHolder, projectGA.getGroupId(), properties);
                 String projectArtifactId = autoResolveReferencedValue(pomHolder, projectGA.getArtifactId(), properties);
@@ -280,22 +288,17 @@ public class ReleaseRunner {
                 repositoryInfo.getModules().add(moduleGA);
             }
             for (PomHolder pomHolder : poms) {
-                JsonNode project = pomHolder.getPomNode();
+                Model project = pomHolder.getModel();
                 Map<String, String> properties = new HashMap<>();
-                List<JsonNode> dependencyManagementNodes = Optional.ofNullable(project.get("dependencyManagement"))
-                        .map(dm -> dm.get("dependencies"))
-                        .map(d -> d.get("dependency"))
-                        .map(nodeToListFunction)
+                List<Dependency> dependencyManagementNodes = Optional.ofNullable(project.getDependencyManagement())
+                        .map(DependencyManagement::getDependencies)
                         .orElse(List.of());
-                List<JsonNode> dependenciesNodes = Optional.ofNullable(project.get("dependencies"))
-                        .map(d -> d.get("dependency"))
-                        .map(nodeToListFunction)
-                        .orElse(List.of());
-                List<JsonNode> allDependenciesNodes = Stream.concat(dependencyManagementNodes.stream(), dependenciesNodes.stream()).toList();
-                for (JsonNode dependency : allDependenciesNodes) {
-                    String groupId = autoResolveReferencedValue(pomHolder, Optional.ofNullable(dependency.get("groupId")).map(JsonNode::asText).orElse(null), properties);
-                    String artifactId = autoResolveReferencedValue(pomHolder, Optional.ofNullable(dependency.get("artifactId")).map(JsonNode::asText).orElse(null), properties);
-                    String version = autoResolveReferencedValue(pomHolder, Optional.ofNullable(dependency.get("version")).map(JsonNode::asText).orElse(null), properties);
+                List<Dependency> dependenciesNodes = Optional.ofNullable(project.getDependencies()).orElse(List.of());
+                List<Dependency> allDependenciesNodes = Stream.concat(dependencyManagementNodes.stream(), dependenciesNodes.stream()).toList();
+                for (Dependency dependency : allDependenciesNodes) {
+                    String groupId = autoResolveReferencedValue(pomHolder, dependency.getGroupId(), properties);
+                    String artifactId = autoResolveReferencedValue(pomHolder, dependency.getArtifactId(), properties);
+                    String version = autoResolveReferencedValue(pomHolder, dependency.getVersion(), properties);
                     if (Stream.of(groupId, artifactId, version).allMatch(Objects::nonNull)) {
                         GAV dependencyGAV = new GAV(groupId, artifactId, version);
                         GA dependencyGA = new GA(groupId, artifactId);
@@ -310,17 +313,52 @@ public class ReleaseRunner {
         }
     }
 
-    List<GAV> prepare(String baseDir, RepositoryInfo repository, Collection<GAV> dependencies, boolean runTests) {
-        updateDependencies(baseDir, repository, dependencies);
-        return releasePrepare(baseDir, repository, runTests);
+    Release prepareRelease(String baseDir, RepositoryInfo repository, Collection<GAV> dependencies, VersionIncrementType versionIncrementType, boolean runTests) {
+        List<PomHolder> poms = getPoms(baseDir, repository);
+        updateDependencies(baseDir, repository, poms, dependencies);
+        String releaseVersion = calculateReleaseVersion(repository, poms, versionIncrementType);
+        return releasePrepare(baseDir, repository, releaseVersion, runTests);
     }
 
-    void updateDependencies(String baseDir, RepositoryInfo repositoryInfo, Collection<GAV> dependencies) {
-        updateDepVersionsNew(baseDir, repositoryInfo, dependencies);
+    String calculateReleaseVersion(RepositoryInfo repository, List<PomHolder> poms, VersionIncrementType versionIncrementType) {
+        Set<String> pomVersions = poms.stream().map(PomHolder::getVersion).collect(Collectors.toSet());
+        if (pomVersions.size() != 1) {
+            throw new IllegalArgumentException(String.format("pom.xml files from repository: %s have different versions: %s",
+                    repository.getUrl(), String.join(",", pomVersions)));
+        }
+        String pomVersion = pomVersions.iterator().next();
+        Pattern semverPattern = Pattern.compile("(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(?<snapshot>-SNAPSHOT)?");
+        Matcher matcher = semverPattern.matcher(pomVersion);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException(String.format("Non-semver version: %s. Must match pattern: '%s'", pomVersion, semverPattern.pattern()));
+        }
+        int major = Integer.parseInt(matcher.group("major"));
+        int minor = Integer.parseInt(matcher.group("minor"));
+        int patch = Integer.parseInt(matcher.group("patch"));
+        switch (versionIncrementType) {
+            case MAJOR -> {
+                major++;
+                minor = 0;
+                patch = 0;
+            }
+            case MINOR -> {
+                minor++;
+                patch = 0;
+            }
+            case PATCH -> {
+                String snapshot = matcher.group("snapshot");
+                if (snapshot == null) patch++;
+            }
+        }
+        return String.format("%d.%d.%d", major, minor, patch);
+    }
+
+    void updateDependencies(String baseDir, RepositoryInfo repositoryInfo, List<PomHolder> poms, Collection<GAV> dependencies) {
+        updateDepVersionsNew(baseDir, repositoryInfo, poms, dependencies);
         // check all versions were updated
-        List<PomHolder> poms = getPoms(baseDir, repositoryInfo);
         Predicate<GA> filter = ga -> dependencies.stream().anyMatch(gav -> gav.getGroupId().equals(ga.getGroupId()) && gav.getArtifactId().equals(ga.getArtifactId()));
-        resolveDependencies(repositoryInfo, poms, filter);
+        List<PomHolder> updatedPoms = getPoms(baseDir, repositoryInfo);
+        resolveDependencies(repositoryInfo, updatedPoms, filter);
         Set<GAV> updatedModuleDependencies = repositoryInfo.getModuleDependencies();
         Set<GAV> missedDependencies = updatedModuleDependencies.stream()
                 .filter(gav -> {
@@ -337,11 +375,11 @@ public class ReleaseRunner {
         commitUpdatedDependenciesIfAny(baseDir, repositoryInfo);
     }
 
-    Function<JsonNode, GA> pomGAFunction = node -> {
-        String groupId = node.get("artifactId").asText();
-        String artifactId = Optional.ofNullable(node.get("groupId")).map(JsonNode::asText).orElseGet(() -> {
+    Function<Model, GA> pomGAFunction = pom -> {
+        String groupId = pom.getArtifactId();
+        String artifactId = Optional.ofNullable(pom.getGroupId()).orElseGet(() -> {
             // get groupIg from parent tag
-            return Optional.ofNullable(node.get("parent")).map(p -> p.get("groupId")).map(JsonNode::asText)
+            return Optional.ofNullable(pom.getParent()).map(Parent::getGroupId)
                     .orElseThrow(() -> new IllegalStateException(
                             String.format("Invalid pom with attributeId: '%s' - no groupId or no parent",
                                     groupId)));
@@ -349,29 +387,16 @@ public class ReleaseRunner {
         return new GA(artifactId, groupId);
     };
 
-    Function<JsonNode, List<JsonNode>> nodeToListFunction = d -> {
-        List<JsonNode> nodes = new ArrayList<>();
-        if (d instanceof ArrayNode arrayNodes) {
-            for (JsonNode arrayNode : arrayNodes) {
-                nodes.add(arrayNode);
-            }
-        } else {
-            nodes.add(d);
-        }
-        return nodes;
-    };
-
-    void updateDepVersionsNew(String baseDir, RepositoryInfo repositoryInfo, Collection<GAV> dependencies) {
-        List<PomHolder> poms = getPoms(baseDir, repositoryInfo);
+    void updateDepVersionsNew(String baseDir, RepositoryInfo repositoryInfo, List<PomHolder> poms, Collection<GAV> dependencies) {
         Map<String, List<GAV>> propertiesToDependencies = new HashMap<>();
         Map<String, Set<PomHolder>> propertiesToPropertiesNodes = new HashMap<>();
-        BiConsumer<PomHolder, JsonNode> depFunction = (holder, dependency) -> {
-            String groupId = Optional.ofNullable(dependency.get("groupId")).map(JsonNode::asText).orElse(null);
+        BiConsumer<PomHolder, Dependency> depFunction = (holder, dependency) -> {
+            String groupId = dependency.getGroupId();
             if (groupId == null) {
                 return;
             }
-            String artifactId = dependency.get("artifactId").asText();
-            String version = Optional.ofNullable(dependency.get("version")).map(JsonNode::asText).orElse(null);
+            String artifactId = dependency.getArtifactId();
+            String version = dependency.getVersion();
             GA dependencyGA = new GA(groupId, artifactId);
             GAV newGav = dependencies.stream()
                     // exclude our's own modules
@@ -391,8 +416,9 @@ public class ReleaseRunner {
                 }
             }
         };
-        BiConsumer<PomHolder, JsonNode> propFunction = (holder, node) -> {
-            Map<String, JsonNode> props = node.properties().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        BiConsumer<PomHolder, Properties> propFunction = (holder, properties) -> {
+            Map<String, String> props = properties.entrySet().stream()
+                    .collect(Collectors.toMap(entry -> (String) entry.getKey(), entry -> (String) entry.getValue()));
             props.forEach((propertyName, propertyValue) -> {
                 if (propertiesToDependencies.containsKey(propertyName)) {
                     propertiesToPropertiesNodes.computeIfAbsent(propertyName, k -> new HashSet<>()).add(holder);
@@ -400,20 +426,16 @@ public class ReleaseRunner {
             });
         };
         poms.forEach(ph -> {
-            Optional.ofNullable(ph.getPomNode().get("dependencyManagement"))
-                    .map(dm -> dm.get("dependencies"))
-                    .map(d -> d.get("dependency"))
-                    .map(nodeToListFunction)
+            Optional.ofNullable(ph.getModel().getDependencyManagement())
+                    .map(DependencyManagement::getDependencies)
                     .ifPresent(d -> d.forEach(dep -> depFunction.accept(ph, dep)));
-            Optional.ofNullable(ph.getPomNode().get("dependencies"))
-                    .map(d -> d.get("dependency"))
-                    .map(nodeToListFunction)
+            Optional.ofNullable(ph.getModel().getDependencies())
                     .ifPresent(d -> d.forEach(dep -> depFunction.accept(ph, dep)));
 
             PomHolder pomHolderWithProperties = ph;
             while (pomHolderWithProperties != null) {
-                JsonNode pomWithProperties = pomHolderWithProperties.getPomNode();
-                Optional.ofNullable(pomWithProperties.get("properties"))
+                Model pomWithProperties = pomHolderWithProperties.getModel();
+                Optional.ofNullable(pomWithProperties.getProperties())
                         .ifPresent(p -> propFunction.accept(ph, p));
                 pomHolderWithProperties = pomHolderWithProperties.getParent();
             }
@@ -491,10 +513,9 @@ public class ReleaseRunner {
         Map<String, String> properties = new HashMap<>();
         PomHolder pomHolderWithProperties = ph;
         while (pomHolderWithProperties != null) {
-            JsonNode pomWithProperties = pomHolderWithProperties.getPomNode();
-            properties.putAll(Optional.ofNullable(pomWithProperties.get("properties"))
-                    .map(node -> node.properties().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().asText())))
-                    .orElse(new HashMap<>()));
+            Model pomWithProperties = pomHolderWithProperties.getModel();
+            properties.putAll(pomWithProperties.getProperties().entrySet().stream()
+                    .collect(Collectors.toMap(entry -> (String) entry.getKey(), entry -> (String) entry.getValue())));
             pomHolderWithProperties = pomHolderWithProperties.getParent();
         }
         return properties;
@@ -536,20 +557,22 @@ public class ReleaseRunner {
         }
     }
 
-    List<GAV> releasePrepare(String baseDir, RepositoryInfo repositoryInfo, boolean runTests) {
+    Release releasePrepare(String baseDir, RepositoryInfo repositoryInfo, String releaseVersion, boolean runTests) {
         Path repositoryDirPath = Paths.get(baseDir, repositoryInfo.getDir());
         Path outputFilePath = Paths.get(repositoryDirPath.toString(), "release-prepare-output.log");
 
         List<String> arguments = new ArrayList<>();
-        arguments.add("surefire.rerunFailingTestsCount=2");
-        if (!runTests) {
+        if (runTests) {
+            arguments.add("surefire.rerunFailingTestsCount=2");
+        } else {
             arguments.add("skipTests");
         }
-
         List<String> cmd = List.of("mvn", "-B", "release:prepare",
-                "-Dresume=false", "-DautoVersionSubmodules=true",
-                warpPropertyInQuotes(String.format("-Darguments=%s", String.join(" ", arguments.stream().map(arg -> "-D" + arg).toList()))),
+                "-Dresume=false",
+                "-DautoVersionSubmodules=true",
+                "-DreleaseVersion=" + releaseVersion,
                 "-DpushChanges=false",
+                warpPropertyInQuotes(String.format("-Darguments=%s", String.join(" ", arguments.stream().map(arg -> "-D" + arg).toList()))),
                 warpPropertyInQuotes("-DtagNameFormat=@{project.version}"),
                 warpPropertyInQuotes("-DpreparationGoals=clean install"));
         log.info("Cmd: '{}' started", String.join(" ", cmd));
@@ -573,12 +596,17 @@ public class ReleaseRunner {
             if (process.exitValue() != 0) {
                 throw new RuntimeException(String.format("Failed to execute cmd, error: %s", baos));
             }
-            return Files.readString(Paths.get(repositoryDirPath.toString(), "release.properties")).lines()
+            List<GAV> gavs = Files.readString(Paths.get(repositoryDirPath.toString(), "release.properties")).lines()
                     .filter(l -> l.startsWith("project.rel."))
                     .map(l -> l.replace("project.rel.", "")
                             .replace("\\", "")
                             .replace("=", ":"))
                     .map(GAV::new).toList();
+            Release release = new Release();
+            release.setRepository(repositoryInfo);
+            release.setReleaseVersion(releaseVersion);
+            release.setGavs(gavs);
+            return release;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -588,7 +616,67 @@ public class ReleaseRunner {
         return String.format("\"%s\"", prop);
     }
 
-    void releasePerform(Repository repository) {
+    void performRelease(String baseDir, Release release) {
+        try {
+            RepositoryInfo repository = release.getRepository();
+            String releaseVersion = release.getReleaseVersion();
+            Path repositoryDirPath = Paths.get(baseDir, repository.getDir());
+            Path outputFilePath = Paths.get(repositoryDirPath.toString(), "release-perform-output.log");
+            Files.writeString(outputFilePath, "", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
+            pushChanges(baseDir, repository, releaseVersion);
+            releaseDeploy(baseDir, repository, outputFilePath);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    void pushChanges(String baseDir, RepositoryInfo repositoryInfo, String releaseVersion) {
+        Path repositoryDirPath = Paths.get(baseDir, repositoryInfo.getDir());
+        try (Git git = Git.open(repositoryDirPath.toFile())) {
+            Optional<Ref> tagOpt = git.tagList().call().stream()
+                    .filter(t -> t.getName().equals(String.format("refs/tags/%s", releaseVersion)))
+                    .findFirst();
+            if (tagOpt.isEmpty()) {
+                throw new IllegalStateException(String.format("git tag: %s not found", releaseVersion));
+            }
+            git.push().setRemote("origin")
+//                    .add(tagOpt.get().getName())
+                    .setCredentialsProvider(credentialsProvider)
+                    .call();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    void releaseDeploy(String baseDir, RepositoryInfo repositoryInfo, Path outputFilePath) {
+        try {
+            Path repositoryDirPath = Paths.get(baseDir, repositoryInfo.getDir());
+            List<String> arguments = new ArrayList<>();
+            arguments.add("skipTests");
+            List<String> cmd = List.of("mvn", "-B", "release:perform", "-DlocalCheckout=true", "-DautoVersionSubmodules=true",
+                    warpPropertyInQuotes(String.format("-Darguments=%s", String.join(" ", arguments.stream().map(arg -> "-D" + arg).toList()))));
+            log.info("Cmd: '{}' started", String.join(" ", cmd));
+
+            Process process = new ProcessBuilder(cmd).directory(repositoryDirPath.toFile()).start();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            OutputStream umbrellaOutStream = new OutputStream() {
+                @Override
+                public void write(int b) throws IOException {
+                    baos.write(b);
+                    byte[] byteArray = new byte[]{(byte) b};
+                    Files.write(outputFilePath, byteArray, StandardOpenOption.APPEND);
+                }
+            };
+            process.getInputStream().transferTo(umbrellaOutStream);
+            process.getErrorStream().transferTo(umbrellaOutStream);
+            process.waitFor();
+            log.info("Cmd: '{}' ended with code: {}, output: {}", String.join(" ", cmd), process.exitValue(), baos);
+            if (process.exitValue() != 0) {
+                throw new RuntimeException(String.format("Failed to execute cmd, error: %s", baos));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
