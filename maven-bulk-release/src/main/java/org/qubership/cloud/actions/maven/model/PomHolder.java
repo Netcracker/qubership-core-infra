@@ -24,6 +24,14 @@ public class PomHolder {
         return parents;
     }
 
+    public String getGroupId() {
+        return Optional.ofNullable(model.getGroupId()).orElseGet(() -> model.getParent().getGroupId());
+    }
+
+    public String getArtifactId() {
+        return model.getArtifactId();
+    }
+
     public String getVersion() {
         return Optional.ofNullable(model.getVersion()).orElseGet(() -> model.getParent().getVersion());
     }

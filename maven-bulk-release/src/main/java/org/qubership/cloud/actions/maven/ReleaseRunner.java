@@ -58,7 +58,7 @@ public class ReleaseRunner {
         Map<Integer, List<RepositoryInfo>> dependencyGraph = buildDependencyGraph(baseDir, repositories, dependenciesFilter);
         List<Release> allReleases = dependencyGraph.entrySet().stream().flatMap(entry -> {
             int level = entry.getKey();
-            log.info("Processing level {}, repositories:\n{}", level + 1, String.join("\n", entry.getValue().stream().map(Repository::getUrl).toList()));
+            log.info("Processing level {}/{}, repositories:\n{}", level + 1, dependencyGraph.size(), String.join("\n", entry.getValue().stream().map(Repository::getUrl).toList()));
             List<RepositoryInfo> reposInfoList = entry.getValue();
             int threads = reposInfoList.size();
 //            int threads = 1;
@@ -227,7 +227,7 @@ public class ReleaseRunner {
 
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    if (file.toString().endsWith("/pom.xml")) {
+                    if (Arrays.asList(file.toString().split("/")).contains("pom.xml")) {
                         PomHolder pomHolder = new PomHolder();
                         String content = Files.readString(file);
                         pomHolder.setPath(file);
@@ -263,10 +263,8 @@ public class ReleaseRunner {
                     if (parent != null) {
                         String groupId = parent.getGroupId();
                         String artifactId = parent.getArtifactId();
-                        poms.stream().filter(ph -> {
-                            Model phModel = ph.getModel();
-                            return Objects.equals(phModel.getGroupId(), groupId) && Objects.equals(phModel.getArtifactId(), artifactId);
-                        }).findFirst().ifPresent(pom::setParent);
+                        poms.stream().filter(ph -> Objects.equals(ph.getGroupId(), groupId) && Objects.equals(ph.getArtifactId(), artifactId))
+                                .findFirst().ifPresent(pom::setParent);
                     }
                 })
                 // start with leaf poms
