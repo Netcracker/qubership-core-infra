@@ -13,8 +13,9 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class RepositoryInfo extends Repository {
-    String name;
     public static Pattern repositoryUrlPattern = Pattern.compile("https?://[^/]+/(.+)");
+
+    String name;
     Set<GA> modules = new HashSet<>();
     Set<GAV> moduleDependencies = new HashSet<>();
     Set<RepositoryInfo> repoDependencies = new HashSet<>();

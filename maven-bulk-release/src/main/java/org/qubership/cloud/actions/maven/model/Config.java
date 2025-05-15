@@ -4,9 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 
 @Data
@@ -18,6 +16,7 @@ public class Config {
     final Predicate<GA> dependenciesFilter;
     Collection<String> dependencies = new ArrayList<>();
     VersionIncrementType versionIncrementType = VersionIncrementType.PATCH;
+    Map<String, String> javaVersionToJavaHomeEnv = new HashMap<>();
     boolean runTests;
     boolean runDeploy;
 }

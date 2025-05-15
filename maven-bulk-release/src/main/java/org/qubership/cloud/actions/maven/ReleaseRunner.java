@@ -6,6 +6,7 @@ import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -201,22 +202,22 @@ public class ReleaseRunner {
         }
     }
 
-    String getEffectivePom(String baseDir, Repository repository) {
-        Path repositoryDirPath = Paths.get(baseDir, repository.getDir());
+    Model getEffectivePom(Path path, String artifact) {
         try {
-            Files.deleteIfExists(Path.of(repositoryDirPath.toString(), "effective-pom.xml"));
-            List<String> cmd = List.of("mvn", "help:effective-pom", "-Doutput=effective-pom.xml");
-            log.info("Repository: {}\nCmd: '{}' started", repository.getUrl(), String.join(" ", cmd));
-            Process process = new ProcessBuilder(cmd).directory(repositoryDirPath.toFile()).start();
+            Files.deleteIfExists(Path.of(path.toString(), "effective-pom.xml"));
+            List<String> cmd = List.of("mvn", "help:effective-pom", "-Dartifact=" + artifact, "-Doutput=effective-pom.xml");
+            log.info("pom file: {}\nCmd: '{}' started", path, String.join(" ", cmd));
+            Process process = new ProcessBuilder(cmd).directory(path.toFile()).start();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             process.getInputStream().transferTo(baos);
             process.getErrorStream().transferTo(baos);
             process.waitFor();
-            log.info("Repository: {}\nCmd: '{}' ended with code: {}", repository.getUrl(), String.join(" ", cmd), process.exitValue());
+            log.info("pom file: {}\nCmd: '{}' ended with code: {}", path, String.join(" ", cmd), process.exitValue());
             if (process.exitValue() != 0) {
                 throw new RuntimeException(String.format("Failed to execute cmd, error: %s", baos));
             }
-            return Files.readString(Path.of(repositoryDirPath.toString(), "effective-pom.xml"));
+            String effectivePomContent = Files.readString(Path.of(path.toString(), "effective-pom.xml"));
+            return new MavenXpp3Reader().read(new ByteArrayInputStream(effectivePomContent.getBytes()));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -324,7 +325,8 @@ public class ReleaseRunner {
         List<PomHolder> poms = getPoms(baseDir, repository);
         updateDependencies(baseDir, repository, poms, dependencies);
         String releaseVersion = calculateReleaseVersion(repository, poms, config.getVersionIncrementType());
-        return releasePrepare(baseDir, repository, releaseVersion, config.isRunTests());
+        String javaVersion = calculateJavaVersion(poms);
+        return releasePrepare(repository, config, releaseVersion, javaVersion);
     }
 
     String calculateReleaseVersion(RepositoryInfo repository, List<PomHolder> poms, VersionIncrementType versionIncrementType) {
@@ -360,8 +362,83 @@ public class ReleaseRunner {
         return String.format("%d.%d.%d", major, minor, patch);
     }
 
+    String calculateJavaVersion(List<PomHolder> poms) {
+        Set<String> propsToSearch = Set.of("maven.compiler.source", "maven.compiler.target", "maven.compiler.release");
+        List<PomHolder> effectivePoms = poms.stream().map(ph -> {
+            String artifact = String.format("%s:%s", ph.getGroupId(), ph.getArtifactId());
+            Model effectivePom = getEffectivePom(ph.getPath().getParent(), artifact);
+            PomHolder pomHolder = new PomHolder();
+            pomHolder.setPath(ph.getPath());
+            pomHolder.setModel(effectivePom);
+            return pomHolder;
+        }).toList();
+        List<PomHolder> updateEffectivePoms = effectivePoms.stream().peek(pom -> {
+            Parent parent = pom.getModel().getParent();
+            if (parent != null) {
+                String groupId = parent.getGroupId();
+                String artifactId = parent.getArtifactId();
+                effectivePoms.stream().filter(ph -> Objects.equals(ph.getGroupId(), groupId) && Objects.equals(ph.getArtifactId(), artifactId))
+                        .findFirst().ifPresent(pom::setParent);
+            }
+        }).toList();
+        // first search among plugins in effective-poms
+        Optional<String> javaVersionFromMavenCompilerPlugin = updateEffectivePoms.stream().map(ph -> {
+                    Map<String, String> compilerPluginConfigProps = ph.getModel().getBuild().getPlugins().stream()
+                            .filter(plugin -> plugin.getArtifactId().equals("maven-compiler-plugin") && plugin.getConfiguration() instanceof Xpp3Dom)
+                            .flatMap(plugin -> {
+                                Map<String, String> result = new HashMap<>();
+                                Xpp3Dom configuration = (Xpp3Dom) plugin.getConfiguration();
+                                Optional.ofNullable(configuration.getChild("release")).map(Xpp3Dom::getValue).ifPresentOrElse(r -> result.put("release", r),
+                                        () -> {
+                                            Optional.ofNullable(configuration.getChild("target")).map(Xpp3Dom::getValue).ifPresent(r -> result.put("target", r));
+                                            Optional.ofNullable(configuration.getChild("source")).map(Xpp3Dom::getValue).ifPresent(r -> result.put("source", r));
+                                        });
+                                return result.entrySet().stream();
+                            })
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                                    (s1, s2) -> {
+                                        if (!Objects.equals(s1, s2)) {
+                                            throw new IllegalStateException(String.format("Different java versions %s and %s specified for maven-compiler-plugin in pom: %s",
+                                                    s1, s2, String.format("%s:%s", ph.getGroupId(), ph.getArtifactId())));
+                                        } else {
+                                            return s1;
+                                        }
+                                    }));
+                    return compilerPluginConfigProps.getOrDefault("release",
+                            compilerPluginConfigProps.getOrDefault("target",
+                                    compilerPluginConfigProps.get("source")));
+                })
+                .filter(Objects::nonNull)
+                .findFirst();
+        if (javaVersionFromMavenCompilerPlugin.isPresent()) {
+            return javaVersionFromMavenCompilerPlugin.get();
+        }
+        Map<String, String> mergedProperties = updateEffectivePoms.stream()
+                .flatMap(ph -> ph.getModel().getProperties().entrySet().stream())
+                .filter(entry -> entry.getKey() instanceof String && entry.getValue() instanceof String)
+                .filter(entry -> propsToSearch.contains(entry.getKey()))
+                .collect(Collectors.toMap(entry -> ((String) entry.getKey()).replace("maven.compiler.", ""),
+                        entry -> (String) entry.getValue(),
+                        (s1, s2) -> {
+                            if (!Objects.equals(s1, s2)) {
+                                throw new IllegalStateException(String.format("Different java versions %s and %s specified in properties in poms: %s",
+                                        s1, s2, String.join(", ", updateEffectivePoms.stream().map(ph -> String.format("%s:%s", ph.getGroupId(), ph.getArtifactId())).toList())));
+                            } else {
+                                return s1;
+                            }
+                        }));
+        String versionFromProperties = mergedProperties.getOrDefault("release",
+                mergedProperties.getOrDefault("target",
+                        mergedProperties.get("source")));
+        if (versionFromProperties == null) {
+            throw new IllegalStateException("Failed to resolve java version neither from maven-compiler-plugin's configuration nor from 'maven.compiler.xxx' properties");
+        }
+        return versionFromProperties;
+    }
+
     void updateDependencies(String baseDir, RepositoryInfo repositoryInfo, List<PomHolder> poms, Collection<GAV> dependencies) {
-        updateDepVersionsNew(baseDir, repositoryInfo, poms, dependencies);
+        updateDepVersionsNew(repositoryInfo, poms, dependencies);
         // check all versions were updated
         Predicate<GA> filter = ga -> dependencies.stream().anyMatch(gav -> gav.getGroupId().equals(ga.getGroupId()) && gav.getArtifactId().equals(ga.getArtifactId()));
         List<PomHolder> updatedPoms = getPoms(baseDir, repositoryInfo);
@@ -394,7 +471,7 @@ public class ReleaseRunner {
         return new GA(artifactId, groupId);
     };
 
-    void updateDepVersionsNew(String baseDir, RepositoryInfo repositoryInfo, List<PomHolder> poms, Collection<GAV> dependencies) {
+    void updateDepVersionsNew(RepositoryInfo repositoryInfo, List<PomHolder> poms, Collection<GAV> dependencies) {
         Map<String, List<GAV>> propertiesToDependencies = new HashMap<>();
         Map<String, Set<PomHolder>> propertiesToPropertiesNodes = new HashMap<>();
         BiConsumer<PomHolder, Dependency> depFunction = (holder, dependency) -> {
@@ -564,13 +641,13 @@ public class ReleaseRunner {
         }
     }
 
-    Release releasePrepare(String baseDir, RepositoryInfo repositoryInfo, String releaseVersion, boolean runTests) {
-        Path repositoryDirPath = Paths.get(baseDir, repositoryInfo.getDir());
+    Release releasePrepare(RepositoryInfo repositoryInfo, Config config, String releaseVersion, String javaVersion) {
+        Path repositoryDirPath = Paths.get(config.getBaseDir(), repositoryInfo.getDir());
         Path outputFilePath = Paths.get(repositoryDirPath.toString(), "release-prepare-output.log");
 
         List<String> arguments = new ArrayList<>();
-        if (runTests) {
-//            arguments.add("surefire.rerunFailingTestsCount=2");
+        if (config.isRunTests()) {
+            arguments.add("surefire.rerunFailingTestsCount=2");
         } else {
             arguments.add("skipTests");
         }
@@ -586,7 +663,12 @@ public class ReleaseRunner {
         try {
             Files.writeString(outputFilePath, "", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
-            Process process = new ProcessBuilder(cmd).directory(repositoryDirPath.toFile()).start();
+            ProcessBuilder processBuilder = new ProcessBuilder(cmd).directory(repositoryDirPath.toFile());
+            String javaHome = config.getJavaVersionToJavaHomeEnv().get(javaVersion);
+            if (javaHome != null) {
+                processBuilder.environment().put("JAVA_HOME", javaHome);
+            }
+            Process process = processBuilder.start();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             OutputStream umbrellaOutStream = new OutputStream() {
                 @Override
