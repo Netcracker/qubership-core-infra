@@ -108,7 +108,7 @@ runs:
       working-directory: ${{ inputs.directory }}
       # language="shell script"
       run: |-
-        cat cat ~/.m2/settings.xml
+        cat ~/.m2/settings.xml
         git config user.email "actions@github.com"
         git config user.name "actions"
         git remote set-url origin https://x-access-token:${{ inputs.maven-token }}@github.com/${{ inputs.repository }}
