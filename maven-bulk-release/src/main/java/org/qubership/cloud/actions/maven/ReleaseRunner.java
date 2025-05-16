@@ -48,7 +48,7 @@ public class ReleaseRunner {
         CredentialsProvider.setDefault(credentialsProvider);
     }
 
-    public Result release(Config config) {
+    public Result prepare(Config config) {
         Result result = new Result();
         Map<GA, String> dependenciesGavs = config.getDependencies().stream().map(GAV::new).collect(Collectors.toMap(gav -> new GA(gav.getGroupId(), gav.getArtifactId()), GAV::getVersion));
         // build dependency graph
@@ -65,7 +65,7 @@ public class ReleaseRunner {
             try (ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
                 Set<GAV> gavList = dependenciesGavs.entrySet().stream().map(e -> new GAV(e.getKey().getGroupId(), e.getKey().getArtifactId(), e.getValue())).collect(Collectors.toSet());
                 List<Release> releases = reposInfoList.stream()
-                        .map(repo -> executorService.submit(() -> release(config, repo, gavList)))
+                        .map(repo -> executorService.submit(() -> prepare(config, repo, gavList)))
                         .toList()
                         .stream()
                         .map(future -> {
@@ -305,7 +305,7 @@ public class ReleaseRunner {
         }
     }
 
-    Release release(Config config, RepositoryInfo repository, Collection<GAV> dependencies) {
+    Release prepare(Config config, RepositoryInfo repository, Collection<GAV> dependencies) {
         String baseDir = config.getBaseDir();
         List<PomHolder> poms = getPoms(baseDir, repository);
         updateDependencies(baseDir, repository, poms, dependencies);
