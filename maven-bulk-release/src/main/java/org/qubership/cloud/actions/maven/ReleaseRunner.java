@@ -399,12 +399,7 @@ public class ReleaseRunner {
                             }
                             return s1;
                         }));
-        String version = props.getOrDefault("release", props.getOrDefault("target", props.get("source")));
-        if (version == null) {
-            throw new IllegalStateException("Failed to resolve java version neither from maven-compiler-plugin's configuration nor from 'maven.compiler.xxx' properties in poms: " +
-                                            String.join("\n", poms.stream().map(ph -> String.format("%s:%s", ph.getGroupId(), ph.getArtifactId())).toList()));
-        }
-        return version;
+        return props.getOrDefault("release", props.getOrDefault("target", props.get("source")));
     }
 
     void updateDependencies(String baseDir, RepositoryInfo repositoryInfo, List<PomHolder> poms, Collection<GAV> dependencies) {
@@ -550,10 +545,8 @@ public class ReleaseRunner {
             Files.writeString(outputFilePath, "", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
             ProcessBuilder processBuilder = new ProcessBuilder(cmd).directory(repositoryDirPath.toFile());
-            String javaHome = config.getJavaVersionToJavaHomeEnv().get(javaVersion);
-            if (javaHome != null) {
-                processBuilder.environment().put("JAVA_HOME", javaHome);
-            }
+            Optional.ofNullable(javaVersion).map(v-> config.getJavaVersionToJavaHomeEnv().get(v))
+                    .ifPresent(javaHome-> processBuilder.environment().put("JAVA_HOME", javaHome));
             Process process = processBuilder.start();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             OutputStream umbrellaOutStream = new OutputStream() {
@@ -638,10 +631,8 @@ public class ReleaseRunner {
             log.info("Repository: {}\nCmd: '{}' started", repositoryInfo.getUrl(), String.join(" ", cmd));
 
             ProcessBuilder processBuilder = new ProcessBuilder(cmd).directory(repositoryDirPath.toFile());
-            String javaHome = config.getJavaVersionToJavaHomeEnv().get(javaVersion);
-            if (javaHome != null) {
-                processBuilder.environment().put("JAVA_HOME", javaHome);
-            }
+            Optional.ofNullable(javaVersion).map(v-> config.getJavaVersionToJavaHomeEnv().get(v))
+                    .ifPresent(javaHome-> processBuilder.environment().put("JAVA_HOME", javaHome));
             Process process = processBuilder.start();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             OutputStream umbrellaOutStream = new OutputStream() {
@@ -674,9 +665,8 @@ public class ReleaseRunner {
         for (RepositoryInfo repositoryInfo : repositoryInfoList) {
             repositoryInfo.getRepoDependencies().forEach(ri -> graph.addEdge(ri.getUrl(), repositoryInfo.getUrl()));
         }
-        Function<String, String> vertexIdProvider = vertex -> {
-            return String.format("\"%s\"", vertex.replace("https://github.com/Netcracker/", ""));
-        };
+        Function<String, String> vertexIdProvider = vertex ->
+                String.format("\"%s\"", vertex.replace("https://github.com/Netcracker/", ""));
         DOTExporter<String, StringEdge> exporter = new DOTExporter<>(vertexIdProvider);
         try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
             exporter.exportGraph(graph, stream);
