@@ -58,7 +58,8 @@ public class ReleaseRunner {
 
         List<Release> allReleases = dependencyGraph.entrySet().stream().flatMap(entry -> {
             int level = entry.getKey();
-            log.info("Processing level {}/{}, repositories:\n{}", level + 1, dependencyGraph.size(), String.join("\n", entry.getValue().stream().map(Repository::getUrl).toList()));
+            log.info("Processing level {}/{}, {} repositories:\n{}", level + 1, dependencyGraph.size(), entry.getValue().size(),
+                    String.join("\n", entry.getValue().stream().map(Repository::getUrl).toList()));
             List<RepositoryInfo> reposInfoList = entry.getValue();
             int threads = reposInfoList.size();
 //            int threads = 1;
@@ -537,16 +538,17 @@ public class ReleaseRunner {
                 "-DautoVersionSubmodules=true",
                 "-DreleaseVersion=" + releaseVersion,
                 "-DpushChanges=false",
-                warpPropertyInQuotes(String.format("-Darguments=%s", String.join(" ", arguments.stream().map(arg -> "-D" + arg).toList()))),
+                "-Dtag=" + releaseVersion,
                 warpPropertyInQuotes("-DtagNameFormat=@{project.version}"),
+                warpPropertyInQuotes(String.format("-Darguments=%s", String.join(" ", arguments.stream().map(arg -> "-D" + arg).toList()))),
                 warpPropertyInQuotes("-DpreparationGoals=clean install"));
         log.info("Repository: {}\nCmd: '{}' started", repositoryInfo.getUrl(), String.join(" ", cmd));
         try {
             Files.writeString(outputFilePath, "", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
             ProcessBuilder processBuilder = new ProcessBuilder(cmd).directory(repositoryDirPath.toFile());
-            Optional.ofNullable(javaVersion).map(v-> config.getJavaVersionToJavaHomeEnv().get(v))
-                    .ifPresent(javaHome-> processBuilder.environment().put("JAVA_HOME", javaHome));
+            Optional.ofNullable(javaVersion).map(v -> config.getJavaVersionToJavaHomeEnv().get(v))
+                    .ifPresent(javaHome -> processBuilder.environment().put("JAVA_HOME", javaHome));
             Process process = processBuilder.start();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             OutputStream umbrellaOutStream = new OutputStream() {
@@ -626,13 +628,25 @@ public class ReleaseRunner {
             Path repositoryDirPath = Paths.get(baseDir, repositoryInfo.getDir());
             List<String> arguments = new ArrayList<>();
             arguments.add("skipTests");
-            List<String> cmd = List.of("mvn", "-B", "release:perform", "-DlocalCheckout=true", "-DautoVersionSubmodules=true",
-                    warpPropertyInQuotes(String.format("-Darguments=%s", String.join(" ", arguments.stream().map(arg -> "-D" + arg).toList()))));
+            if (config.getMavenAltDeploymentRepository() != null) {
+                arguments.add("altDeploymentRepository=" + config.getMavenAltDeploymentRepository());
+            }
+            String argsString = String.join(" ", arguments.stream().map(arg -> "-D" + arg).toList());
+            List<String> cmd = Stream.of("mvn", "-B", "release:perform",
+                            "-DlocalCheckout=true",
+                            "-DautoVersionSubmodules=true",
+                            warpPropertyInQuotes(String.format("-Darguments=%s", argsString)))
+                    .collect(Collectors.toList());
             log.info("Repository: {}\nCmd: '{}' started", repositoryInfo.getUrl(), String.join(" ", cmd));
 
             ProcessBuilder processBuilder = new ProcessBuilder(cmd).directory(repositoryDirPath.toFile());
-            Optional.ofNullable(javaVersion).map(v-> config.getJavaVersionToJavaHomeEnv().get(v))
-                    .ifPresent(javaHome-> processBuilder.environment().put("JAVA_HOME", javaHome));
+            Optional.ofNullable(javaVersion).map(v -> config.getJavaVersionToJavaHomeEnv().get(v))
+                    .ifPresent(javaHome -> processBuilder.environment().put("JAVA_HOME", javaHome));
+            // maven envs
+            if (config.getMavenUser() != null && config.getMavenPassword() != null) {
+                processBuilder.environment().put("MAVEN_USER", config.getMavenUser());
+                processBuilder.environment().put("MAVEN_TOKEN", config.getMavenPassword());
+            }
             Process process = processBuilder.start();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             OutputStream umbrellaOutStream = new OutputStream() {
