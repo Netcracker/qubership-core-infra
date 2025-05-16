@@ -1,13 +1,9 @@
 package org.qubership.cloud.actions.maven;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.maven.model.Dependency;
-import org.apache.maven.model.DependencyManagement;
-import org.apache.maven.model.Model;
-import org.apache.maven.model.Parent;
+import org.apache.maven.model.*;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
@@ -20,16 +16,17 @@ import org.jgrapht.Graph;
 import org.jgrapht.graph.SimpleDirectedGraph;
 import org.jgrapht.nio.dot.DOTExporter;
 import org.qubership.cloud.actions.maven.model.*;
+import org.qubership.cloud.actions.maven.model.Repository;
 
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -237,17 +234,8 @@ public class ReleaseRunner {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     if (Arrays.asList(file.toString().split("/")).contains("pom.xml")) {
-                        PomHolder pomHolder = new PomHolder();
                         String content = Files.readString(file);
-                        pomHolder.setPath(file);
-                        pomHolder.setPom(content);
-                        try {
-                            MavenXpp3Reader mavenReader = new MavenXpp3Reader();
-                            Model model = mavenReader.read(new ByteArrayInputStream(content.getBytes()));
-                            pomHolder.setModel(model);
-                        } catch (XmlPullParserException e) {
-                            throw new RuntimeException(e);
-                        }
+                        PomHolder pomHolder = new PomHolder(content, file);
                         poms.add(pomHolder);
                     }
                     return FileVisitResult.CONTINUE;
@@ -266,8 +254,7 @@ public class ReleaseRunner {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        return poms.stream()
-                .peek(pom -> {
+        return poms.stream().peek(pom -> {
                     Parent parent = pom.getModel().getParent();
                     if (parent != null) {
                         String groupId = parent.getGroupId();
@@ -286,26 +273,24 @@ public class ReleaseRunner {
         repositoryInfo.getModuleDependencies().clear();
         try {
             for (PomHolder pomHolder : poms) {
-                Map<String, String> properties = new HashMap<>();
                 Model project = pomHolder.getModel();
                 GA projectGA = pomGAFunction.apply(project);
-                String projectGroupId = autoResolveReferencedValue(pomHolder, projectGA.getGroupId(), properties);
-                String projectArtifactId = autoResolveReferencedValue(pomHolder, projectGA.getArtifactId(), properties);
+                String projectGroupId = pomHolder.autoResolvePropReference(projectGA.getGroupId());
+                String projectArtifactId = pomHolder.autoResolvePropReference(projectGA.getArtifactId());
                 GA moduleGA = new GA(projectGroupId, projectArtifactId);
                 repositoryInfo.getModules().add(moduleGA);
             }
             for (PomHolder pomHolder : poms) {
                 Model project = pomHolder.getModel();
-                Map<String, String> properties = new HashMap<>();
                 List<Dependency> dependencyManagementNodes = Optional.ofNullable(project.getDependencyManagement())
                         .map(DependencyManagement::getDependencies)
                         .orElse(List.of());
                 List<Dependency> dependenciesNodes = Optional.ofNullable(project.getDependencies()).orElse(List.of());
                 List<Dependency> allDependenciesNodes = Stream.concat(dependencyManagementNodes.stream(), dependenciesNodes.stream()).toList();
                 for (Dependency dependency : allDependenciesNodes) {
-                    String groupId = autoResolveReferencedValue(pomHolder, dependency.getGroupId(), properties);
-                    String artifactId = autoResolveReferencedValue(pomHolder, dependency.getArtifactId(), properties);
-                    String version = autoResolveReferencedValue(pomHolder, dependency.getVersion(), properties);
+                    String groupId = pomHolder.autoResolvePropReference(dependency.getGroupId());
+                    String artifactId = pomHolder.autoResolvePropReference(dependency.getArtifactId());
+                    String version = pomHolder.autoResolvePropReference(dependency.getVersion());
                     if (Stream.of(groupId, artifactId, version).allMatch(Objects::nonNull)) {
                         GAV dependencyGAV = new GAV(groupId, artifactId, version);
                         GA dependencyGA = new GA(groupId, artifactId);
@@ -363,78 +348,63 @@ public class ReleaseRunner {
     }
 
     String calculateJavaVersion(List<PomHolder> poms) {
-        Set<String> propsToSearch = Set.of("maven.compiler.source", "maven.compiler.target", "maven.compiler.release");
-        List<PomHolder> effectivePoms = poms.stream().map(ph -> {
-            String artifact = String.format("%s:%s", ph.getGroupId(), ph.getArtifactId());
-            Model effectivePom = getEffectivePom(ph.getPath().getParent(), artifact);
-            PomHolder pomHolder = new PomHolder();
-            pomHolder.setPath(ph.getPath());
-            pomHolder.setModel(effectivePom);
-            return pomHolder;
-        }).toList();
-        List<PomHolder> updateEffectivePoms = effectivePoms.stream().peek(pom -> {
-            Parent parent = pom.getModel().getParent();
-            if (parent != null) {
-                String groupId = parent.getGroupId();
-                String artifactId = parent.getArtifactId();
-                effectivePoms.stream().filter(ph -> Objects.equals(ph.getGroupId(), groupId) && Objects.equals(ph.getArtifactId(), artifactId))
-                        .findFirst().ifPresent(pom::setParent);
-            }
-        }).toList();
-        // first search among plugins in effective-poms
-        Optional<String> javaVersionFromMavenCompilerPlugin = updateEffectivePoms.stream().map(ph -> {
-                    Map<String, String> compilerPluginConfigProps = ph.getModel().getBuild().getPlugins().stream()
+        Set<String> propsToSearch = Set.of("maven.compiler.source", "maven.compiler.target", "maven.compiler.release", "java.version");
+        // first search among plugins in poms
+        Optional<String> versionFromPlugin = poms.stream().map(ph -> {
+                    Map<String, String> props = Optional.ofNullable(ph.getModel().getBuild()).map(PluginContainer::getPlugins).orElse(List.of()).stream()
                             .filter(plugin -> plugin.getArtifactId().equals("maven-compiler-plugin") && plugin.getConfiguration() instanceof Xpp3Dom)
                             .flatMap(plugin -> {
                                 Map<String, String> result = new HashMap<>();
-                                Xpp3Dom configuration = (Xpp3Dom) plugin.getConfiguration();
-                                Optional.ofNullable(configuration.getChild("release")).map(Xpp3Dom::getValue).ifPresentOrElse(r -> result.put("release", r),
-                                        () -> {
-                                            Optional.ofNullable(configuration.getChild("target")).map(Xpp3Dom::getValue).ifPresent(r -> result.put("target", r));
-                                            Optional.ofNullable(configuration.getChild("source")).map(Xpp3Dom::getValue).ifPresent(r -> result.put("source", r));
-                                        });
+                                Xpp3Dom config = (Xpp3Dom) plugin.getConfiguration();
+                                Optional.ofNullable(config.getChild("release"))
+                                        .map(Xpp3Dom::getValue)
+                                        .map(ph::autoResolvePropReference)
+                                        .ifPresent(r -> result.put("release", r));
+                                Optional.ofNullable(config.getChild("target"))
+                                        .map(Xpp3Dom::getValue)
+                                        .map(ph::autoResolvePropReference)
+                                        .ifPresent(r -> result.put("target", r));
+                                Optional.ofNullable(config.getChild("source"))
+                                        .map(Xpp3Dom::getValue)
+                                        .map(ph::autoResolvePropReference)
+                                        .ifPresent(r -> result.put("source", r));
                                 return result.entrySet().stream();
                             })
                             .filter(Objects::nonNull)
-                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-                                    (s1, s2) -> {
-                                        if (!Objects.equals(s1, s2)) {
-                                            throw new IllegalStateException(String.format("Different java versions %s and %s specified for maven-compiler-plugin in pom: %s",
-                                                    s1, s2, String.format("%s:%s", ph.getGroupId(), ph.getArtifactId())));
-                                        } else {
-                                            return s1;
-                                        }
-                                    }));
-                    return compilerPluginConfigProps.getOrDefault("release",
-                            compilerPluginConfigProps.getOrDefault("target",
-                                    compilerPluginConfigProps.get("source")));
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (s1, s2) -> {
+                                if (!Objects.equals(s1, s2)) {
+                                    throw new IllegalStateException(String.format("Different java versions %s and %s specified for maven-compiler-plugin in pom: %s",
+                                            s1, s2, String.format("%s:%s", ph.getGroupId(), ph.getArtifactId())));
+                                } else {
+                                    return s1;
+                                }
+                            }));
+                    return props.getOrDefault("release", props.getOrDefault("target", props.get("source")));
                 })
                 .filter(Objects::nonNull)
                 .findFirst();
-        if (javaVersionFromMavenCompilerPlugin.isPresent()) {
-            return javaVersionFromMavenCompilerPlugin.get();
+        if (versionFromPlugin.isPresent()) {
+            return versionFromPlugin.get();
         }
-        Map<String, String> mergedProperties = updateEffectivePoms.stream()
-                .flatMap(ph -> ph.getModel().getProperties().entrySet().stream())
-                .filter(entry -> entry.getKey() instanceof String && entry.getValue() instanceof String)
+        Map<String, String> props = poms.stream()
+                .flatMap(ph -> ph.getProperties().entrySet().stream())
                 .filter(entry -> propsToSearch.contains(entry.getKey()))
-                .collect(Collectors.toMap(entry -> ((String) entry.getKey()).replace("maven.compiler.", ""),
-                        entry -> (String) entry.getValue(),
+                .collect(Collectors.toMap(entry -> entry.getKey()
+                                .replace("maven.compiler.", "")
+                                .replace("java.version", "release"), Map.Entry::getValue,
                         (s1, s2) -> {
                             if (!Objects.equals(s1, s2)) {
                                 throw new IllegalStateException(String.format("Different java versions %s and %s specified in properties in poms: %s",
-                                        s1, s2, String.join(", ", updateEffectivePoms.stream().map(ph -> String.format("%s:%s", ph.getGroupId(), ph.getArtifactId())).toList())));
-                            } else {
-                                return s1;
+                                        s1, s2, String.join("\n", poms.stream().map(ph -> String.format("%s:%s", ph.getGroupId(), ph.getArtifactId())).toList())));
                             }
+                            return s1;
                         }));
-        String versionFromProperties = mergedProperties.getOrDefault("release",
-                mergedProperties.getOrDefault("target",
-                        mergedProperties.get("source")));
-        if (versionFromProperties == null) {
-            throw new IllegalStateException("Failed to resolve java version neither from maven-compiler-plugin's configuration nor from 'maven.compiler.xxx' properties");
+        String version = props.getOrDefault("release", props.getOrDefault("target", props.get("source")));
+        if (version == null) {
+            throw new IllegalStateException("Failed to resolve java version neither from maven-compiler-plugin's configuration nor from 'maven.compiler.xxx' properties in poms: " +
+                                            String.join("\n", poms.stream().map(ph -> String.format("%s:%s", ph.getGroupId(), ph.getArtifactId())).toList()));
         }
-        return versionFromProperties;
+        return version;
     }
 
     void updateDependencies(String baseDir, RepositoryInfo repositoryInfo, List<PomHolder> poms, Collection<GAV> dependencies) {
@@ -496,14 +466,12 @@ public class ReleaseRunner {
                     dependenciesList.add(newGav);
                 } else {
                     // update a hard-coded version right away
-                    updateVersionInDependency(holder, newGav);
+                    holder.updateVersionInDependency(newGav);
                 }
             }
         };
-        BiConsumer<PomHolder, Properties> propFunction = (holder, properties) -> {
-            Map<String, String> props = properties.entrySet().stream()
-                    .collect(Collectors.toMap(entry -> (String) entry.getKey(), entry -> (String) entry.getValue()));
-            props.forEach((propertyName, propertyValue) -> {
+        Consumer<PomHolder> propFunction = (holder) -> {
+            holder.getProperties().forEach((propertyName, propertyValue) -> {
                 if (propertiesToDependencies.containsKey(propertyName)) {
                     propertiesToPropertiesNodes.computeIfAbsent(propertyName, k -> new HashSet<>()).add(holder);
                 }
@@ -515,14 +483,7 @@ public class ReleaseRunner {
                     .ifPresent(d -> d.forEach(dep -> depFunction.accept(ph, dep)));
             Optional.ofNullable(ph.getModel().getDependencies())
                     .ifPresent(d -> d.forEach(dep -> depFunction.accept(ph, dep)));
-
-            PomHolder pomHolderWithProperties = ph;
-            while (pomHolderWithProperties != null) {
-                Model pomWithProperties = pomHolderWithProperties.getModel();
-                Optional.ofNullable(pomWithProperties.getProperties())
-                        .ifPresent(p -> propFunction.accept(ph, p));
-                pomHolderWithProperties = pomHolderWithProperties.getParent();
-            }
+            propFunction.accept(ph);
         });
         if (!propertiesToPropertiesNodes.isEmpty()) {
             propertiesToPropertiesNodes.forEach((propertyName, propertyNodes) -> {
@@ -536,7 +497,7 @@ public class ReleaseRunner {
                 }
                 String version = versionToGavs.keySet().iterator().next();
                 // update property value
-                propertyNodes.forEach(pom -> updatePropertyInPom(pom, propertyName, version));
+                propertyNodes.forEach(pom -> pom.updateProperty(propertyName, version));
             });
         }
         poms.forEach(pom -> {
@@ -546,81 +507,6 @@ public class ReleaseRunner {
                 throw new RuntimeException(e);
             }
         });
-    }
-
-    void updateVersionInDependency(PomHolder pom, GAV gav) {
-        Pattern dependencyPattern = Pattern.compile("(?s)<dependency>(.*?)</dependency>");
-        Pattern groupIdPattern = Pattern.compile("<groupId>(.+)</groupId>");
-        Pattern artifactIdPattern = Pattern.compile("<artifactId>(.+)</artifactId>");
-        Pattern versionPattern = Pattern.compile("<version>(.+)</version>");
-        String pomContent = pom.getPom();
-        Matcher matcher = dependencyPattern.matcher(pomContent);
-
-        Map<String, String> properties = new HashMap<>();
-        while (matcher.find()) {
-            String dependency = matcher.group();
-            String dependencyContent = matcher.group(1);
-            Matcher groupIdMatcher = groupIdPattern.matcher(dependencyContent);
-            Matcher artifactIdMatcher = artifactIdPattern.matcher(dependencyContent);
-            Matcher versionMatcher = versionPattern.matcher(dependencyContent);
-            if (groupIdMatcher.find() && artifactIdMatcher.find() && versionMatcher.find()) {
-                String groupId = autoResolveReferencedValue(pom, groupIdMatcher.group(1), properties);
-                String artifactId = autoResolveReferencedValue(pom, artifactIdMatcher.group(1), properties);
-                String version = versionMatcher.group(1);
-                if (groupId.equals(gav.getGroupId()) && artifactId.equals(gav.getArtifactId())) {
-                    pomContent = pomContent.replace(dependency, dependency.replace(version, gav.getVersion()));
-                }
-            }
-        }
-        pom.setPom(pomContent);
-    }
-
-    String autoResolveReferencedValue(PomHolder pom, String value, Map<String, String> properties) {
-        if (value == null) return null;
-        Pattern referencePattern = Pattern.compile("\\$\\{([^<>]+)}");
-        Matcher referenceMatcher = referencePattern.matcher(value);
-        if (referenceMatcher.find()) {
-            // find reference among properties
-            String prop = referenceMatcher.group(1);
-            if (properties.isEmpty()) properties.putAll(getProperties(pom));
-            String valueFromProperty = properties.get(prop);
-            if (valueFromProperty != null) {
-                return valueFromProperty;
-            } else {
-                return value;
-            }
-        }
-        return value;
-    }
-
-    Map<String, String> getProperties(PomHolder ph) {
-        Map<String, String> properties = new HashMap<>();
-        PomHolder pomHolderWithProperties = ph;
-        while (pomHolderWithProperties != null) {
-            Model pomWithProperties = pomHolderWithProperties.getModel();
-            properties.putAll(pomWithProperties.getProperties().entrySet().stream()
-                    .collect(Collectors.toMap(entry -> (String) entry.getKey(), entry -> (String) entry.getValue())));
-            pomHolderWithProperties = pomHolderWithProperties.getParent();
-        }
-        return properties;
-    }
-
-    void updatePropertyInPom(PomHolder pom, String name, String version) {
-        Pattern propertiesPattern = Pattern.compile("(?s)<properties>(.+?)</properties>");
-        Pattern propertyPattern = Pattern.compile(MessageFormat.format("<{0}>(.+)</{0}>", name));
-        String pomContent = pom.getPom();
-        Matcher matcher = propertiesPattern.matcher(pomContent);
-        while (matcher.find()) {
-            String properties = matcher.group();
-            String propertiesContent = matcher.group(1);
-            Matcher propMatcher = propertyPattern.matcher(propertiesContent);
-            String newVersionTag = MessageFormat.format("<{0}>{1}</{0}>", name, version);
-            while (propMatcher.find()) {
-                String oldVersionTag = propMatcher.group();
-                pomContent = pomContent.replace(properties, properties.replace(oldVersionTag, newVersionTag));
-            }
-        }
-        pom.setPom(pomContent);
     }
 
     void commitUpdatedDependenciesIfAny(String baseDir, RepositoryInfo repository) {
