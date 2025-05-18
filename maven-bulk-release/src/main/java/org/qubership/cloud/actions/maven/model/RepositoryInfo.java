@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 public class RepositoryInfo extends Repository {
     public static Pattern repositoryUrlPattern = Pattern.compile("https?://[^/]+/(.+)");
 
-    String name;
     Set<GA> modules = new HashSet<>();
     Set<GAV> moduleDependencies = new HashSet<>();
     Set<RepositoryInfo> repoDependencies = new HashSet<>();
@@ -25,7 +24,6 @@ public class RepositoryInfo extends Repository {
         Matcher matcher = repositoryUrlPattern.matcher(url);
         if (!matcher.matches()) throw new IllegalArgumentException("Invalid repository url: " + url);
         this.dir = matcher.group(1);
-        this.name = this.dir.replaceAll("[/-]", "_");
     }
 
     public RepositoryInfo(String url, Set<RepositoryInfo> repoDependencies) {
@@ -40,4 +38,8 @@ public class RepositoryInfo extends Repository {
         return result;
     }
 
+    @Override
+    public String toString() {
+        return getUrl();
+    }
 }

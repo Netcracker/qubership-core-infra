@@ -50,7 +50,7 @@ public class ReleaseRunner {
 
     public Result prepare(Config config) {
         Result result = new Result();
-        Map<GA, String> dependenciesGavs = config.getDependencies().stream().map(GAV::new).collect(Collectors.toMap(gav -> new GA(gav.getGroupId(), gav.getArtifactId()), GAV::getVersion));
+        Map<GA, String> dependenciesGavs = config.getGavs().stream().map(GAV::new).collect(Collectors.toMap(gav -> new GA(gav.getGroupId(), gav.getArtifactId()), GAV::getVersion));
         // build dependency graph
         Map<Integer, List<RepositoryInfo>> dependencyGraph = buildDependencyGraph(config);
         String dot = generateDotFile(dependencyGraph);
@@ -108,7 +108,7 @@ public class ReleaseRunner {
         String baseDir = config.getBaseDir();
         List<String> repositories = config.getRepositories();
         Predicate<GA> dependenciesFilter = config.getDependenciesFilter();
-        try (ExecutorService executorService = Executors.newFixedThreadPool(5)) {
+        try (ExecutorService executorService = Executors.newFixedThreadPool(8)) {
             List<RepositoryInfo> repositoryInfoList = repositories.stream().map(RepositoryInfo::new)
                     .map(repositoryInfo -> executorService.submit(() -> {
                         gitCheckout(baseDir, repositoryInfo);
@@ -127,25 +127,40 @@ public class ReleaseRunner {
                             throw new RuntimeException(e);
                         }
                     }).toList();
+            // set repository dependencies
             for (RepositoryInfo repositoryInfo : repositoryInfoList.stream().filter(ri -> !ri.getModuleDependencies().isEmpty()).toList()) {
                 Set<GA> moduleDependencies = repositoryInfo.getModuleDependencies().stream()
-                        .map(gav -> new GA(gav.getGroupId(), gav.getArtifactId())).collect(Collectors.toSet());
+                        .map(gav -> new GA(gav.getGroupId(), gav.getArtifactId()))
+                        .collect(Collectors.toSet());
                 repositoryInfo.getRepoDependencies().addAll(moduleDependencies.stream()
                         .flatMap(ga -> repositoryInfoList.stream().filter(ri -> ri.getModules().contains(ga)))
                         .filter(repo -> !Objects.equals(repo.getUrl(), repositoryInfo.getUrl()))
                         .collect(Collectors.toSet()));
             }
+
+            List<RepositoryInfo> repositoryInfos = Optional.ofNullable(config.getRepositoriesToReleaseFrom())
+                    .map(repositoriesToReleaseFrom -> repositoryInfoList.stream()
+                            // filter repositories which are not affected by 'released from' repositories
+                            .filter(ri -> repositoriesToReleaseFrom.contains(ri.getUrl()) || repositoriesToReleaseFrom.stream()
+                                    .anyMatch(riFrom -> ri.getRepoDependenciesFlatSet().stream()
+                                            .map(Repository::getUrl).collect(Collectors.toSet()).contains(riFrom)))
+                            .toList())
+                    .orElse(repositoryInfoList);
+
             Graph<String, StringEdge> graph = new SimpleDirectedGraph<>(StringEdge.class);
 
-            for (RepositoryInfo repositoryInfo : repositoryInfoList) {
+            for (RepositoryInfo repositoryInfo : repositoryInfos) {
                 graph.addVertex(repositoryInfo.getUrl());
             }
-            for (RepositoryInfo repositoryInfo : repositoryInfoList) {
-                repositoryInfo.getRepoDependenciesFlatSet().forEach(ri -> graph.addEdge(ri.getUrl(), repositoryInfo.getUrl()));
+            for (RepositoryInfo repositoryInfo : repositoryInfos) {
+                repositoryInfo.getRepoDependenciesFlatSet()
+                        .stream()
+                        .filter(ri-> repositoryInfos.stream().anyMatch(riFrom -> Objects.equals(riFrom.getUrl(), ri.getUrl())))
+                        .forEach(ri -> graph.addEdge(ri.getUrl(), repositoryInfo.getUrl()));
             }
 
-            List<RepositoryInfo> independentRepos = repositoryInfoList.stream().filter(ri -> graph.incomingEdgesOf(ri.getUrl()).isEmpty()).toList();
-            List<RepositoryInfo> dependentRepos = repositoryInfoList.stream().filter(ri -> !graph.incomingEdgesOf(ri.getUrl()).isEmpty()).collect(Collectors.toList());
+            List<RepositoryInfo> independentRepos = repositoryInfos.stream().filter(ri -> graph.incomingEdgesOf(ri.getUrl()).isEmpty()).toList();
+            List<RepositoryInfo> dependentRepos = repositoryInfos.stream().filter(ri -> !graph.incomingEdgesOf(ri.getUrl()).isEmpty()).collect(Collectors.toList());
             Map<Integer, List<RepositoryInfo>> groupedReposMap = new TreeMap<>();
             groupedReposMap.put(0, independentRepos);
             int level = 1;
@@ -677,7 +692,10 @@ public class ReleaseRunner {
             graph.addVertex(repositoryInfo.getUrl());
         }
         for (RepositoryInfo repositoryInfo : repositoryInfoList) {
-            repositoryInfo.getRepoDependencies().forEach(ri -> graph.addEdge(ri.getUrl(), repositoryInfo.getUrl()));
+            repositoryInfo.getRepoDependencies()
+                    .stream()
+                    .filter(ri-> dependencyGraph.values().stream().flatMap(Collection::stream).anyMatch(ri2 -> Objects.equals(ri2.getUrl(), ri.getUrl())))
+                    .forEach(ri -> graph.addEdge(ri.getUrl(), repositoryInfo.getUrl()));
         }
         Function<String, String> vertexIdProvider = vertex ->
                 String.format("\"%s\"", vertex.replace("https://github.com/Netcracker/", ""));

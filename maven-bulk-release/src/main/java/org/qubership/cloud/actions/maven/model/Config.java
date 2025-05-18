@@ -17,11 +17,11 @@ public class Config {
     // all repositories
     final List<String> repositories;
     final Predicate<GA> dependenciesFilter;
-    Collection<String> dependencies = new ArrayList<>();
+    Collection<String> gavs = new ArrayList<>();
     VersionIncrementType versionIncrementType = VersionIncrementType.PATCH;
     Map<String, String> javaVersionToJavaHomeEnv = new HashMap<>();
     // particular repository(ies) to start release from (the rest of the tree will be calculated automatically)
-    List<String> repositoriesToReleaseFrom = new ArrayList<>();
+    Set<String> repositoriesToReleaseFrom = new LinkedHashSet<>();
     String mavenUser;
     String mavenPassword;
     String mavenAltDeploymentRepository;
