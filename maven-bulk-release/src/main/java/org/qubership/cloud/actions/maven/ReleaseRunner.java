@@ -56,16 +56,15 @@ public class ReleaseRunner {
         String dot = generateDotFile(dependencyGraph);
         result.setDependenciesDot(dot);
 
-        List<Release> allReleases = dependencyGraph.entrySet().stream().flatMap(entry -> {
+        List<RepositoryRelease> allReleases = dependencyGraph.entrySet().stream().flatMap(entry -> {
             int level = entry.getKey();
             log.info("Processing level {}/{}, {} repositories:\n{}", level + 1, dependencyGraph.size(), entry.getValue().size(),
                     String.join("\n", entry.getValue().stream().map(Repository::getUrl).toList()));
             List<RepositoryInfo> reposInfoList = entry.getValue();
             int threads = reposInfoList.size();
-//            int threads = 1;
             try (ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
                 Set<GAV> gavList = dependenciesGavs.entrySet().stream().map(e -> new GAV(e.getKey().getGroupId(), e.getKey().getArtifactId(), e.getValue())).collect(Collectors.toSet());
-                List<Release> releases = reposInfoList.stream()
+                List<RepositoryRelease> releases = reposInfoList.stream()
                         .map(repo -> executorService.submit(() -> prepare(config, repo, gavList)))
                         .toList()
                         .stream()
@@ -321,7 +320,7 @@ public class ReleaseRunner {
         }
     }
 
-    Release prepare(Config config, RepositoryInfo repository, Collection<GAV> dependencies) {
+    RepositoryRelease prepare(Config config, RepositoryInfo repository, Collection<GAV> dependencies) {
         String baseDir = config.getBaseDir();
         List<PomHolder> poms = getPoms(baseDir, repository);
         updateDependencies(baseDir, repository, poms, dependencies);
@@ -538,7 +537,7 @@ public class ReleaseRunner {
         }
     }
 
-    Release releasePrepare(RepositoryInfo repositoryInfo, Config config, String releaseVersion, String javaVersion) {
+    RepositoryRelease releasePrepare(RepositoryInfo repositoryInfo, Config config, String releaseVersion, String javaVersion) {
         Path repositoryDirPath = Paths.get(config.getBaseDir(), repositoryInfo.getDir());
         Path outputFilePath = Paths.get(repositoryDirPath.toString(), "release-prepare-output.log");
 
@@ -588,7 +587,7 @@ public class ReleaseRunner {
                             .replace("\\", "")
                             .replace("=", ":"))
                     .map(GAV::new).toList();
-            Release release = new Release();
+            RepositoryRelease release = new RepositoryRelease();
             release.setRepository(repositoryInfo);
             release.setReleaseVersion(releaseVersion);
             release.setJavaVersion(javaVersion);
@@ -603,7 +602,7 @@ public class ReleaseRunner {
         return String.format("\"%s\"", prop);
     }
 
-    void performRelease(Config config, Release release) {
+    void performRelease(Config config, RepositoryRelease release) {
         try {
             String baseDir = config.getBaseDir();
             RepositoryInfo repository = release.getRepository();
@@ -698,7 +697,7 @@ public class ReleaseRunner {
                     .forEach(ri -> graph.addEdge(ri.getUrl(), repositoryInfo.getUrl()));
         }
         Function<String, String> vertexIdProvider = vertex ->
-                String.format("\"%s\"", vertex.replace("https://github.com/Netcracker/", ""));
+                String.format("\"%s\"", vertex.contains("/")? Optional.of(vertex.split("/")).map(v-> v[v.length-1]).get() : vertex);
         DOTExporter<String, StringEdge> exporter = new DOTExporter<>(vertexIdProvider);
         try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
             exporter.exportGraph(graph, stream);

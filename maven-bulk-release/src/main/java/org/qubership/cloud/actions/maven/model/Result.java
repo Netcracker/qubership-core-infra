@@ -7,5 +7,5 @@ import java.util.List;
 @Data
 public class Result {
     String dependenciesDot;
-    List<Release> releases;
+    List<RepositoryRelease> releases;
 }
