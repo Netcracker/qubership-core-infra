@@ -9,9 +9,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.TextProgressMonitor;
-import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.TagOpt;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.SimpleDirectedGraph;
 import org.jgrapht.nio.dot.DOTExporter;
@@ -41,14 +39,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class ReleaseRunner {
     static Pattern propertyPattern = Pattern.compile("\\$\\{(.*?)}");
 
-    UsernamePasswordCredentialsProvider credentialsProvider;
-
-    public ReleaseRunner(String gitUsername, String gitPassword) {
-        credentialsProvider = new UsernamePasswordCredentialsProvider(gitUsername, gitPassword);
-        CredentialsProvider.setDefault(credentialsProvider);
-    }
-
-    public Result prepare(Config config) {
+    public Result release(Config config) {
         Result result = new Result();
         Map<GA, String> dependenciesGavs = config.getGavs().stream().map(GAV::new).collect(Collectors.toMap(gav -> new GA(gav.getGroupId(), gav.getArtifactId()), GAV::getVersion));
         // build dependency graph
@@ -66,7 +57,7 @@ public class ReleaseRunner {
             try (ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
                 Set<GAV> gavList = dependenciesGavs.entrySet().stream().map(e -> new GAV(e.getKey().getGroupId(), e.getKey().getArtifactId(), e.getValue())).collect(Collectors.toSet());
                 List<RepositoryRelease> releases = reposInfoList.stream()
-                        .map(repo -> executorService.submit(() -> prepare(config, repo, gavList)))
+                        .map(repo -> executorService.submit(() -> release(config, repo, gavList)))
                         .toList()
                         .stream()
                         .map(future -> {
@@ -111,12 +102,12 @@ public class ReleaseRunner {
 
     Map<Integer, List<RepositoryInfo>> buildDependencyGraph(Config config) {
         String baseDir = config.getBaseDir();
-        List<String> repositories = config.getRepositories();
+        Set<String> repositories = config.getRepositories();
         Predicate<GA> dependenciesFilter = config.getDependenciesFilter();
         try (ExecutorService executorService = Executors.newFixedThreadPool(8)) {
             List<RepositoryInfo> repositoryInfoList = repositories.stream().map(RepositoryInfo::new)
                     .map(repositoryInfo -> executorService.submit(() -> {
-                        gitCheckout(baseDir, repositoryInfo);
+                        gitCheckout(config, baseDir, repositoryInfo);
                         List<PomHolder> poms = getPoms(baseDir, repositoryInfo);
                         resolveDependencies(repositoryInfo, poms, dependenciesFilter);
                         return repositoryInfo;
@@ -144,6 +135,7 @@ public class ReleaseRunner {
             }
 
             List<RepositoryInfo> repositoryInfos = Optional.ofNullable(config.getRepositoriesToReleaseFrom())
+                    .map(r -> r.isEmpty() ? null : r)
                     .map(repositoriesToReleaseFrom -> repositoryInfoList.stream()
                             // filter repositories which are not affected by 'released from' repositories
                             .filter(ri -> repositoriesToReleaseFrom.contains(ri.getUrl()) || repositoriesToReleaseFrom.stream()
@@ -182,7 +174,7 @@ public class ReleaseRunner {
         }
     }
 
-    void gitCheckout(String baseDir, Repository repository) {
+    void gitCheckout(Config config, String baseDir, Repository repository) {
         Path repositoryDirPath = Paths.get(baseDir, repository.getDir());
         boolean repositoryDirExists = Files.exists(repositoryDirPath);
         try {
@@ -202,7 +194,7 @@ public class ReleaseRunner {
                         });
             }
             try (Git git = Git.cloneRepository()
-                    .setCredentialsProvider(credentialsProvider)
+                    .setCredentialsProvider(config.getCredentialsProvider())
                     .setURI(repository.getUrl())
                     .setDirectory(repositoryDirPath.toFile())
                     .setDepth(1)
@@ -325,7 +317,7 @@ public class ReleaseRunner {
         }
     }
 
-    RepositoryRelease prepare(Config config, RepositoryInfo repository, Collection<GAV> dependencies) {
+    RepositoryRelease release(Config config, RepositoryInfo repository, Collection<GAV> dependencies) {
         String baseDir = config.getBaseDir();
         List<PomHolder> poms = getPoms(baseDir, repository);
         updateDependencies(baseDir, repository, poms, dependencies);
@@ -551,12 +543,13 @@ public class ReleaseRunner {
         } else {
             arguments.add("skipTests");
         }
+        String tag = releaseVersion;
         List<String> cmd = List.of("mvn", "-B", "release:prepare",
                 "-Dresume=false",
                 "-DautoVersionSubmodules=true",
                 "-DreleaseVersion=" + releaseVersion,
                 "-DpushChanges=false",
-                "-Dtag=" + releaseVersion,
+                "-Dtag=" + tag,
                 warpPropertyInQuotes("-DtagNameFormat=@{project.version}"),
                 warpPropertyInQuotes(String.format("-Darguments=%s", String.join(" ", arguments.stream().map(arg -> "-D" + arg).toList()))),
                 warpPropertyInQuotes("-DpreparationGoals=clean install"));
@@ -594,6 +587,7 @@ public class ReleaseRunner {
             RepositoryRelease release = new RepositoryRelease();
             release.setRepository(repositoryInfo);
             release.setReleaseVersion(releaseVersion);
+            release.setTag(tag);
             release.setJavaVersion(javaVersion);
             release.setGavs(gavs);
             return release;
@@ -615,15 +609,15 @@ public class ReleaseRunner {
             Path outputFilePath = Paths.get(repositoryDirPath.toString(), "release-perform-output.log");
             Files.writeString(outputFilePath, "", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
-            pushChanges(baseDir, repository, releaseVersion);
+            pushChanges(config, repository, releaseVersion);
             releaseDeploy(baseDir, repository, outputFilePath, config, release.getJavaVersion());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    void pushChanges(String baseDir, RepositoryInfo repositoryInfo, String releaseVersion) {
-        Path repositoryDirPath = Paths.get(baseDir, repositoryInfo.getDir());
+    void pushChanges(Config config, RepositoryInfo repositoryInfo, String releaseVersion) {
+        Path repositoryDirPath = Paths.get(config.getBaseDir(), repositoryInfo.getDir());
         try (Git git = Git.open(repositoryDirPath.toFile())) {
             Optional<Ref> tagOpt = git.tagList().call().stream()
                     .filter(t -> t.getName().equals(String.format("refs/tags/%s", releaseVersion)))
@@ -631,7 +625,7 @@ public class ReleaseRunner {
             if (tagOpt.isEmpty()) {
                 throw new IllegalStateException(String.format("git tag: %s not found", releaseVersion));
             }
-            git.push().setCredentialsProvider(credentialsProvider)
+            git.push().setCredentialsProvider(config.getCredentialsProvider())
                     .setRemote("origin")
                     .setPushAll()
                     .setPushTags()

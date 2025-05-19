@@ -8,6 +8,7 @@ import java.util.List;
 public class RepositoryRelease {
     RepositoryInfo repository;
     String releaseVersion;
+    String tag;
     List<GAV> gavs;
     String javaVersion;
     boolean pushedToGit;

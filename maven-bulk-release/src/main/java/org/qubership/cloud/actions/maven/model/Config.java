@@ -1,21 +1,18 @@
 package org.qubership.cloud.actions.maven.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import org.eclipse.jgit.transport.CredentialsProvider;
 
 import java.util.*;
 import java.util.function.Predicate;
 
 @Data
-@Builder
-@RequiredArgsConstructor
-@AllArgsConstructor
 public class Config {
     final String baseDir;
+    final CredentialsProvider credentialsProvider;
     // all repositories
-    final List<String> repositories;
+    final Set<String> repositories;
     final Predicate<GA> dependenciesFilter;
     Collection<String> gavs = new ArrayList<>();
     VersionIncrementType versionIncrementType = VersionIncrementType.PATCH;
@@ -27,4 +24,41 @@ public class Config {
     String mavenAltDeploymentRepository;
     boolean runTests;
     boolean runDeploy;
+
+    @Builder(builderMethodName = "")
+    private Config(String baseDir,
+                  CredentialsProvider credentialsProvider,
+                  Set<String> repositories,
+                  Predicate<GA> dependenciesFilter,
+                  Collection<String> gavs,
+                  VersionIncrementType versionIncrementType,
+                  Map<String, String> javaVersionToJavaHomeEnv,
+                  Set<String> repositoriesToReleaseFrom,
+                  String mavenUser,
+                  String mavenPassword,
+                  String mavenAltDeploymentRepository,
+                  boolean runDeploy,
+                  boolean runTests) {
+        this.baseDir = baseDir;
+        this.credentialsProvider = credentialsProvider;
+        this.dependenciesFilter = dependenciesFilter;
+        this.gavs = gavs;
+        this.javaVersionToJavaHomeEnv = javaVersionToJavaHomeEnv;
+        this.mavenAltDeploymentRepository = mavenAltDeploymentRepository;
+        this.mavenPassword = mavenPassword;
+        this.mavenUser = mavenUser;
+        this.repositories = repositories;
+        this.repositoriesToReleaseFrom = repositoriesToReleaseFrom;
+        this.runDeploy = runDeploy;
+        this.runTests = runTests;
+        this.versionIncrementType = versionIncrementType;
+    }
+
+    public static ConfigBuilder builder(String baseDir,
+                                        CredentialsProvider credentialsProvider,
+                                        Set<String> repositories,
+                                        Predicate<GA> dependenciesFilter) {
+        CredentialsProvider.setDefault(credentialsProvider);
+        return new ConfigBuilder().baseDir(baseDir).credentialsProvider(credentialsProvider).repositories(repositories).dependenciesFilter(dependenciesFilter);
+    }
 }

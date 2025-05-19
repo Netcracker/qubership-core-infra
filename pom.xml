@@ -16,6 +16,7 @@
 
     <modules>
         <module>maven-bulk-release</module>
+        <module>maven-bulk-release-cli</module>
     </modules>
 
     <build>
