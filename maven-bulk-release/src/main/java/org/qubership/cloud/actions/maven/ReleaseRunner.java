@@ -53,12 +53,13 @@ public class ReleaseRunner {
         Map<GA, String> dependenciesGavs = config.getGavs().stream().map(GAV::new).collect(Collectors.toMap(gav -> new GA(gav.getGroupId(), gav.getArtifactId()), GAV::getVersion));
         // build dependency graph
         Map<Integer, List<RepositoryInfo>> dependencyGraph = buildDependencyGraph(config);
+        result.setDependencyGraph(dependencyGraph);
         String dot = generateDotFile(dependencyGraph);
         result.setDependenciesDot(dot);
 
         List<RepositoryRelease> allReleases = dependencyGraph.entrySet().stream().flatMap(entry -> {
             int level = entry.getKey();
-            log.info("Processing level {}/{}, {} repositories:\n{}", level + 1, dependencyGraph.size(), entry.getValue().size(),
+            log.info("Running 'prepare' - processing level {}/{}, {} repositories:\n{}", level + 1, dependencyGraph.size(), entry.getValue().size(),
                     String.join("\n", entry.getValue().stream().map(Repository::getUrl).toList()));
             List<RepositoryInfo> reposInfoList = entry.getValue();
             int threads = reposInfoList.size();
@@ -85,19 +86,24 @@ public class ReleaseRunner {
         }).toList();
 
         if (config.isRunDeploy()) {
-            try (ExecutorService executorService = Executors.newFixedThreadPool(4)) {
-                allReleases.stream()
-                        .map(release -> executorService.submit(() -> performRelease(config, release)))
-                        .toList()
-                        .forEach(future -> {
-                            try {
-                                future.get();
-                            } catch (Exception e) {
-                                if (e instanceof InterruptedException) Thread.currentThread().interrupt();
-                                throw new RuntimeException(e);
-                            }
-                        });
-            }
+            dependencyGraph.forEach((level, repos) -> {
+                log.info("Running 'perform' - processing level {}/{}, {} repositories:\n{}", level + 1, dependencyGraph.size(), repos.size(),
+                        String.join("\n", repos.stream().map(Repository::getUrl).toList()));
+                try (ExecutorService executorService = Executors.newFixedThreadPool(repos.size())) {
+                    allReleases.stream()
+                            .filter(release -> repos.stream().map(Repository::getUrl).anyMatch(repo -> Objects.equals(repo, release.getRepository().getUrl())))
+                            .map(release -> executorService.submit(() -> performRelease(config, release)))
+                            .toList()
+                            .forEach(future -> {
+                                try {
+                                    future.get();
+                                } catch (Exception e) {
+                                    if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+                                    throw new RuntimeException(e);
+                                }
+                            });
+                }
+            });
         }
         result.setReleases(allReleases);
         return result;
@@ -154,7 +160,7 @@ public class ReleaseRunner {
             for (RepositoryInfo repositoryInfo : repositoryInfos) {
                 repositoryInfo.getRepoDependenciesFlatSet()
                         .stream()
-                        .filter(ri-> repositoryInfos.stream().anyMatch(riFrom -> Objects.equals(riFrom.getUrl(), ri.getUrl())))
+                        .filter(ri -> repositoryInfos.stream().anyMatch(riFrom -> Objects.equals(riFrom.getUrl(), ri.getUrl())))
                         .forEach(ri -> graph.addEdge(ri.getUrl(), repositoryInfo.getUrl()));
             }
 
@@ -205,7 +211,6 @@ public class ReleaseRunner {
                     .setTagOption(TagOpt.FETCH_TAGS)
                     .setProgressMonitor(new TextProgressMonitor(new PrintWriter(new OutputStreamWriter(System.out, UTF_8))))
                     .call()) {
-//                git.fetch().call();
             } catch (GitAPIException e) {
                 throw new RuntimeException(e);
             }
@@ -480,13 +485,12 @@ public class ReleaseRunner {
                 }
             }
         };
-        Consumer<PomHolder> propFunction = (holder) -> {
-            holder.getProperties().forEach((propertyName, propertyValue) -> {
-                if (propertiesToDependencies.containsKey(propertyName)) {
-                    propertiesToPropertiesNodes.computeIfAbsent(propertyName, k -> new HashSet<>()).add(holder);
-                }
-            });
-        };
+        Consumer<PomHolder> propFunction = (holder) -> holder.getProperties()
+                .forEach((propertyName, propertyValue) -> {
+                    if (propertiesToDependencies.containsKey(propertyName)) {
+                        propertiesToPropertiesNodes.computeIfAbsent(propertyName, k -> new HashSet<>()).add(holder);
+                    }
+                });
         poms.forEach(ph -> {
             Optional.ofNullable(ph.getModel().getDependencyManagement())
                     .map(DependencyManagement::getDependencies)
@@ -693,11 +697,24 @@ public class ReleaseRunner {
         for (RepositoryInfo repositoryInfo : repositoryInfoList) {
             repositoryInfo.getRepoDependencies()
                     .stream()
-                    .filter(ri-> dependencyGraph.values().stream().flatMap(Collection::stream).anyMatch(ri2 -> Objects.equals(ri2.getUrl(), ri.getUrl())))
+                    .filter(ri -> dependencyGraph.values().stream().flatMap(Collection::stream).anyMatch(ri2 -> Objects.equals(ri2.getUrl(), ri.getUrl())))
                     .forEach(ri -> graph.addEdge(ri.getUrl(), repositoryInfo.getUrl()));
         }
-        Function<String, String> vertexIdProvider = vertex ->
-                String.format("\"%s\"", vertex.contains("/")? Optional.of(vertex.split("/")).map(v-> v[v.length-1]).get() : vertex);
+        Function<String, String> vertexIdProvider = vertex -> {
+            int level = dependencyGraph.entrySet().stream()
+                    .filter(e -> e.getValue().stream().anyMatch(ri -> Objects.equals(ri.getUrl(), vertex)))
+                    .mapToInt(Map.Entry::getKey).findFirst()
+                    .orElseThrow(() -> new IllegalStateException(String.format("Failed to find level for vertex: %s", vertex)));
+            List<RepositoryInfo> repositoryInfos = dependencyGraph.get(level);
+            int index = IntStream.range(0, repositoryInfos.size())
+                    .boxed()
+                    .filter(i -> repositoryInfos.get(i).getUrl().equals(vertex))
+                    .mapToInt(i -> i)
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException(String.format("Failed to find index for vertex: %s", vertex)));
+            String id = vertex.contains("/") ? Optional.of(vertex.split("/")).map(v -> v[v.length - 1]).get() : vertex;
+            return String.format("\"%d.%d %s\"", level + 1, index + 1, id);
+        };
         DOTExporter<String, StringEdge> exporter = new DOTExporter<>(vertexIdProvider);
         try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
             exporter.exportGraph(graph, stream);
