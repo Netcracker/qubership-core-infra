@@ -10,6 +10,14 @@ on:
       maven-goal:
         required: true
         type: string
+      sonar-project-key:
+        required: true
+        type: string
+    secrets:
+      maven-token:
+        required: true
+      sonar-token:
+        required: true
 
 jobs:
   mvn:
@@ -19,12 +27,12 @@ jobs:
         --batch-mode ${{ inputs.maven-goal }} 
         -Dgpg.skip=true 
         org.sonarsource.scanner.maven:sonar-maven-plugin:${{ vars.SONAR_PLUGIN_VERSION }}:sonar 
-        -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }} 
+        -Dsonar.projectKey=${{ inputs.sonar-project-key }}
         -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }} 
         -Dsonar.host.url=${{ vars.SONAR_HOST_URL }}
       server-id: github
       java-version: ${{ inputs.java-version }}
       ref: ${{ github.head_ref }}
     secrets:
-      maven-token: ${{ secrets.GITHUB_TOKEN }}
-      sonar-token: ${{ secrets.SONAR_TOKEN }}
+      maven-token: ${{ secrets.maven-token }}
+      sonar-token: ${{ secrets.sonar-token }}
