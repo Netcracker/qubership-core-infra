@@ -605,20 +605,20 @@ public class ReleaseRunner {
         try {
             String baseDir = config.getBaseDir();
             RepositoryInfo repository = release.getRepository();
-            String releaseVersion = release.getReleaseVersion();
             Path repositoryDirPath = Paths.get(baseDir, repository.getDir());
             Path outputFilePath = Paths.get(repositoryDirPath.toString(), "release-perform-output.log");
             Files.writeString(outputFilePath, "", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
-            pushChanges(config, repository, releaseVersion);
-            releaseDeploy(baseDir, repository, outputFilePath, config, release.getJavaVersion());
+            pushChanges(config, repository, release);
+            releaseDeploy(baseDir, repository, outputFilePath, config, release);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    void pushChanges(Config config, RepositoryInfo repositoryInfo, String releaseVersion) {
+    void pushChanges(Config config, RepositoryInfo repositoryInfo, RepositoryRelease release) {
         Path repositoryDirPath = Paths.get(config.getBaseDir(), repositoryInfo.getDir());
+        String releaseVersion = release.getReleaseVersion();
         try (Git git = Git.open(repositoryDirPath.toFile())) {
             Optional<Ref> tagOpt = git.tagList().call().stream()
                     .filter(t -> t.getName().equals(String.format("refs/tags/%s", releaseVersion)))
@@ -634,9 +634,10 @@ public class ReleaseRunner {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        release.setPushedToGit(true);
     }
 
-    void releaseDeploy(String baseDir, RepositoryInfo repositoryInfo, Path outputFilePath, Config config, String javaVersion) {
+    void releaseDeploy(String baseDir, RepositoryInfo repositoryInfo, Path outputFilePath, Config config, RepositoryRelease release) {
         try {
             Path repositoryDirPath = Paths.get(baseDir, repositoryInfo.getDir());
             List<String> arguments = new ArrayList<>();
@@ -653,7 +654,7 @@ public class ReleaseRunner {
             log.info("Repository: {}\nCmd: '{}' started", repositoryInfo.getUrl(), String.join(" ", cmd));
 
             ProcessBuilder processBuilder = new ProcessBuilder(cmd).directory(repositoryDirPath.toFile());
-            Optional.ofNullable(javaVersion).map(v -> config.getJavaVersionToJavaHomeEnv().get(v))
+            Optional.ofNullable(release.getJavaVersion()).map(v -> config.getJavaVersionToJavaHomeEnv().get(v))
                     .ifPresent(javaHome -> processBuilder.environment().put("JAVA_HOME", javaHome));
             // maven envs
             if (config.getMavenUser() != null && config.getMavenPassword() != null) {
@@ -681,6 +682,7 @@ public class ReleaseRunner {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        release.setDeployed(true);
     }
 
     String generateDotFile(Map<Integer, List<RepositoryInfo>> dependencyGraph) {
