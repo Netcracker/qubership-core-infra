@@ -47,6 +47,7 @@ public class ReleaseRunner {
         result.setDependencyGraph(dependencyGraph);
         String dot = generateDotFile(dependencyGraph);
         result.setDependenciesDot(dot);
+        result.setDryRun(!config.isRunDeploy());
 
         List<RepositoryRelease> allReleases = dependencyGraph.entrySet().stream().flatMap(entry -> {
             int level = entry.getKey();

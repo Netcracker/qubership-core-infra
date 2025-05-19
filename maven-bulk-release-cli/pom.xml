@@ -13,11 +13,6 @@
 
     <artifactId>maven-bulk-release-cli</artifactId>
 
-    <properties>
-        <jackson.version>2.18.2</jackson.version>
-        <org.jgrapht.version>1.5.2</org.jgrapht.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.projectlombok</groupId>

@@ -19,7 +19,7 @@ public class PomHolder {
     static Pattern groupIdPattern = Pattern.compile("<groupId>(.+)</groupId>");
     static Pattern artifactIdPattern = Pattern.compile("<artifactId>(.+)</artifactId>");
     static Pattern versionPattern = Pattern.compile("<version>(.+)</version>");
-    static Pattern referencePattern = Pattern.compile("\\$\\{([^<>]+)}");
+    static Pattern referencePattern = Pattern.compile("\\$\\{(.+?)}");
 
     Path path;
     PomHolder parent;
@@ -40,6 +40,7 @@ public class PomHolder {
             throw new RuntimeException(e);
         }
     }
+
     public List<PomHolder> getParentsFlatList() {
         List<PomHolder> parents = new ArrayList<>();
         if (this.parent != null) {
@@ -70,13 +71,30 @@ public class PomHolder {
             Map<String, String> properties = getProperties();
             String valueFromProperty = properties.get(prop);
             if (valueFromProperty != null) {
-                return valueFromProperty;
+                return autoResolvePropReference(valueFromProperty, properties);
             } else {
                 return value;
             }
         }
         return value;
     }
+
+    public String autoResolvePropReference(String value, Map<String, String> properties) {
+        if (value == null) return null;
+        Matcher referenceMatcher = referencePattern.matcher(value);
+        if (referenceMatcher.find()) {
+            // find reference among properties
+            String prop = referenceMatcher.group(1);
+            String valueFromProperty = properties.get(prop);
+            if (valueFromProperty != null) {
+                return autoResolvePropReference(valueFromProperty, properties);
+            } else {
+                return value;
+            }
+        }
+        return value;
+    }
+
 
     public Map<String, String> getProperties() {
         Map<String, String> properties = new HashMap<>();
@@ -88,7 +106,11 @@ public class PomHolder {
                     .collect(Collectors.toMap(entry -> (String) entry.getKey(), entry -> (String) entry.getValue())));
             ph = ph.getParent();
         }
-        return properties;
+        return properties.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+                    String value = entry.getValue();
+                    return autoResolvePropReference(value, properties);
+                }));
     }
 
     public void updateProperty(String name, String version) {

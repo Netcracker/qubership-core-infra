@@ -14,13 +14,15 @@ public class ReleaseSummary {
                             %s
                             ```
                             """;
-                    String tagUrl = String.format("%s/tree/%s", r.getRepository().getUrl(), r.getTag());
+                    String tagUrl = r.isPushedToGit() ?
+                            String.format("%s/tree/%s", r.getRepository().getUrl(), r.getTag()) :
+                            r.getRepository().getUrl();
                     String gavs = r.getGavs().stream().map(GAV::toString).collect(Collectors.joining("\n"));
                     return String.format(repositoryPart, tagUrl, gavs);
                 }).toList());
         return String.format("""
-                ### Release Summary
+                ### Release Summary%s
                 %s
-                """, releasedRepositoriesGavs);
+                """, result.isDryRun()? " [DRY RUN]" : "", releasedRepositoriesGavs);
     }
 }
