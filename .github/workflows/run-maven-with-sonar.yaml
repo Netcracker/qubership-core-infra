@@ -1,0 +1,30 @@
+name: Run maven command + Sonar plugin
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        required: false
+        type: string
+        default: "21"
+      maven-goal:
+        required: true
+        type: string
+
+jobs:
+  mvn:
+    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@v1.0.1
+    with:
+      maven-command: >
+        --batch-mode ${{ inputs.maven-goal }} 
+        -Dgpg.skip=true 
+        org.sonarsource.scanner.maven:sonar-maven-plugin:${{ vars.SONAR_PLUGIN_VERSION }}:sonar 
+        -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }} 
+        -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }} 
+        -Dsonar.host.url=${{ vars.SONAR_HOST_URL }}
+      server-id: github
+      java-version: ${{ inputs.java-version }}
+      ref: ${{ github.head_ref }}
+    secrets:
+      maven-token: ${{ secrets.GITHUB_TOKEN }}
+      sonar-token: ${{ secrets.SONAR_TOKEN }}
