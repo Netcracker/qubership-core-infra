@@ -9,8 +9,11 @@ on:
         description: |-
           yaml file with indexed repositories to release
         required: false
-        type: string
-        default: ".github/config/repositories-index.json"
+        type: choice
+        options:
+          - ".github/config/core-repositories.txt"
+          - ".github/config/test-repositories.txt"
+        default: ".github/config/core-repositories.txt"
       maven-envs:
         description: "Envs in format 'env1=val1,env2=val2' for mvn release plugin. Used for testing"
         type: string
