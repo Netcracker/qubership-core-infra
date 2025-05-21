@@ -88,7 +88,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-maven
+          key: ${{ runner.os }}-maven-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-maven
 
       - name: "Set up java"
         uses: actions/setup-java@v4
@@ -118,9 +119,7 @@ jobs:
           jarFile="maven-bulk-release-cli-1.0.0-20250521.174751-38-jar-with-dependencies.jar"          
           url="https://maven.pkg.github.com/Netcracker/qubership-core-infra/org.qubership.cloud/maven-bulk-release-cli/1.0.0-SNAPSHOT/${jarFile}"
           curl -L -o "maven-bulk-release-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
-          
-          ls -l 
-          
+                    
           options=""
           if [ "${SKIP_TEST}" = "true" ]; then
             options="${options} --skipTests"
