@@ -64,10 +64,10 @@ jobs:
         # language="shell script"
         run: |
           set -x
-          repositories=$(cat ${REPOSITORIES_FILE})
+          repositories=$(cat "${REPOSITORIES_FILE}")
+          echo "repositories=\n${repositories}"
           repositories=$(echo "repositories" | tr '\n' ',')
-          repositories=${repositories%,}
-          echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
+          echo "repositories=${repositories}" >> "$GITHUB_OUTPUT"
 
       - name: "Cache Maven dependencies"
         uses: actions/cache@v4
@@ -99,7 +99,6 @@ jobs:
         id: run-maven-bulk-release-cli
         shell: bash
         env:
-          MAVEN_RELEASE_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
           REPOSITORIES: ${{ steps.read-repositories.outputs.repositories }}
           VERSION_INCREMENT_TYPE: ${{ inputs.versionIncrementType }}
           SKIP_TEST: ${{ inputs.skipTest }}
@@ -108,8 +107,10 @@ jobs:
         run: |
           set -x
           
+          printenv
+          
           url="https://maven.pkg.github.com/Netcracker/qubership-core-infra/org.qubership.cloud/maven-bulk-release-cli/1.0.0-SNAPSHOT/maven-bulk-release-cli-1.0.0-20250521.075007-11-jar-with-dependencies.jar"
-          curl -o "maven-bulk-release-cli.jar" -H "Authorization: Bearer ${MAVEN_RELEASE_TOKEN}" "${url}"
+          curl -o "maven-bulk-release-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
           
           ls -l 
           
@@ -126,7 +127,7 @@ jobs:
           --gitURL=https://github.com \
           --gitUsername=actions \
           --gitEmail=actions@github.com \
-          --gitPassword=${MAVEN_RELEASE_TOKEN} \
+          --gitPassword=${MAVEN_TOKEN} \
           --groupsPatterns=org\.qubership\..* \
           --repositories=${REPOSITORIES} \
           --versionIncrementType=${VERSION_INCREMENT_TYPE} \
