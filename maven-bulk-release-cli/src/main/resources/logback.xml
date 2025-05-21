@@ -5,7 +5,7 @@
             <pattern>%d %-5p %thread %c{1} - %m%n</pattern>
         </encoder>
     </appender>
-    <logger name="org.qubership.cloud.actions" level="DEBUG"/>
+    <logger name="org.qubership.cloud.actions" level="INFO"/>
     <root level="ERROR">
         <appender-ref ref="STDOUT"/>
     </root>

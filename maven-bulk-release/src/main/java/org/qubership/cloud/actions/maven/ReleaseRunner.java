@@ -44,7 +44,7 @@ public class ReleaseRunner {
     @SneakyThrows
     public Result release(Config config) {
         Result result = new Result();
-        log.info("Config: \n{}", yamlMapper.writeValueAsString(config));
+        log.info("Config: {}", yamlMapper.writeValueAsString(config));
 
         // set up git creds if necessary
         setupGit(config);
