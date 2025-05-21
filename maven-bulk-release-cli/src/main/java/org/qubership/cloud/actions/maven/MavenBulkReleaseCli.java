@@ -82,6 +82,9 @@ public class MavenBulkReleaseCli implements Runnable {
     @CommandLine.Option(names = {"--resultOutputFile"}, description = "File path to save result GAVs to")
     private String resultOutputFile;
 
+    @CommandLine.Option(names = {"--dependencyGraphFile"}, description = "File path to save dependencies graph in DOT format")
+    private String dependencyGraphFile;
+
     public static void main(String... args) {
         CommandLine commandLine = new CommandLine(new MavenBulkReleaseCli());
         commandLine.registerConverter(VersionIncrementType.class, v -> VersionIncrementType.valueOf(v.toUpperCase()));
@@ -124,17 +127,36 @@ public class MavenBulkReleaseCli implements Runnable {
             Result result = releaseRunner.release(config);
             if (summaryFile != null && !summaryFile.isBlank()) {
                 // write summary
-                Path summaryPath = Paths.get(summaryFile);
-                String md = ReleaseSummary.md(result);
-                log.info("Writing to {} summary:\n{}", summaryPath, md);
-                Files.writeString(summaryPath, md, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                try {
+                    Path summaryPath = Paths.get(summaryFile);
+                    String md = ReleaseSummary.md(result);
+                    log.info("Writing to {} summary:\n{}", summaryPath, md);
+                    Files.writeString(summaryPath, md, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                } catch (Exception e) {
+                    log.error("Failed to write summary to file {}", summaryFile, e);
+                }
             }
             if (resultOutputFile != null && !resultOutputFile.isBlank()) {
                 // write the result
-                Path resultPath = Paths.get(resultOutputFile);
-                String gavsResult = ReleaseSummary.gavs(result);
-                log.info("Writing to {} result:\n{}", resultPath, gavsResult.replaceAll(",", "\n"));
-                Files.writeString(resultPath, String.format("result=%s", gavsResult), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                try {
+                    Path resultPath = Paths.get(resultOutputFile);
+                    String gavsResult = ReleaseSummary.gavs(result);
+                    log.info("Writing to {} result:\n{}", resultPath, gavsResult.replaceAll(",", "\n"));
+                    Files.writeString(resultPath, String.format("result=%s", gavsResult), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                } catch (Exception e) {
+                    log.error("Failed to write result to file {}", resultOutputFile, e);
+                }
+            }
+            if (dependencyGraphFile != null && !dependencyGraphFile.isBlank()) {
+                // write the dependency graph
+                try {
+                    Path resultPath = Paths.get(dependencyGraphFile);
+                    String graph = ReleaseSummary.dependencyGraphDOT(result);
+                    log.info("Writing to {} graph:\n{}", resultPath, graph);
+                    Files.writeString(resultPath, graph, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                } catch (Exception e) {
+                    log.error("Failed to write dependency graph to file {}", dependencyGraphFile, e);
+                }
             }
         } catch (Exception e) {
             throw new IllegalStateException("Failed to perform maven bulk release", e);
