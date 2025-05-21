@@ -30,7 +30,7 @@ on:
         type: boolean
         default: false
       dryRun:
-        description: "perform upgrade without deploying artifacts to repository and pushing to git"
+        description: "dry run"
         type: boolean
         default: false
 
