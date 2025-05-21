@@ -34,6 +34,10 @@ on:
         description: "Envs in format 'env1=val1,env2=val2' for mvn release plugin. Used for testing"
         type: string
 
+concurrency:
+  group: ${{ inputs.repositoriesFile }}
+  cancel-in-progress: false
+
 permissions:
   actions: write
   contents: write
