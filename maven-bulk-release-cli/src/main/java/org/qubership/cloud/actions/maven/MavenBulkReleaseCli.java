@@ -85,6 +85,9 @@ public class MavenBulkReleaseCli implements Runnable {
     @CommandLine.Option(names = {"--dependencyGraphFile"}, description = "File path to save dependencies graph in DOT format")
     private String dependencyGraphFile;
 
+    @CommandLine.Option(names = {"--gavsResultFile"}, description = "File path to save dependencies graph in DOT format")
+    private String gavsResultFile;
+
     public static void main(String... args) {
         CommandLine commandLine = new CommandLine(new MavenBulkReleaseCli());
         commandLine.registerConverter(VersionIncrementType.class, v -> VersionIncrementType.valueOf(v.toUpperCase()));
@@ -145,6 +148,17 @@ public class MavenBulkReleaseCli implements Runnable {
                     Files.writeString(resultPath, String.format("result=%s", gavsResult), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
                 } catch (Exception e) {
                     log.error("Failed to write result to file {}", resultOutputFile, e);
+                }
+            }
+            if (gavsResultFile != null && !gavsResultFile.isBlank()) {
+                // write GAVs
+                try {
+                    Path resultPath = Paths.get(gavsResultFile);
+                    String gavsResult = ReleaseSummary.gavs(result).replaceAll(",", "\n");
+                    log.info("Writing to {} gavs:\n{}", resultPath, gavsResult);
+                    Files.writeString(resultPath, gavsResult, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                } catch (Exception e) {
+                    log.error("Failed to write GAVs to file {}", gavsResultFile, e);
                 }
             }
             if (dependencyGraphFile != null && !dependencyGraphFile.isBlank()) {
