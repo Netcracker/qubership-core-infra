@@ -1,0 +1,68 @@
+name: Go build + Sonar
+
+on:
+  workflow_call:
+    inputs:
+      go-version:
+        required: false
+        type: string
+        default: "1.24.2"
+      working-directory:
+        required: false
+        type: string
+        default: "."
+      sonar-project-key:
+        required: true
+        type: string
+    secrets:
+      sonar-token:
+        required: true
+
+jobs:
+  prepare-variables:
+    runs-on: ubuntu-latest
+    steps:
+      - id: tag_build_number
+        run: echo "tag=$(echo ${{ github.head_ref || github.ref_name }} | tr -cs 'a-zA-Z0-9' '-')$(date +'%Y%m%d%H%M%S')-${{ github.run_number }}" >> $GITHUB_OUTPUT
+      - id: tag_snapshot
+        run: echo "tag=$(echo ${{ github.head_ref || github.ref_name }} | tr -cs 'a-zA-Z0-9' '-')snapshot" >> $GITHUB_OUTPUT
+    outputs:
+      tag_build_number: ${{ steps.tag_build_number.outputs.tag }}
+      tag_snapshot: ${{ steps.tag_snapshot.outputs.tag }}
+      repo: ${{ steps.repo.outputs.repo }}
+  build:
+    runs-on: ubuntu-latest
+    needs: prepare-variables
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ inputs.go-version }}
+
+      - name: Install Sonar Scanner
+        run: npm install -g sonar-scanner@3.1.0
+
+      - name: Go build
+        working-directory: ${{ inputs.working-directory }}
+        run: CGO_ENABLED=0 go build -v ./...
+
+      - name: Test with coverage
+        working-directory: ${{ inputs.working-directory }}
+        run: go test -v ./... -coverprofile coverage.out
+
+      - name: Upload coverage report to SonarCloud
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          sonar-scanner \
+            -Dproject.settings=sonar-project.properties \
+            -Dsonar.projectKey=${{ inputs.sonar-project-key }} \
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }} \
+            -Dsonar.host.url=${{ vars.SONAR_HOST_URL }} \
+            -Dsonar.go.coverage.reportPaths=coverage.out
+        env:
+          SONAR_TOKEN: ${{ secrets.sonar-token }}
