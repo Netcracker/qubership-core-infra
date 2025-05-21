@@ -4,7 +4,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.model.*;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -18,7 +17,6 @@ import org.jgrapht.nio.dot.DOTExporter;
 import org.qubership.cloud.actions.maven.model.*;
 import org.qubership.cloud.actions.maven.model.Repository;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -272,27 +270,6 @@ public class ReleaseRunner {
             } catch (GitAPIException e) {
                 throw new RuntimeException(e);
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    Model getEffectivePom(Path path, String artifact) {
-        try {
-            Files.deleteIfExists(Path.of(path.toString(), "effective-pom.xml"));
-            List<String> cmd = List.of("mvn", "help:effective-pom", "-Dartifact=" + artifact, "-Doutput=effective-pom.xml");
-            log.info("pom file: {}\nCmd: '{}' started", path, String.join(" ", cmd));
-            Process process = new ProcessBuilder(cmd).directory(path.toFile()).start();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            process.getInputStream().transferTo(baos);
-            process.getErrorStream().transferTo(baos);
-            process.waitFor();
-            log.info("pom file: {}\nCmd: '{}' ended with code: {}", path, String.join(" ", cmd), process.exitValue());
-            if (process.exitValue() != 0) {
-                throw new RuntimeException(String.format("Failed to execute cmd, error: %s", baos));
-            }
-            String effectivePomContent = Files.readString(Path.of(path.toString(), "effective-pom.xml"));
-            return new MavenXpp3Reader().read(new ByteArrayInputStream(effectivePomContent.getBytes()));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

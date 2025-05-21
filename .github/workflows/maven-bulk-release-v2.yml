@@ -120,7 +120,7 @@ jobs:
           --gitUsername=actions \
           --gitEmail=actions@github.com \
           --gitPassword=${MAVEN_TOKEN} \
-          --groupsPatterns=org\.qubership\..* \
+          "--groupsPatterns=org\.qubership\..*" \
           --repositories=${REPOSITORIES} \
           --versionIncrementType=${VERSION_INCREMENT_TYPE} \
           --javaVersionToJavaHomeEnv=\

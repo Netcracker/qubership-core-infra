@@ -1,5 +1,6 @@
 package org.qubership.cloud.actions.maven.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Builder;
 import lombok.Data;
 import org.eclipse.jgit.transport.CredentialsProvider;
@@ -12,6 +13,7 @@ import java.util.function.Predicate;
 public class Config {
     final String baseDir;
     final GitConfig gitConfig;
+    @JsonIgnore
     final CredentialsProvider credentialsProvider;
     // all repositories
     final Set<String> repositories;

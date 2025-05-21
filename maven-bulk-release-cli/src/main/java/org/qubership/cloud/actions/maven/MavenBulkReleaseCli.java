@@ -36,7 +36,7 @@ public class MavenBulkReleaseCli implements Runnable {
 
     @CommandLine.Option(names = {"--groupsPatterns"}, required = true, split = "\\s*,\\s*",
             description = "comma seperated list of maven groupId pattern to use in dependency lookup")
-    private Set<Pattern> groups;
+    private Set<Pattern> groupsPatterns;
 
     @CommandLine.Option(names = {"--repositories"}, required = true, split = "\\s*,\\s*",
             description = "comma seperated list of git urls to all repositories which depend on each other and can be bulk released")
@@ -92,13 +92,18 @@ public class MavenBulkReleaseCli implements Runnable {
     @Override
     public void run() {
         try {
-            if (groups.isEmpty()) {
+            if (groupsPatterns.stream()
+                    .filter(r -> !r.pattern().isBlank())
+                    .toList()
+                    .isEmpty()) {
                 throw new IllegalArgumentException("--groupsPatterns property cannot be empty");
             }
-            if (repositories.isEmpty()) {
+            if (repositories.stream()
+                    .filter(r -> !r.isBlank())
+                    .toList().isEmpty()) {
                 throw new IllegalArgumentException("--repositories property cannot be empty");
             }
-            Predicate<GA> dependenciesFilter = ga -> groups.stream().anyMatch(pattern -> pattern.matcher(ga.getGroupId()).matches());
+            Predicate<GA> dependenciesFilter = ga -> groupsPatterns.stream().anyMatch(pattern -> pattern.matcher(ga.getGroupId()).matches());
             Collection<String> gavs = Arrays.stream(System.getProperty("gavs", "").split("\\s*,\\s*"))
                     .filter(r -> !r.isBlank())
                     .toList();
