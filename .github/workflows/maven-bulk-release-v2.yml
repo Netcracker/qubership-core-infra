@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       MAVEN_USER: "x-access-token"
-      MAVEN_TOKEN: ${{ secrets.maven-token }}
+      MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
     outputs:
       result: ${{ steps.run-maven-bulk-release-cli.outputs.result }}
@@ -66,7 +66,7 @@ jobs:
           set -x
           repositories=$(cat "${REPOSITORIES_FILE}")
           echo "repositories=\n${repositories}"
-          repositories=$(echo "repositories" | tr '\n' ',')
+          repositories=$(echo "${repositories}" | tr '\n' ',')
           echo "repositories=${repositories}" >> "$GITHUB_OUTPUT"
 
       - name: "Cache Maven dependencies"
@@ -81,7 +81,7 @@ jobs:
         uses: actions/setup-java@v4
         env:
           MAVEN_USER: "x-access-token"
-          MAVEN_TOKEN: ${{ secrets.maven-token }}
+          MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
         with:
           java-version: |
