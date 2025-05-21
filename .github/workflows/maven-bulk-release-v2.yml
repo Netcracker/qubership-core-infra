@@ -1,0 +1,111 @@
+# $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-workflow.json
+
+name: "Maven bulk release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      repositoriesFile:
+        description: |-
+          yaml file with indexed repositories to release
+        required: false
+        type: string
+        default: ".github/config/repositories-index.json"
+      maven-envs:
+        description: "Envs in format 'env1=val1,env2=val2' for mvn release plugin. Used for testing"
+        type: string
+      versionIncrementType:
+        description: "Version part to increment"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+
+permissions:
+  actions: write
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      MAVEN_USER: "x-access-token"
+      MAVEN_TOKEN: ${{ secrets.maven-token }}
+      MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
+    outputs:
+      result: ${{ steps.run-maven-bulk-release-cli.outputs.result }}
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+        with:
+          ref: "main"
+          token: '${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}'
+
+      - name: "Read repositories"
+        id: read-repositories
+        shell: bash
+        env:
+          REPOSITORIES_FILE: ${{ inputs.repositoriesFile }}
+        # language="shell script"
+        run: |
+          set -x
+          repositories=$(cat ${REPOSITORIES_FILE})
+          repositories=$(echo "repositories" | tr '\n' ',')
+          repositories=${repositories%,}
+          echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
+
+      - name: "Cache Maven dependencies"
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: "Set up java"
+        uses: actions/setup-java@v4
+        env:
+          MAVEN_USER: "x-access-token"
+          MAVEN_TOKEN: ${{ inputs.maven-token }}
+          MAVEN_GPG_PASSPHRASE: ${{ inputs.maven-gpg-passphrase }}
+        with:
+          java-version: |
+            17
+            21
+          architecture: 'x64'
+          distribution: 'temurin'
+          server-id: github
+          server-username: MAVEN_USER
+          server-password: MAVEN_TOKEN
+          gpg-private-key: ${{ inputs.maven-gpg-private-key }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: "Run maven-bulk-release-cli"
+        id: run-maven-bulk-release-cli
+        shell: bash
+        env:
+          REPOSITORIES: ${{ steps.read-repositories.outputs.repositories }}
+        # language="shell script"
+        run: |
+          set -x
+          printenv
+          
+          url="https://maven.pkg.github.com/Netcracker/qubership-core-infra/org.qubership.cloud/maven-bulk-release-cli/1.0.0-SNAPSHOT/maven-bulk-release-cli-1.0.0-20250521.075007-11-jar-with-dependencies.jar"
+          curl -u "${MAVEN_USER}:${MAVEN_TOKEN}" "${url}" --output "maven-bulk-release-cli.jar"
+          java -jar maven-bulk-release-cli.jar \
+          --baseDir=/tmp \
+          --gitURL=https://github.com \
+          --gitUsername=actions \
+          --gitEmail=actions@github.com \
+          --gitPassword=${MAVEN_TOKEN} \
+          --groupsPatterns=org\.qubership\..* \
+          --repositories=${REPOSITORIES} \
+          --javaVersionToJavaHomeEnv=\
+          17=${JAVA_HOME_17_x64},\
+          21=${JAVA_HOME_21_x64} \
+          --summaryFile=${GITHUB_STEP_SUMMARY} \
+          --resulOutputFile=${GITHUB_OUTPUT}

@@ -79,6 +79,9 @@ public class MavenBulkReleaseCli implements Runnable {
     @CommandLine.Option(names = {"--summaryFile"}, description = "File path to save summary to")
     private String summaryFileOption;
 
+    @CommandLine.Option(names = {"--resulOutputFile"}, description = "File path to save result GAVs to")
+    private String resulOutputFileOption;
+
     public static void main(String... args) {
         CommandLine commandLine = new CommandLine(new MavenBulkReleaseCli());
         commandLine.registerConverter(VersionIncrementType.class, v -> VersionIncrementType.valueOf(v.toUpperCase()));
@@ -120,6 +123,13 @@ public class MavenBulkReleaseCli implements Runnable {
                 String md = ReleaseSummary.md(result);
                 log.info("Writing to {} summary:\n{}", summaryPath, md);
                 Files.writeString(summaryPath, md, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            }
+            if (resulOutputFileOption != null && !resulOutputFileOption.isBlank()) {
+                // write the result
+                Path resultPath = Paths.get(resulOutputFileOption);
+                String gavsResult = ReleaseSummary.gavs(result);
+                log.info("Writing to {} result:\n{}", resultPath, String.format("result=%s", gavsResult.replaceAll("\n", ",")));
+                Files.writeString(resultPath, gavsResult, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             }
         } catch (Exception e) {
             throw new IllegalStateException("Failed to perform maven bulk release", e);
