@@ -28,7 +28,7 @@ public class ReleaseSummary {
     }
 
     public  static String gavs(Result result) {
-        return result.getReleases().stream().flatMap(r -> r.getGavs().stream()).map(GAV::toString).collect(Collectors.joining("\n"));
+        return result.getReleases().stream().flatMap(r -> r.getGavs().stream()).map(GAV::toString).collect(Collectors.joining(","));
     }
 
     public  static String dependencyGraphDOT(Result result) {

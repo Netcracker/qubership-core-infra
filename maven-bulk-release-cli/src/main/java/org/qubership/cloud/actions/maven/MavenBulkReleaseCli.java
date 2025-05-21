@@ -128,8 +128,8 @@ public class MavenBulkReleaseCli implements Runnable {
                 // write the result
                 Path resultPath = Paths.get(resultOutputFile);
                 String gavsResult = ReleaseSummary.gavs(result);
-                log.info("Writing to {} result:\n{}", resultPath, String.format("result=%s", gavsResult.replaceAll("\n", ",")));
-                Files.writeString(resultPath, gavsResult, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                log.info("Writing to {} result:\n{}", resultPath, gavsResult.replaceAll(",", "\n"));
+                Files.writeString(resultPath, String.format("result=%s", gavsResult), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             }
         } catch (Exception e) {
             throw new IllegalStateException("Failed to perform maven bulk release", e);
