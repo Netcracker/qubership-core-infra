@@ -129,5 +129,5 @@ jobs:
           17=${JAVA_HOME_17_x64},\
           21=${JAVA_HOME_21_x64} \
           --summaryFile=${GITHUB_STEP_SUMMARY} \
-          --resulOutputFile=${GITHUB_OUTPUT} \
+          --resultOutputFile=${GITHUB_OUTPUT} \
           ${options}
