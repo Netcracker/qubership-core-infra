@@ -108,7 +108,7 @@ jobs:
           
           options=""
           if [ "${SKIP_TEST}" = "true" ]; then
-            options="${options} --skipTest"
+            options="${options} --skipTests"
           fi
           if [ "${DRY_RUN}" = "true" ]; then
             options="${options} --dryRun"
