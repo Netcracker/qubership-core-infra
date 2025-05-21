@@ -25,6 +25,14 @@ on:
           - minor
           - major
         default: patch
+      skipTest:
+        description: "skip tests"
+        type: boolean
+        default: false
+      dryRun:
+        description: "perform upgrade without deploying artifacts to repository and pushing to git"
+        type: boolean
+        default: false
 
 permissions:
   actions: write
@@ -92,6 +100,9 @@ jobs:
         shell: bash
         env:
           REPOSITORIES: ${{ steps.read-repositories.outputs.repositories }}
+          VERSION_INCREMENT_TYPE: ${{ inputs.versionIncrementType }}
+          SKIP_TEST: ${{ inputs.skipTest }}
+          DRY_RUN: ${{ inputs.dryRun }}
         # language="shell script"
         run: |
           set -x
@@ -99,6 +110,13 @@ jobs:
           
           url="https://maven.pkg.github.com/Netcracker/qubership-core-infra/org.qubership.cloud/maven-bulk-release-cli/1.0.0-SNAPSHOT/maven-bulk-release-cli-1.0.0-20250521.075007-11-jar-with-dependencies.jar"
           curl -u "${MAVEN_USER}:${MAVEN_TOKEN}" "${url}" --output "maven-bulk-release-cli.jar"
+          options=""
+          if [ "${SKIP_TEST}" = "true" ]; then
+            options="${options} --skipTest"
+          fi
+          if [ "${DRY_RUN}" = "true" ]; then
+            options="${options} --dryRun"
+          fi
           java -jar maven-bulk-release-cli.jar \
           --baseDir=/tmp \
           --gitURL=https://github.com \
@@ -107,8 +125,10 @@ jobs:
           --gitPassword=${MAVEN_TOKEN} \
           --groupsPatterns=org\.qubership\..* \
           --repositories=${REPOSITORIES} \
+          --versionIncrementType=${VERSION_INCREMENT_TYPE} \
           --javaVersionToJavaHomeEnv=\
           17=${JAVA_HOME_17_x64},\
           21=${JAVA_HOME_21_x64} \
           --summaryFile=${GITHUB_STEP_SUMMARY} \
-          --resulOutputFile=${GITHUB_OUTPUT}
+          --resulOutputFile=${GITHUB_OUTPUT} \
+          ${options}
