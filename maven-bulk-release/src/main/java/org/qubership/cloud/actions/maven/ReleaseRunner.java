@@ -605,9 +605,9 @@ public class ReleaseRunner {
 
         List<String> arguments = new ArrayList<>();
         if (config.isSkipTests()) {
-            arguments.add("surefire.rerunFailingTestsCount=2");
-        } else {
             arguments.add("skipTests");
+        } else {
+            arguments.add("surefire.rerunFailingTestsCount=2");
         }
         String tag = releaseVersion;
         List<String> cmd = List.of("mvn", "-B", "release:prepare",
