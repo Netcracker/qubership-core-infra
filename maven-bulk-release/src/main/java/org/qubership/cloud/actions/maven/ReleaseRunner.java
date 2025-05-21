@@ -68,7 +68,7 @@ public class ReleaseRunner {
             try (ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
                 Set<GAV> gavList = dependenciesGavs.entrySet().stream().map(e -> new GAV(e.getKey().getGroupId(), e.getKey().getArtifactId(), e.getValue())).collect(Collectors.toSet());
                 List<RepositoryRelease> releases = reposInfoList.stream()
-                        .map(repo -> executorService.submit(() -> release(config, repo, gavList)))
+                        .map(repo -> executorService.submit(() -> releasePrepare(config, repo, gavList)))
                         .toList()
                         .stream()
                         .map(future -> {
@@ -268,7 +268,7 @@ public class ReleaseRunner {
                 gitConfig.setString("user", null, "email", config.getGitConfig().getEmail());
                 gitConfig.setString("credential", null, "helper", "store");
                 gitConfig.save();
-                log.info("Saved git config:\n{}", gitConfig.toText());
+                log.debug("Saved git config:\n{}", gitConfig.toText());
             } catch (GitAPIException e) {
                 throw new RuntimeException(e);
             }
@@ -383,7 +383,7 @@ public class ReleaseRunner {
         }
     }
 
-    RepositoryRelease release(Config config, RepositoryInfo repository, Collection<GAV> dependencies) {
+    RepositoryRelease releasePrepare(Config config, RepositoryInfo repository, Collection<GAV> dependencies) {
         String baseDir = config.getBaseDir();
         List<PomHolder> poms = getPoms(baseDir, repository);
         updateDependencies(baseDir, repository, poms, dependencies);
@@ -625,10 +625,14 @@ public class ReleaseRunner {
             ProcessBuilder processBuilder = new ProcessBuilder(cmd).directory(repositoryDirPath.toFile());
             Optional.ofNullable(javaVersion).map(v -> config.getJavaVersionToJavaHomeEnv().get(v))
                     .ifPresent(javaHome -> processBuilder.environment().put("JAVA_HOME", javaHome));
-            log.info("Repository: {}\nCmd: '{}' started with env:\n{}", repositoryInfo.getUrl(), String.join(" ", cmd),
-                    String.join("\n", processBuilder.environment().entrySet().stream()
-                            .map(entry -> String.format("%s=%s", entry.getKey(), entry.getValue()))
-                            .toList()));
+            if (log.isDebugEnabled()) {
+                log.debug("Repository: {}\nCmd: '{}' started with env:\n{}", repositoryInfo.getUrl(), String.join(" ", cmd),
+                        String.join("\n", processBuilder.environment().entrySet().stream()
+                                .map(entry -> String.format("%s=%s", entry.getKey(), entry.getValue()))
+                                .toList()));
+            } else {
+                log.info("Repository: {}\nCmd: '{}' started", repositoryInfo.getUrl(), String.join(" ", cmd));
+            }
             Process process = processBuilder.start();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             OutputStream umbrellaOutStream = new OutputStream() {
@@ -642,7 +646,7 @@ public class ReleaseRunner {
             process.getInputStream().transferTo(umbrellaOutStream);
             process.getErrorStream().transferTo(umbrellaOutStream);
             process.waitFor();
-            log.info("Repository: {}\nCmd: '{}' ended with code: {}, output: {}",
+            log.info("Repository: {}\nCmd: '{}' ended with code: {}, output:\n{}",
                     repositoryInfo.getUrl(), String.join(" ", cmd), process.exitValue(), baos);
             if (process.exitValue() != 0) {
                 throw new RuntimeException(String.format("Failed to execute cmd, error: %s", baos));
@@ -742,7 +746,7 @@ public class ReleaseRunner {
             process.getInputStream().transferTo(umbrellaOutStream);
             process.getErrorStream().transferTo(umbrellaOutStream);
             process.waitFor();
-            log.info("Repository: {}\nCmd: '{}' ended with code: {}, output: {}",
+            log.info("Repository: {}\nCmd: '{}' ended with code: {}, output:\n{}",
                     repositoryInfo.getUrl(), String.join(" ", cmd), process.exitValue(), baos);
             if (process.exitValue() != 0) {
                 throw new RuntimeException(String.format("Failed to execute cmd, error: %s", baos));
