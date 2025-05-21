@@ -60,6 +60,15 @@ jobs:
           ref: "main"
           token: '${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}'
 
+      - name: "Print resources information"
+        shell: bash
+        # language="shell script"
+        run: |-
+          lscpu
+          free -h
+          df -h
+          uname -a
+
       - name: "Read repositories"
         id: read-repositories
         shell: bash
