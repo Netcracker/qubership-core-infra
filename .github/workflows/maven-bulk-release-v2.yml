@@ -103,7 +103,7 @@ jobs:
         run: |
           set -x
                     
-          url="https://maven.pkg.github.com/Netcracker/qubership-core-infra/org.qubership.cloud/maven-bulk-release-cli/1.0.0-SNAPSHOT/maven-bulk-release-cli-1.0.0-20250521.075007-11-jar-with-dependencies.jar"
+          url="https://maven.pkg.github.com/Netcracker/qubership-core-infra/org.qubership.cloud/maven-bulk-release-cli/1.0.0-SNAPSHOT/maven-bulk-release-cli-1.0.0-20250521.134427-23-jar-with-dependencies.jar"
           curl -L -o "maven-bulk-release-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
           
           ls -l 
