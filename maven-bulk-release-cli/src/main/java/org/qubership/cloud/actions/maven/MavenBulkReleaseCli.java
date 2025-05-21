@@ -1,7 +1,6 @@
 package org.qubership.cloud.actions.maven;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.qubership.cloud.actions.maven.model.*;
 import picocli.CommandLine;
 
@@ -20,8 +19,14 @@ import java.util.regex.Pattern;
 @Slf4j
 public class MavenBulkReleaseCli implements Runnable {
 
+    @CommandLine.Option(names = {"--gitURL"}, required = true, description = "git host")
+    private String gitURLOption;
+
     @CommandLine.Option(names = {"--gitUsername"}, required = true, description = "git username")
     private String gitUsernameOption;
+
+    @CommandLine.Option(names = {"--gitEmail"}, required = true, description = "git email")
+    private String gitEmailOption;
 
     @CommandLine.Option(names = {"--gitPassword"}, required = true, description = "git password")
     private String gitPasswordOption;
@@ -38,14 +43,14 @@ public class MavenBulkReleaseCli implements Runnable {
     private Set<String> repositoriesOption;
 
     @CommandLine.Option(names = {"--repositoriesToReleaseFrom"}, split = "\\s*,\\s*",
-            description = "comma seperated list of git urls which were changed and need to be release along with repositories which use them directly or indirectly")
-    private Set<String> repositoriesToReleaseFromOption;
+            description = "comma seperated list of git urls which were changed and need to be released. Repositories which use them directly or indirectly will be released as well")
+    private Set<String> repositoriesToReleaseFromOption = Set.of();
 
-    @CommandLine.Option(names = {"--runTests"}, defaultValue = "true", description = "run tests by release:prepare mvn command")
-    private boolean runTestsOption;
+    @CommandLine.Option(names = {"--skipTests"}, arity = "0", defaultValue = "false", description = "skip tests run by release:prepare mvn command")
+    private boolean skipTestsOption;
 
-    @CommandLine.Option(names = {"--dryRun"}, defaultValue = "false", description = """
-            if present:
+    @CommandLine.Option(names = {"--dryRun"}, arity = "0", defaultValue = "false", description = """
+            if specified:
             1. only run release:prepare mvn command in each repository updating dependencies with versions from artifacts in dependent repositories
             if not specified:
             1. push git updates to origin
@@ -63,7 +68,7 @@ public class MavenBulkReleaseCli implements Runnable {
 
     @CommandLine.Option(names = {"--javaVersionToJavaHomeEnv"}, split = "\\s*,\\s*",
             description = "comma seperated list of javaVersion=JAVA_HOME mappings")
-    private Map<String, String> javaVersionToJavaHomeEnvOption;
+    private Map<String, String> javaVersionToJavaHomeEnvOption = Map.of();
 
     @CommandLine.Option(names = {"--mavenUser"}, description = "maven username to use to login to remote repository")
     private String mavenUserOption;
@@ -95,8 +100,8 @@ public class MavenBulkReleaseCli implements Runnable {
                     .filter(r -> !r.isBlank())
                     .toList();
 
-            UsernamePasswordCredentialsProvider credentialsProvider = new UsernamePasswordCredentialsProvider(gitUsernameOption, gitPasswordOption);
-            Config config = Config.builder(baseDirOption, credentialsProvider, repositoriesOption, dependenciesFilter)
+            GitConfig gitConfig = GitConfig.builder().url(gitURLOption).username(gitUsernameOption).email(gitEmailOption).password(gitPasswordOption).build();
+            Config config = Config.builder(baseDirOption, gitConfig, repositoriesOption, dependenciesFilter)
                     .repositoriesToReleaseFrom(repositoriesToReleaseFromOption)
                     .versionIncrementType(versionIncrementTypeOption)
                     .mavenAltDeploymentRepository(mavenAltDeploymentRepositoryOption)
@@ -104,8 +109,8 @@ public class MavenBulkReleaseCli implements Runnable {
                     .mavenUser(mavenUserOption)
                     .mavenPassword(mavenPasswordOption)
                     .gavs(gavs)
-                    .runTests(runTestsOption)
-                    .runDeploy(!dryRunOption)
+                    .skipTests(skipTestsOption)
+                    .dryRun(dryRunOption)
                     .build();
             ReleaseRunner releaseRunner = new ReleaseRunner();
             Result result = releaseRunner.release(config);

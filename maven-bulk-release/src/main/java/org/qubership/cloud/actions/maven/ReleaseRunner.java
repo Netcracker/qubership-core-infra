@@ -1,5 +1,7 @@
 package org.qubership.cloud.actions.maven;
 
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.model.*;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
@@ -8,7 +10,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.TextProgressMonitor;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.transport.TagOpt;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.SimpleDirectedGraph;
@@ -16,7 +18,10 @@ import org.jgrapht.nio.dot.DOTExporter;
 import org.qubership.cloud.actions.maven.model.*;
 import org.qubership.cloud.actions.maven.model.Repository;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
@@ -33,21 +38,26 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 @Slf4j
 public class ReleaseRunner {
     static Pattern propertyPattern = Pattern.compile("\\$\\{(.*?)}");
+    static YAMLMapper yamlMapper = new YAMLMapper();
 
+    @SneakyThrows
     public Result release(Config config) {
         Result result = new Result();
+        log.info("Config: \n{}", yamlMapper.writeValueAsString(config));
+
+        // set up git creds if necessary
+        setupGit(config);
+
         Map<GA, String> dependenciesGavs = config.getGavs().stream().map(GAV::new).collect(Collectors.toMap(gav -> new GA(gav.getGroupId(), gav.getArtifactId()), GAV::getVersion));
         // build dependency graph
         Map<Integer, List<RepositoryInfo>> dependencyGraph = buildDependencyGraph(config);
         result.setDependencyGraph(dependencyGraph);
         String dot = generateDotFile(dependencyGraph);
         result.setDependenciesDot(dot);
-        result.setDryRun(!config.isRunDeploy());
+        result.setDryRun(config.isDryRun());
 
         List<RepositoryRelease> allReleases = dependencyGraph.entrySet().stream().flatMap(entry -> {
             int level = entry.getKey();
@@ -77,7 +87,7 @@ public class ReleaseRunner {
             }
         }).toList();
 
-        if (config.isRunDeploy()) {
+        if (!config.isDryRun()) {
             dependencyGraph.forEach((level, repos) -> {
                 log.info("Running 'perform' - processing level {}/{}, {} repositories:\n{}", level + 1, dependencyGraph.size(), repos.size(),
                         String.join("\n", repos.stream().map(Repository::getUrl).toList()));
@@ -108,7 +118,7 @@ public class ReleaseRunner {
         try (ExecutorService executorService = Executors.newFixedThreadPool(8)) {
             List<RepositoryInfo> repositoryInfoList = repositories.stream().map(RepositoryInfo::new)
                     .map(repositoryInfo -> executorService.submit(() -> {
-                        gitCheckout(config, baseDir, repositoryInfo);
+                        gitCheckout(config, repositoryInfo);
                         List<PomHolder> poms = getPoms(baseDir, repositoryInfo);
                         resolveDependencies(repositoryInfo, poms, dependenciesFilter);
                         return repositoryInfo;
@@ -156,7 +166,6 @@ public class ReleaseRunner {
                         .filter(ri -> repositoryInfos.stream().anyMatch(riFrom -> Objects.equals(riFrom.getUrl(), ri.getUrl())))
                         .forEach(ri -> graph.addEdge(ri.getUrl(), repositoryInfo.getUrl()));
             }
-
             List<RepositoryInfo> independentRepos = repositoryInfos.stream().filter(ri -> graph.incomingEdgesOf(ri.getUrl()).isEmpty()).toList();
             List<RepositoryInfo> dependentRepos = repositoryInfos.stream().filter(ri -> !graph.incomingEdgesOf(ri.getUrl()).isEmpty()).collect(Collectors.toList());
             Map<Integer, List<RepositoryInfo>> groupedReposMap = new TreeMap<>();
@@ -175,8 +184,54 @@ public class ReleaseRunner {
         }
     }
 
-    void gitCheckout(Config config, String baseDir, Repository repository) {
-        Path repositoryDirPath = Paths.get(baseDir, repository.getDir());
+    void setupGit(Config config) {
+        Pattern urlPattern = Pattern.compile("^https://(?<host>.+)(:\\d+)?$");
+        Pattern gitHostCredsPattern = Pattern.compile("^https://(?<username>.+):(?<password>.+)@(?<host>.+)$");
+
+        Path credentialsFilePath = Paths.get(System.getProperty("user.home"), "/.git-credentials");
+        GitConfig gitConfig = config.getGitConfig();
+        String url = gitConfig.getUrl();
+        Matcher urlMatcher = urlPattern.matcher(url);
+        if (!urlMatcher.matches()) {
+            throw new IllegalArgumentException(String.format("Invalid git url: %s, must match pattern: %s", url, urlPattern.pattern()));
+        }
+        String host = urlMatcher.group("host");
+        try {
+            if (!Files.exists(credentialsFilePath)) {
+                Files.createFile(credentialsFilePath);
+            }
+            List<String> lines = Files.readAllLines(credentialsFilePath);
+            boolean updated = false;
+            Optional<Matcher> existingHostMatcher = lines.stream()
+                    .map(gitHostCredsPattern::matcher)
+                    .filter(Matcher::matches)
+                    .filter(matcher -> Objects.equals(matcher.group("host"), host))
+                    .findFirst();
+            if (existingHostMatcher.isPresent()) {
+                Matcher existingGitHostMatcher = existingHostMatcher.get();
+                String username = existingGitHostMatcher.group("username");
+                String password = existingGitHostMatcher.group("password");
+                gitConfig.setUsername(username);
+                gitConfig.setPassword(password);
+            } else {
+                String username = gitConfig.getUsername();
+                String password = gitConfig.getPassword();
+                String newEntry = String.format("https://%s:%s@%s", username, password, host);
+                lines.add(newEntry);
+                updated = true;
+            }
+            if (updated) {
+                Files.writeString(credentialsFilePath, String.join("\n", lines));
+                log.info("Updated ~/.git-credentials.");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    void gitCheckout(Config config, Repository repository) {
+        Path repositoryDirPath = Paths.get(config.getBaseDir(), repository.getDir());
         boolean repositoryDirExists = Files.exists(repositoryDirPath);
         try {
             if (!repositoryDirExists) {
@@ -202,8 +257,18 @@ public class ReleaseRunner {
                     .setBranch("HEAD")
                     .setCloneAllBranches(false)
                     .setTagOption(TagOpt.FETCH_TAGS)
-                    .setProgressMonitor(new TextProgressMonitor(new PrintWriter(new OutputStreamWriter(System.out, UTF_8))))
-                    .call()) {
+//                    .setProgressMonitor(new TextProgressMonitor(new PrintWriter(new OutputStreamWriter(System.out, UTF_8))))
+                    .call();
+                 org.eclipse.jgit.lib.Repository rep = git.getRepository()) {
+                //        git config user.email "actions@github.com"
+                //        git config user.name "actions"
+                //        git remote set-url origin https://x-access-token:${{ inputs.maven-token }}@github.com/${{ inputs.repository }}
+                StoredConfig gitConfig = rep.getConfig();
+                gitConfig.setString("user", null, "name", config.getGitConfig().getUsername());
+                gitConfig.setString("user", null, "email", config.getGitConfig().getEmail());
+                gitConfig.setString("credential", null, "helper", "store");
+                gitConfig.save();
+                log.info("Saved git config:\n{}", gitConfig.toText());
             } catch (GitAPIException e) {
                 throw new RuntimeException(e);
             }
@@ -539,7 +604,7 @@ public class ReleaseRunner {
         Path outputFilePath = Paths.get(repositoryDirPath.toString(), "release-prepare-output.log");
 
         List<String> arguments = new ArrayList<>();
-        if (config.isRunTests()) {
+        if (config.isSkipTests()) {
             arguments.add("surefire.rerunFailingTestsCount=2");
         } else {
             arguments.add("skipTests");
@@ -554,13 +619,16 @@ public class ReleaseRunner {
                 warpPropertyInQuotes("-DtagNameFormat=@{project.version}"),
                 warpPropertyInQuotes(String.format("-Darguments=%s", String.join(" ", arguments.stream().map(arg -> "-D" + arg).toList()))),
                 warpPropertyInQuotes("-DpreparationGoals=clean install"));
-        log.info("Repository: {}\nCmd: '{}' started", repositoryInfo.getUrl(), String.join(" ", cmd));
         try {
             Files.writeString(outputFilePath, "", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
             ProcessBuilder processBuilder = new ProcessBuilder(cmd).directory(repositoryDirPath.toFile());
             Optional.ofNullable(javaVersion).map(v -> config.getJavaVersionToJavaHomeEnv().get(v))
                     .ifPresent(javaHome -> processBuilder.environment().put("JAVA_HOME", javaHome));
+            log.info("Repository: {}\nCmd: '{}' started with env:\n{}", repositoryInfo.getUrl(), String.join(" ", cmd),
+                    String.join("\n", processBuilder.environment().entrySet().stream()
+                            .map(entry -> String.format("%s=%s", entry.getKey(), entry.getValue()))
+                            .toList()));
             Process process = processBuilder.start();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             OutputStream umbrellaOutStream = new OutputStream() {
