@@ -1,32 +1,44 @@
 # $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-workflow.json
 
 name: "Maven bulk release"
+run-name: Maven bulk release of ${{ inputs.repositoriesFile }} by @${{ github.actor }}
+
 
 on:
   workflow_dispatch:
     inputs:
-      repositoriesIndexFile:
+      repositoriesFile:
         description: |-
           yaml file with indexed repositories to release
         required: false
-        type: string
-        default: ".github/config/repositories-index.json"
-      rollbackOnError:
-        description: "Perform rollback for all released repositories if release of another repository has failed"
+        type: choice
+        options:
+          - "core-repositories"
+          - "test-repositories"
+        default: "core-repositories"
+      versionIncrementType:
+        description: "Version part to increment"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+      skipTest:
+        description: "skip tests"
+        type: boolean
+        default: false
+      dryRun:
+        description: "dry run"
         type: boolean
         default: true
       maven-envs:
         description: "Envs in format 'env1=val1,env2=val2' for mvn release plugin. Used for testing"
         type: string
 
-#      type:
-#        description: "Version part to increment"
-#        type: choice
-#        options:
-#          - patch
-#          - minor
-#          - major
-#        default: patch
+concurrency:
+  group: ${{ inputs.repositoriesFile }}
+  cancel-in-progress: false
 
 permissions:
   actions: write
@@ -34,118 +46,116 @@ permissions:
   packages: write
 
 jobs:
-  prepare:
+  release:
     runs-on: ubuntu-latest
     env:
       MAVEN_USER: "x-access-token"
-      MAVEN_TOKEN: ${{ secrets.maven-token }}
+      MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
     outputs:
-      repositories: ${{ steps.format-repositories.outputs.json }}
+      result: ${{ steps.run-maven-bulk-release-cli.outputs.result }}
 
     steps:
-      - name: Checkout
+      - name: "Checkout"
         uses: actions/checkout@v4
         with:
           ref: "main"
           token: '${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}'
 
-      - name: Create shared GAVs file
-        run: touch gavs.txt
+      - name: "Print resources information"
+        shell: bash
+        # language="shell script"
+        run: |-
+          lscpu
+          free -h
+          df -h
+          uname -a
 
-      - name: Upload clean gavs artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: "gavs-${{ github.run_id }}"
-          path: gavs.txt
-          overwrite: true
-
-      - name: Format repositories
-        id: format-repositories
+      - name: "Read repositories"
+        id: read-repositories
         shell: bash
         env:
-          REPOSITORIES_INDEX_FILE: ${{ inputs.repositoriesIndexFile }}
+          REPOSITORIES_FILE: ${{ inputs.repositoriesFile }}
         # language="shell script"
         run: |
           set -x
-          json=$(cat "${REPOSITORIES_INDEX_FILE}" | tr -d '\n' | tr -d ' ')
-          echo "json=${json}"
-          echo "json=${json}" >> "$GITHUB_OUTPUT"
+          repositories=$(cat ".github/config/${REPOSITORIES_FILE}.txt")
+          echo "repositories=\n${repositories}"
+          repositories=$(echo "${repositories}" | tr '\n' ',')
+          echo "repositories=${repositories}" >> "$GITHUB_OUTPUT"
 
-  release:
-    needs: prepare
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        repository: ${{ fromJson(needs.prepare.outputs.repositories) }}
-      max-parallel: 1
-      fail-fast: true
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: "Cache Maven dependencies"
+        uses: actions/cache@v4
         with:
-          repository: '${{ github.repository }}'
-          ref: "main"
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven
 
-      - name: Format repository name
-        id: format-repo-name
+      - name: "Set up java"
+        uses: actions/setup-java@v4
+        with:
+          java-version: |
+            17
+            21
+          architecture: 'x64'
+          distribution: 'temurin'
+          server-id: github
+          server-username: MAVEN_USER
+          server-password: MAVEN_TOKEN
+          gpg-private-key: ${{ inputs.maven-gpg-private-key }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: "Run maven-bulk-release-cli"
+        id: run-maven-bulk-release-cli
         shell: bash
+        env:
+          REPOSITORIES: ${{ steps.read-repositories.outputs.repositories }}
+          VERSION_INCREMENT_TYPE: ${{ inputs.versionIncrementType }}
+          SKIP_TEST: ${{ inputs.skipTest }}
+          DRY_RUN: ${{ inputs.dryRun }}
         # language="shell script"
         run: |
           set -x
-          repo="${{ matrix.repository.name }}"
-          repo=$(echo "$repo" | tr '/' '_')
-          echo "repo=${repo}" >> "$GITHUB_OUTPUT"
+          jarFile="maven-bulk-release-cli-1.0.0-20250521.174751-38-jar-with-dependencies.jar"          
+          url="https://maven.pkg.github.com/Netcracker/qubership-core-infra/org.qubership.cloud/maven-bulk-release-cli/1.0.0-SNAPSHOT/${jarFile}"
+          curl -L -o "maven-bulk-release-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
+          
+          ls -l 
+          
+          options=""
+          if [ "${SKIP_TEST}" = "true" ]; then
+            options="${options} --skipTests"
+          fi
+          if [ "${DRY_RUN}" = "true" ]; then
+            options="${options} --dryRun"
+          fi
+          
+          java -jar maven-bulk-release-cli.jar \
+          --baseDir=/tmp \
+          --gitURL=https://github.com \
+          --gitUsername=actions \
+          --gitEmail=actions@github.com \
+          --gitPassword=${MAVEN_TOKEN} \
+          "--groupsPatterns=org\.qubership\..*" \
+          --repositories=${REPOSITORIES} \
+          --versionIncrementType=${VERSION_INCREMENT_TYPE} \
+          --javaVersionToJavaHomeEnv=\
+          17=${JAVA_HOME_17_X64},\
+          21=${JAVA_HOME_21_X64} \
+          --resultOutputFile=${GITHUB_OUTPUT} \
+          --summaryFile=${GITHUB_STEP_SUMMARY} \
+          --gavsResultFile=/tmp/gavs.txt \
+          --dependencyGraphFile=/tmp/graph.dot \
+          ${options}
 
-      - name: "Run '${{ matrix.repository.name }}' repository release"
-        uses: "./.github/actions/maven-release"
+      - name: "Upload gavs artifact"
+        uses: actions/upload-artifact@v4
         with:
-          run-id: "${{ github.run_id }}"
-          repository: "${{ matrix.repository.name }}"
-          directory: "${{ matrix.repository.name }}"
-          java-version: ${{ matrix.repository.java }}
-          artifact-name: "gavs-${{ github.run_id }}"
-          backup-artifact-name: "release-backup-${{ github.run_id }}-${{ steps.format-repo-name.outputs.repo }}"
-          maven-envs: ${{ inputs.maven-envs }}
-          maven-token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
-          maven-gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
-          maven-gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+          name: gavs.txt
+          path: /tmp/gavs.txt
 
-  rollback:
-    needs: [prepare, release]
-    runs-on: ubuntu-latest
-    if: failure() && inputs.rollbackOnError
-    strategy:
-      matrix:
-        repository: ${{ fromJson(needs.prepare.outputs.repositories) }}
-      max-parallel: 4
-      fail-fast: false
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: "Upload graph artifact"
+        uses: actions/upload-artifact@v4
         with:
-          repository: '${{ github.repository }}'
-          ref: "main"
+          name: graph.dot
+          path: /tmp/graph.dot
 
-      - name: Format repository name
-        id: format-repo-name
-        shell: bash
-        # language="shell script"
-        run: |
-          set -x
-          repo="${{ matrix.repository.name }}"
-          repo=$(echo "$repo" | tr '/' '_')
-          echo "repo=${repo}" >> "$GITHUB_OUTPUT"
-
-      - name: "Run '${{ matrix.repository.name }}' repository release rollback"
-        uses: "./.github/actions/maven-release-rollback"
-        with:
-          run-id: "${{ github.run_id }}"
-          repository: "${{ matrix.repository.name }}"
-          directory: "${{ matrix.repository.name }}"
-          java-version: ${{ matrix.repository.java }}
-          artifact-name: "gavs-${{ github.run_id }}"
-          backup-artifact-name: "release-backup-${{ github.run_id }}-${{ steps.format-repo-name.outputs.repo }}"
-          maven-token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
-          maven-gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
-          maven-gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
