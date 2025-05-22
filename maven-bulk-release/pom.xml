@@ -14,7 +14,7 @@
     <artifactId>maven-bulk-release</artifactId>
 
     <properties>
-        <jackson.version>2.18.2</jackson.version>
+        <jackson.version>2.19.0</jackson.version>
         <org.jgrapht.version>1.5.2</org.jgrapht.version>
     </properties>
 
