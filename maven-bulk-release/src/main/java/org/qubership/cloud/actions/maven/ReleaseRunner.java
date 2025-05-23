@@ -86,11 +86,11 @@ public class ReleaseRunner {
                             } catch (Exception e) {
                                 if (e instanceof InterruptedException) Thread.currentThread().interrupt();
                                 log.info("'prepare' process {}/{} at level {}/{} failed: {}",
-                                        activeProcessCount.decrementAndGet(), threads, level + 1, dependencyGraph.size(), e.getMessage());
+                                        activeProcessCount.decrementAndGet(), threads, level, dependencyGraph.size(), e.getMessage());
                                 throw new RuntimeException(e);
                             } finally {
                                 log.info("Remaining 'prepare' processes: {}/{} at level {}/{}",
-                                        activeProcessCount.decrementAndGet(), threads, level + 1, dependencyGraph.size());
+                                        activeProcessCount.decrementAndGet(), threads, level, dependencyGraph.size());
                             }
                         })
                         .toList();
