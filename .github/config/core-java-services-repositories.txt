@@ -1,0 +1,3 @@
+https://github.com/Netcracker/qubership-core-config-server
+https://github.com/Netcracker/qubership-core-core-operator
+https://github.com/Netcracker/qubership-dbaas

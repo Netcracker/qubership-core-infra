@@ -11,12 +11,16 @@ on:
         required: false
         type: choice
         options:
-          - "core-repositories"
+          - "core-java-libs-repositories"
+          - "core-java-services-repositories"
           - "test-repositories"
         default: "core-repositories"
       repositoriesToReleaseFrom:
         type: string
         description: "Comma seperated list of repository(ies) to smart release from. Or leave empty to release all repositories"
+      runIdsWithGAVs:
+        type: number
+        description: "Comma seperated list of runId(s) of another release workflow(s) to use their dependencies GAVs"
       versionIncrementType:
         description: "Version part to increment"
         type: choice
@@ -72,6 +76,51 @@ jobs:
           df -h
           uname -a
 
+      - name: "Download GAVs from another release workflow(s)"
+        id: download-gavs
+        if: ${{ inputs.runIdsWithGAVs != '' }}
+        shell: bash
+        env:
+          RUN_IDS: ${{ inputs.runIdsWithGAVs }}
+        # language="shell script"
+        run: |-
+          set -x
+          GAVS=""
+          IFS=','
+          for runId in ${RUN_IDS}; do
+            url="https://api.github.com/repos/Netcracker/qubership-core-infra/actions/runs/${runId}/artifacts"
+            gavsFile="gavs.txt" 
+            zipUrl=$(curl -s -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}" | jq -r --arg name "${gavsFile}" '.artifacts[] | select(.name == $name) | .archive_download_url')
+            if [ -s "${zipUrl}" ]; then
+              echo "artifacts from ${url} do not contain ${gavsFile} artifact"
+              exit 1
+            fi
+            dir="/tmp/gavs_artifacts/${runId}"    
+            
+            mkdir -p "${dir}"
+            
+            zipFile="${dir}/gavs.zip"
+            echo "Downloading ${gavsFile} from ${zipUrl}..."
+            curl -o "${zipFile}" "${zipUrl}" || { echo "Failed to download ${gavsFile}"; exit 1; }
+            
+            echo "Extracting ${zipFile} to ${dir}..."
+            unzip -o "${zipFile}" -d "${dir}" || { echo "Failed to extract ${zipFile}"; exit 1; }
+            
+            extractedGAVsFile="${dir}/${gavsFile}"  
+            if [ -e "${extractedGAVsFile}" ]; then
+              gavs=$(cat "${extractedGAVsFile}" | tr '\n' ',')
+              if [ -n "${GAVS}" ]; then
+                 GAVS="${GAVS},${gavs}"
+              else 
+                 GAVS="${gavs}"     
+              fi
+            else  
+              echo "File ${extractedGAVsFile} not found"
+              exit 1
+            fi
+          done
+          echo "gavs=${GAVS}" >> "${GITHUB_OUTPUT}"
+
       - name: "Read repositories"
         id: read-repositories
         shell: bash
@@ -83,7 +132,7 @@ jobs:
           repositories=$(cat ".github/config/${REPOSITORIES_FILE}.txt")
           echo "repositories=\n${repositories}"
           repositories=$(echo "${repositories}" | tr '\n' ',')
-          echo "repositories=${repositories}" >> "$GITHUB_OUTPUT"
+          echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
 
       - name: "Cache Maven dependencies"
         uses: actions/cache@v4
@@ -110,6 +159,7 @@ jobs:
         id: run-maven-bulk-release-cli
         shell: bash
         env:
+          GAVS: ${{ steps.download-gavs.outputs.gavs }}
           REPOSITORIES: ${{ steps.read-repositories.outputs.repositories }}
           REPOSITORIES_TO_RELEASE_FROM: ${{ inputs.repositoriesToReleaseFrom }}
           VERSION_INCREMENT_TYPE: ${{ inputs.versionIncrementType }}
@@ -117,7 +167,7 @@ jobs:
           DRY_RUN: ${{ inputs.dryRun }}
         # language="shell script"
         run: |
-          jarFile="maven-bulk-release-cli-1.0.0-20250523.102852-81-jar-with-dependencies.jar"          
+          jarFile="maven-bulk-release-cli-1.0.0-20250523.150810-86-jar-with-dependencies.jar"          
           url="https://maven.pkg.github.com/Netcracker/qubership-core-infra/org.qubership.cloud/maven-bulk-release-cli/1.0.0-SNAPSHOT/${jarFile}"
           curl -L -o "maven-bulk-release-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
                     
@@ -136,6 +186,7 @@ jobs:
           args="${args} --groupsPatterns=org\.qubership\..*"
           args="${args} --repositories=${REPOSITORIES}"
           args="${args} --repositoriesToReleaseFrom=${REPOSITORIES_TO_RELEASE_FROM}"
+          args="${args} --gavs=${GAVS}"
           args="${args} --versionIncrementType=${VERSION_INCREMENT_TYPE}"
           args="${args} --javaVersionToJavaHomeEnv=17=${JAVA_HOME_17_X64},21=${JAVA_HOME_21_X64}"
           args="${args} --resultOutputFile=${GITHUB_OUTPUT}"
