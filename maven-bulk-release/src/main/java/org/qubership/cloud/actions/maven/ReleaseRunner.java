@@ -27,7 +27,6 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -113,15 +112,12 @@ public class ReleaseRunner {
                 try (ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
                     allReleases.stream()
                             .filter(release -> repos.stream().map(Repository::getUrl).anyMatch(repo -> Objects.equals(repo, release.getRepository().getUrl())))
-                            .map(release -> {
-                                Future<RepositoryRelease> future = executorService.submit(() -> performRelease(config, release), release);
-                                return new FutureWrapper<RepositoryRelease, RepositoryRelease>(future, release);
-                            })
+                            .map(release -> executorService.submit(() -> performRelease(config, release), release))
                             .peek(f -> activeProcessCount.incrementAndGet())
                             .toList()
-                            .forEach(futureWrapper -> {
+                            .forEach(future -> {
                                 try {
-                                    futureWrapper.getFuture().get();
+                                    future.get();
                                 } catch (Exception e) {
                                     if (e instanceof InterruptedException) Thread.currentThread().interrupt();
                                     String msg = String.format("'perform' process %s/%s at level %s/%s failed: %s",
