@@ -17,7 +17,7 @@ on:
         default: "core-repositories"
       repositoriesToReleaseFrom:
         type: string
-        description: "Allows to smart release repositories tree from specified repository(ies)"
+        description: "Comma seperated list of repository(ies) to smart release provided repositories and dependent repositories only"
       versionIncrementType:
         description: "Version part to increment"
         type: choice
