@@ -37,9 +37,6 @@ on:
         description: "dry run"
         type: boolean
         default: false
-      maven-envs:
-        description: "Envs in format 'env1=val1,env2=val2'. Used for testing"
-        type: string
 
 concurrency:
   group: ${{ inputs.repositoriesFile }}
