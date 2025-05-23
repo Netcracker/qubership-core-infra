@@ -15,6 +15,9 @@ on:
           - "core-repositories"
           - "test-repositories"
         default: "core-repositories"
+      repositoriesToReleaseFrom:
+        type: string
+        description: "Allows to smart release repositories tree from specified repository(ies)"
       versionIncrementType:
         description: "Version part to increment"
         type: choice
@@ -109,6 +112,7 @@ jobs:
         shell: bash
         env:
           REPOSITORIES: ${{ steps.read-repositories.outputs.repositories }}
+          REPOSITORIES_TO_RELEASE_FROM: ${{ inputs.repositoriesToReleaseFrom }}
           VERSION_INCREMENT_TYPE: ${{ inputs.versionIncrementType }}
           SKIP_TEST: ${{ inputs.skipTest }}
           DRY_RUN: ${{ inputs.dryRun }}
@@ -135,6 +139,7 @@ jobs:
           --gitPassword=${MAVEN_TOKEN} \
           "--groupsPatterns=org\.qubership\..*" \
           --repositories=${REPOSITORIES} \
+          --repositoriesToReleaseFrom=${REPOSITORIES_TO_RELEASE_FROM}
           --versionIncrementType=${VERSION_INCREMENT_TYPE} \
           --javaVersionToJavaHomeEnv=\
           17=${JAVA_HOME_17_X64},\
