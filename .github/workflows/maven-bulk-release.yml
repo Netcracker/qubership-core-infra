@@ -148,7 +148,7 @@ jobs:
           --summaryFile=${GITHUB_STEP_SUMMARY} \
           --gavsResultFile=/tmp/gavs.txt \
           --dependencyGraphFile=/tmp/graph.dot \
-          ${options}
+          "${options}"
 
       - name: "Upload gavs artifact"
         uses: actions/upload-artifact@v4
