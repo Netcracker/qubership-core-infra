@@ -84,42 +84,41 @@ jobs:
           RUN_IDS: ${{ inputs.runIdsWithGAVs }}
         # language="shell script"
         run: |-
-          set -x
           GAVS=""
-          IFS=','
-          for runId in ${RUN_IDS}; do
-            url="https://api.github.com/repos/Netcracker/qubership-core-infra/actions/runs/${runId}/artifacts"
-            gavsFile="gavs.txt" 
-            zipUrl=$(curl -s -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}" | jq -r --arg name "${gavsFile}" '.artifacts[] | select(.name == $name) | .archive_download_url')
-            if [ -s "${zipUrl}" ]; then
-              echo "artifacts from ${url} do not contain ${gavsFile} artifact"
-              exit 1
-            fi
-            dir="/tmp/gavs_artifacts/${runId}"    
-            
-            mkdir -p "${dir}"
-            
-            zipFile="${dir}/gavs.zip"
-            echo "Downloading ${gavsFile} from ${zipUrl}..."
-            curl -o "${zipFile}" "${zipUrl}" || { echo "Failed to download ${gavsFile}"; exit 1; }
-            
-            echo "Extracting ${zipFile} to ${dir}..."
-            unzip -o "${zipFile}" -d "${dir}" || { echo "Failed to extract ${zipFile}"; exit 1; }
-            
-            extractedGAVsFile="${dir}/${gavsFile}"  
-            if [ -e "${extractedGAVsFile}" ]; then
-              gavs=$(cat "${extractedGAVsFile}" | tr '\n' ',')
-              if [ -n "${GAVS}" ]; then
-                 GAVS="${GAVS},${gavs}"
-              else 
-                 GAVS="${gavs}"     
-              fi
-            else  
-              echo "File ${extractedGAVsFile} not found"
-              exit 1
-            fi
-          done
-          echo "gavs=${GAVS}" >> "${GITHUB_OUTPUT}"
+              IFS=','
+              for runId in ${RUN_IDS}; do
+                url="https://api.github.com/repos/Netcracker/qubership-core-infra/actions/runs/${runId}/artifacts"
+                gavsFile="gavs.txt"
+                zipUrl=$(curl -s -L -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}" | jq -r --arg name "${gavsFile}" '.artifacts[] | select(.name == $name) | .archive_download_url')
+                if [ -s "${zipUrl}" ]; then
+                  echo "artifacts from ${url} do not contain ${gavsFile} artifact"
+                  exit 1
+                fi
+                dir="/tmp/gavs_artifacts/${runId}"
+              
+                mkdir -p "${dir}"
+              
+                zipFile="${dir}/gavs.zip"
+                echo "Downloading ${gavsFile} from ${zipUrl}"
+                curl -o "${zipFile}" -L -H "Authorization: Bearer ${MAVEN_TOKEN}" "${zipUrl}" || { echo "Failed to download ${gavsFile}"; exit 1; }
+              
+                echo "Extracting ${zipFile} to ${dir}"
+                unzip -o "${zipFile}" -d "${dir}" || { echo "Failed to extract ${zipFile}"; exit 1; }
+              
+                extractedGAVsFile="${dir}/${gavsFile}"
+                if [ -e "${extractedGAVsFile}" ]; then
+                  gavs=$(cat "${extractedGAVsFile}" | tr '\n' ',')
+                  if [ -n "${GAVS}" ]; then
+                     GAVS="${GAVS},${gavs}"
+                  else
+                     GAVS="${gavs}"
+                  fi
+                else
+                  echo "File ${extractedGAVsFile} not found"
+                  exit 1
+                fi
+              done
+              echo "gavs=${GAVS}" >> "${GITHUB_OUTPUT}"
 
       - name: "Read repositories"
         id: read-repositories
