@@ -30,9 +30,9 @@ on:
       dryRun:
         description: "dry run"
         type: boolean
-        default: true
+        default: false
       maven-envs:
-        description: "Envs in format 'env1=val1,env2=val2' for mvn release plugin. Used for testing"
+        description: "Envs in format 'env1=val1,env2=val2'. Used for testing"
         type: string
 
 concurrency:
