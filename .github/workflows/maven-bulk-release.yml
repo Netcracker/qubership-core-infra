@@ -118,7 +118,7 @@ jobs:
           DRY_RUN: ${{ inputs.dryRun }}
         # language="shell script"
         run: |
-          set -x
+          # set -x
           jarFile="maven-bulk-release-cli-1.0.0-20250523.075156-67-jar-with-dependencies.jar"          
           url="https://maven.pkg.github.com/Netcracker/qubership-core-infra/org.qubership.cloud/maven-bulk-release-cli/1.0.0-SNAPSHOT/${jarFile}"
           curl -L -o "maven-bulk-release-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
@@ -130,25 +130,24 @@ jobs:
           if [ "${DRY_RUN}" = "true" ]; then
             options="${options} --dryRun"
           fi
-          
-          java -jar maven-bulk-release-cli.jar \
-          --baseDir=/tmp \
-          --gitURL=https://github.com \
-          --gitUsername=actions \
-          --gitEmail=actions@github.com \
-          --gitPassword=${MAVEN_TOKEN} \
-          "--groupsPatterns=org\.qubership\..*" \
-          --repositories=${REPOSITORIES} \
-          --repositoriesToReleaseFrom=${REPOSITORIES_TO_RELEASE_FROM}
-          --versionIncrementType=${VERSION_INCREMENT_TYPE} \
-          --javaVersionToJavaHomeEnv=\
-          17=${JAVA_HOME_17_X64},\
-          21=${JAVA_HOME_21_X64} \
-          --resultOutputFile=${GITHUB_OUTPUT} \
-          --summaryFile=${GITHUB_STEP_SUMMARY} \
-          --gavsResultFile=/tmp/gavs.txt \
-          --dependencyGraphFile=/tmp/graph.dot \
-          "${options}"
+          args="--baseDir=/tmp"
+          args="${args} --gitURL=https://github.com"
+          args="${args} --gitUsername=actions"
+          args="${args} --gitEmail=actions@github.com"
+          args="${args} --gitPassword=${MAVEN_TOKEN}"
+          args="${args} --groupsPatterns=org\.qubership\..*"
+          args="${args} --repositories=${REPOSITORIES}"
+          args="${args} --repositoriesToReleaseFrom=${REPOSITORIES_TO_RELEASE_FROM}"
+          args="${args} --versionIncrementType=${VERSION_INCREMENT_TYPE}"
+          args="${args} --javaVersionToJavaHomeEnv=17=${JAVA_HOME_17_X64},21=${JAVA_HOME_21_X64}"
+          args="${args} --resultOutputFile=${GITHUB_OUTPUT}"
+          args="${args} --summaryFile=${GITHUB_STEP_SUMMARY}"
+          args="${args} --gavsResultFile=/tmp/gavs.txt"
+          args="${args} --dependencyGraphFile=/tmp/graph.dot"
+          args="${args} ${options}"
+          cmd ="java -jar maven-bulk-release-cli.jar ${args}"
+          echo "running cmd: ${cmd}"
+          eval "cmd"
 
       - name: "Upload gavs artifact"
         uses: actions/upload-artifact@v4
