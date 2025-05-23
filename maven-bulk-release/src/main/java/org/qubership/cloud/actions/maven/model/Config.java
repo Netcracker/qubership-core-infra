@@ -6,6 +6,7 @@ import lombok.Data;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
+import java.io.OutputStream;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -28,6 +29,7 @@ public class Config {
     String mavenAltDeploymentRepository;
     boolean skipTests;
     boolean dryRun;
+    OutputStream summaryOutputStream;
 
     @Builder(builderMethodName = "")
     private Config(String baseDir,
@@ -43,7 +45,8 @@ public class Config {
                    String mavenPassword,
                    String mavenAltDeploymentRepository,
                    boolean skipTests,
-                   boolean dryRun) {
+                   boolean dryRun,
+                   OutputStream summaryOutputStream) {
         this.baseDir = baseDir;
         this.gitConfig = gitConfig;
         this.credentialsProvider = credentialsProvider;
@@ -58,6 +61,7 @@ public class Config {
         this.skipTests = skipTests;
         this.dryRun = dryRun;
         this.versionIncrementType = versionIncrementType;
+        this.summaryOutputStream = summaryOutputStream;
     }
 
     public static ConfigBuilder builder(String baseDir,
@@ -71,7 +75,13 @@ public class Config {
                 .gitConfig(gitConfig)
                 .credentialsProvider(credentialsProvider)
                 .repositories(repositories)
-                .dependenciesFilter(dependenciesFilter);
+                .dependenciesFilter(dependenciesFilter)
+                // set by default NOP OutputStream
+                .summaryOutputStream(new OutputStream() {
+                    @Override
+                    public void write(int b) {
+                    }
+                });
     }
 
     public Collection<String> getGavs() {
