@@ -8,8 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -46,6 +44,10 @@ public class MavenBulkReleaseCli implements Runnable {
     @CommandLine.Option(names = {"--repositoriesToReleaseFrom"}, split = "\\s*,\\s*",
             description = "comma seperated list of git urls which were changed and need to be released. Repositories which use them directly or indirectly will be released as well")
     private Set<String> repositoriesToReleaseFrom = Set.of();
+
+    @CommandLine.Option(names = {"--gavs"}, required = true, split = "\\s*,\\s*",
+            description = "comma seperated list of GAVs to update dependencies from pom.xml files to")
+    private Set<String> gavs;
 
     @CommandLine.Option(names = {"--skipTests"}, arity = "0", defaultValue = "false", description = "skip tests run by release:prepare mvn command")
     private boolean skipTests;
@@ -111,13 +113,13 @@ public class MavenBulkReleaseCli implements Runnable {
                 throw new IllegalArgumentException("--repositories property cannot be empty");
             }
             Predicate<GA> dependenciesFilter = ga -> groupsPatterns.stream().anyMatch(pattern -> pattern.matcher(ga.getGroupId()).matches());
-            Collection<String> gavs = Arrays.stream(System.getProperty("gavs", "").split("\\s*,\\s*"))
-                    .filter(r -> !r.isBlank())
-                    .toList();
 
             GitConfig gitConfig = GitConfig.builder().url(gitURL).username(gitUsername).email(gitEmail).password(gitPassword).build();
+            gavs = this.gavs.stream().filter(gav -> !gav.isBlank()).collect(Collectors.toSet());
+            repositoriesToReleaseFrom = repositoriesToReleaseFrom.stream().filter(r -> !r.isBlank()).collect(Collectors.toSet());
+
             Config config = Config.builder(baseDir, gitConfig, repositories, dependenciesFilter)
-                    .repositoriesToReleaseFrom(repositoriesToReleaseFrom.stream().filter(r -> !r.isBlank()).collect(Collectors.toSet()))
+                    .repositoriesToReleaseFrom(repositoriesToReleaseFrom)
                     .versionIncrementType(versionIncrementType)
                     .mavenAltDeploymentRepository(mavenAltDeploymentRepository)
                     .javaVersionToJavaHomeEnv(javaVersionToJavaHomeEnv)
