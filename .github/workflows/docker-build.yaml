@@ -68,8 +68,9 @@ jobs:
         uses: netcracker/qubership-workflow-hub/actions/metadata-action@main
         id: metadata
         with:
-          configuration-path: .github/dev-metadata-config.yml
+          configuration-path: .github/metadata-action-config.yml
           short-sha: 11
+          default-template: '{{ref-name}}-{{timestamp}}-{{runNumber}}'
 
       - name: Echo metadata
         run: echo "Metadata result ${{ steps.metadata.outputs.result }}" >> $GITHUB_STEP_SUMMARY
