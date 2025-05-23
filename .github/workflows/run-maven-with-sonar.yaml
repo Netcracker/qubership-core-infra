@@ -88,7 +88,7 @@ jobs:
           fi
 
           # Check if actor is restricted
-          if yq e '.restricted-actors[]' "$CONFIG_FILE" | grep -q "^$ACTOR$"; then
+          if yq e '.restricted-actors[]' "$CONFIG_FILE" | grep -Fxq "$ACTOR"; then
             IS_RESTRICTED_ACTOR=true
             echo "::info:: Actor $ACTOR is restricted"
           else
