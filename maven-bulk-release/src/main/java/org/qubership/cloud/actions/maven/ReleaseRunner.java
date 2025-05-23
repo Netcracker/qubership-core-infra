@@ -90,7 +90,7 @@ public class ReleaseRunner {
                                 throw new RuntimeException(e);
                             } finally {
                                 log.info("Remaining 'prepare' processes: {}/{} at level {}/{}",
-                                        activeProcessCount.decrementAndGet(), threads, level, dependencyGraph.size());
+                                        activeProcessCount.decrementAndGet(), threads, level + 1, dependencyGraph.size());
                             }
                         })
                         .toList();
@@ -110,14 +110,14 @@ public class ReleaseRunner {
                     allReleases.stream()
                             .filter(release -> repos.stream().map(Repository::getUrl).anyMatch(repo -> Objects.equals(repo, release.getRepository().getUrl())))
                             .map(release -> {
-                               try {
-                                   PipedOutputStream out = new PipedOutputStream();
-                                   PipedInputStream pipedInputStream = new PipedInputStream(out, 16384);
-                                   Future<RepositoryRelease> future = executorService.submit(() -> performRelease(config, release, out));
-                                   return new TraceableFuture<>(future, pipedInputStream);
-                               } catch (IOException e) {
-                                   throw new RuntimeException(e);
-                               }
+                                try {
+                                    PipedOutputStream out = new PipedOutputStream();
+                                    PipedInputStream pipedInputStream = new PipedInputStream(out, 16384);
+                                    Future<RepositoryRelease> future = executorService.submit(() -> performRelease(config, release, out));
+                                    return new TraceableFuture<>(future, pipedInputStream);
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
                             })
                             .peek(f -> activeProcessCount.incrementAndGet())
                             .toList()
