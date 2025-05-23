@@ -145,7 +145,7 @@ jobs:
           args="${args} --gavsResultFile=/tmp/gavs.txt"
           args="${args} --dependencyGraphFile=/tmp/graph.dot"
           args="${args} ${options}"
-          cmd ="java -jar maven-bulk-release-cli.jar ${args}"
+          cmd="java -jar maven-bulk-release-cli.jar ${args}"
           echo "running cmd: ${cmd}"
           eval "cmd"
 
