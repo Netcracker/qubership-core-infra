@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -63,10 +64,12 @@ public class ReleaseRunner {
                     String.join("\n", entry.getValue().stream().map(Repository::getUrl).toList()));
             List<RepositoryInfo> reposInfoList = entry.getValue();
             int threads = reposInfoList.size();
+            AtomicInteger activeProcessCount = new AtomicInteger(0);
             try (ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
                 Set<GAV> gavList = dependenciesGavs.entrySet().stream().map(e -> new GAV(e.getKey().getGroupId(), e.getKey().getArtifactId(), e.getValue())).collect(Collectors.toSet());
                 List<RepositoryRelease> releases = reposInfoList.stream()
                         .map(repo -> executorService.submit(() -> releasePrepare(config, repo, gavList)))
+                        .peek(f -> activeProcessCount.incrementAndGet())
                         .toList()
                         .stream()
                         .map(future -> {
@@ -77,8 +80,11 @@ public class ReleaseRunner {
                                 throw new RuntimeException(e);
                             } catch (ExecutionException e) {
                                 throw new RuntimeException(e);
+                            } finally {
+                                log.info("Remaining 'prepare' processes: {}/{}", activeProcessCount.decrementAndGet(), threads);
                             }
-                        }).toList();
+                        })
+                        .toList();
                 releases.stream().flatMap(r -> r.getGavs().stream())
                         .forEach(gav -> dependenciesGavs.put(new GA(gav.getGroupId(), gav.getArtifactId()), gav.getVersion()));
                 return releases.stream();
@@ -87,12 +93,15 @@ public class ReleaseRunner {
 
         if (!config.isDryRun()) {
             dependencyGraph.forEach((level, repos) -> {
-                log.info("Running 'perform' - processing level {}/{}, {} repositories:\n{}", level + 1, dependencyGraph.size(), repos.size(),
+                int threads = repos.size();
+                log.info("Running 'perform' - processing level {}/{}, {} repositories:\n{}", level + 1, dependencyGraph.size(), threads,
                         String.join("\n", repos.stream().map(Repository::getUrl).toList()));
-                try (ExecutorService executorService = Executors.newFixedThreadPool(repos.size())) {
+                AtomicInteger activeProcessCount = new AtomicInteger(0);
+                try (ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
                     allReleases.stream()
                             .filter(release -> repos.stream().map(Repository::getUrl).anyMatch(repo -> Objects.equals(repo, release.getRepository().getUrl())))
                             .map(release -> executorService.submit(() -> performRelease(config, release)))
+                            .peek(f -> activeProcessCount.incrementAndGet())
                             .toList()
                             .forEach(future -> {
                                 try {
@@ -100,6 +109,8 @@ public class ReleaseRunner {
                                 } catch (Exception e) {
                                     if (e instanceof InterruptedException) Thread.currentThread().interrupt();
                                     throw new RuntimeException(e);
+                                } finally {
+                                    log.info("Remaining 'perform' processes: {}/{}", activeProcessCount.decrementAndGet(), threads);
                                 }
                             });
                 }

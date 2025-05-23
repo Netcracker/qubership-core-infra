@@ -3,7 +3,6 @@
 name: "Maven bulk release"
 run-name: Maven bulk release of [${{ inputs.repositoriesFile }}] by @${{ github.actor }}'
 
-
 on:
   workflow_dispatch:
     inputs:
@@ -157,4 +156,3 @@ jobs:
         with:
           name: graph.dot
           path: /tmp/graph.dot
-
