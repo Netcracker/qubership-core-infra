@@ -7,8 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       repositoriesFile:
-        description: |-
-          yaml file with indexed repositories to release
+        description: "Repositories group"
         required: false
         type: choice
         options:
