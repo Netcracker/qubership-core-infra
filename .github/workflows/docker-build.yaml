@@ -65,12 +65,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Create name
-        uses: netcracker/qubership-workflow-hub/actions/metadata-action@main
+        uses: nookyo/qubership-workflow-hub/actions/metadata-action@main
         id: metadata
         with:
           configuration-path: .github/metadata-action-config.yml
           short-sha: 11
-          default-template: '{{ref-name}}-{{timestamp}}-${{ github.run_number }}'
+          default-template: '{{ref-name}}-{{timestamp}}-{{run-number}}'
 
       - name: Echo metadata
         run: echo "Metadata result ${{ steps.metadata.outputs.result }}" >> $GITHUB_STEP_SUMMARY
