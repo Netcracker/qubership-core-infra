@@ -17,15 +17,14 @@ import org.jgrapht.nio.dot.DOTExporter;
 import org.qubership.cloud.actions.maven.model.*;
 import org.qubership.cloud.actions.maven.model.Repository;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -67,13 +66,22 @@ public class ReleaseRunner {
             try (ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
                 Set<GAV> gavList = dependenciesGavs.entrySet().stream().map(e -> new GAV(e.getKey().getGroupId(), e.getKey().getArtifactId(), e.getValue())).collect(Collectors.toSet());
                 List<RepositoryRelease> releases = reposInfoList.stream()
-                        .map(repo -> executorService.submit(() -> releasePrepare(config, repo, gavList)))
+                        .map(repo -> {
+                            PipedOutputStream out = new PipedOutputStream();
+                            Future<RepositoryRelease> future = executorService.submit(() -> releasePrepare(config, repo, gavList, out));
+                            return new TraceableFuture<>(future, out);
+                        })
                         .peek(f -> activeProcessCount.incrementAndGet())
                         .toList()
                         .stream()
                         .map(future -> {
                             try {
-                                return future.get();
+                                PipedInputStream pipedInputStream = new PipedInputStream(future.getOutputStream());
+                                int bytes;
+                                while ((bytes = pipedInputStream.read()) != -1) {
+                                    System.out.write(bytes);
+                                }
+                                return future.getFuture().get();
                             } catch (Exception e) {
                                 if (e instanceof InterruptedException) Thread.currentThread().interrupt();
                                 log.info("'prepare' process {}/{} at level {}/{} failed: {}",
@@ -100,12 +108,21 @@ public class ReleaseRunner {
                 try (ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
                     allReleases.stream()
                             .filter(release -> repos.stream().map(Repository::getUrl).anyMatch(repo -> Objects.equals(repo, release.getRepository().getUrl())))
-                            .map(release -> executorService.submit(() -> performRelease(config, release), release))
+                            .map(release -> {
+                                PipedOutputStream out = new PipedOutputStream();
+                                Future<RepositoryRelease> future = executorService.submit(() -> performRelease(config, release, out));
+                                return new TraceableFuture<>(future, out);
+                            })
                             .peek(f -> activeProcessCount.incrementAndGet())
                             .toList()
                             .forEach(future -> {
                                 try {
-                                    future.get();
+                                    PipedInputStream pipedInputStream = new PipedInputStream(future.getOutputStream());
+                                    int bytes;
+                                    while ((bytes = pipedInputStream.read()) != -1) {
+                                        System.out.write(bytes);
+                                    }
+                                    future.getFuture().get();
                                 } catch (Exception e) {
                                     if (e instanceof InterruptedException) Thread.currentThread().interrupt();
                                     log.info("'perform' process {}/{} at level {}/{} failed: {}",
@@ -374,13 +391,13 @@ public class ReleaseRunner {
         }
     }
 
-    RepositoryRelease releasePrepare(Config config, RepositoryInfo repository, Collection<GAV> dependencies) {
+    RepositoryRelease releasePrepare(Config config, RepositoryInfo repository, Collection<GAV> dependencies, OutputStream outputStream) throws Exception {
         String baseDir = config.getBaseDir();
         List<PomHolder> poms = getPoms(baseDir, repository);
         updateDependencies(baseDir, repository, poms, dependencies);
         String releaseVersion = calculateReleaseVersion(repository, poms, config.getVersionIncrementType());
         String javaVersion = calculateJavaVersion(poms);
-        return releasePrepare(repository, config, releaseVersion, javaVersion);
+        return releasePrepare(repository, config, releaseVersion, javaVersion, outputStream);
     }
 
     String calculateReleaseVersion(RepositoryInfo repository, List<PomHolder> poms, VersionIncrementType versionIncrementType) {
@@ -590,28 +607,25 @@ public class ReleaseRunner {
         }
     }
 
-    RepositoryRelease releasePrepare(RepositoryInfo repositoryInfo, Config config, String releaseVersion, String javaVersion) {
-        Path repositoryDirPath = Paths.get(config.getBaseDir(), repositoryInfo.getDir());
-        Path outputFilePath = Paths.get(repositoryDirPath.toString(), "release-prepare-output.log");
-
-        List<String> arguments = new ArrayList<>();
-        if (config.isSkipTests()) {
-            arguments.add("skipTests");
-        } else {
-            arguments.add("surefire.rerunFailingTestsCount=2");
-        }
-        String tag = releaseVersion;
-        List<String> cmd = List.of("mvn", "-B", "release:prepare",
-                "-Dresume=false",
-                "-DautoVersionSubmodules=true",
-                "-DreleaseVersion=" + releaseVersion,
-                "-DpushChanges=false",
-                "-Dtag=" + tag,
-                warpPropertyInQuotes("-DtagNameFormat=@{project.version}"),
-                warpPropertyInQuotes(String.format("-Darguments=%s", String.join(" ", arguments.stream().map(arg -> "-D" + arg).toList()))),
-                warpPropertyInQuotes("-DpreparationGoals=clean install"));
+    RepositoryRelease releasePrepare(RepositoryInfo repositoryInfo, Config config, String releaseVersion, String javaVersion, OutputStream outputStream) throws Exception {
         try {
-            Files.writeString(outputFilePath, "", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            Path repositoryDirPath = Paths.get(config.getBaseDir(), repositoryInfo.getDir());
+            List<String> arguments = new ArrayList<>();
+            if (config.isSkipTests()) {
+                arguments.add("skipTests");
+            } else {
+                arguments.add("surefire.rerunFailingTestsCount=2");
+            }
+            String tag = releaseVersion;
+            List<String> cmd = List.of("mvn", "-B", "release:prepare",
+                    "-Dresume=false",
+                    "-DautoVersionSubmodules=true",
+                    "-DreleaseVersion=" + releaseVersion,
+                    "-DpushChanges=false",
+                    "-Dtag=" + tag,
+                    warpPropertyInQuotes("-DtagNameFormat=@{project.version}"),
+                    warpPropertyInQuotes(String.format("-Darguments=%s", String.join(" ", arguments.stream().map(arg -> "-D" + arg).toList()))),
+                    warpPropertyInQuotes("-DpreparationGoals=clean install"));
 
             ProcessBuilder processBuilder = new ProcessBuilder(cmd).directory(repositoryDirPath.toFile());
             Optional.ofNullable(javaVersion).map(v -> config.getJavaVersionToJavaHomeEnv().get(v))
@@ -625,22 +639,13 @@ public class ReleaseRunner {
                 log.info("Repository: {}\nCmd: '{}' started", repositoryInfo.getUrl(), String.join(" ", cmd));
             }
             Process process = processBuilder.start();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            OutputStream umbrellaOutStream = new OutputStream() {
-                @Override
-                public void write(int b) throws IOException {
-                    baos.write(b);
-                    byte[] byteArray = new byte[]{(byte) b};
-                    Files.write(outputFilePath, byteArray, StandardOpenOption.APPEND);
-                }
-            };
-            process.getInputStream().transferTo(umbrellaOutStream);
-            process.getErrorStream().transferTo(umbrellaOutStream);
+            process.getInputStream().transferTo(outputStream);
+            process.getErrorStream().transferTo(outputStream);
             process.waitFor();
-            log.info("Repository: {}\nCmd: '{}' ended with code: {}, output:\n{}",
-                    repositoryInfo.getUrl(), String.join(" ", cmd), process.exitValue(), baos);
+            log.info("Repository: {}\nCmd: '{}' ended with code: {}",
+                    repositoryInfo.getUrl(), String.join(" ", cmd), process.exitValue());
             if (process.exitValue() != 0) {
-                throw new RuntimeException(String.format("Failed to execute cmd, error: %s", baos));
+                throw new RuntimeException("Failed to execute cmd");
             }
             List<GAV> gavs = Files.readString(Paths.get(repositoryDirPath.toString(), "release.properties")).lines()
                     .filter(l -> l.startsWith("project.rel."))
@@ -655,8 +660,8 @@ public class ReleaseRunner {
             release.setJavaVersion(javaVersion);
             release.setGavs(gavs);
             return release;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } finally {
+            outputStream.close();
         }
     }
 
@@ -664,18 +669,13 @@ public class ReleaseRunner {
         return String.format("\"%s\"", prop);
     }
 
-    void performRelease(Config config, RepositoryRelease release) {
-        try {
+    RepositoryRelease performRelease(Config config, RepositoryRelease release, OutputStream outputStream) throws Exception {
+        try (outputStream) {
             String baseDir = config.getBaseDir();
             RepositoryInfo repository = release.getRepository();
-            Path repositoryDirPath = Paths.get(baseDir, repository.getDir());
-            Path outputFilePath = Paths.get(repositoryDirPath.toString(), "release-perform-output.log");
-            Files.writeString(outputFilePath, "", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-
             pushChanges(config, repository, release);
-            releaseDeploy(baseDir, repository, outputFilePath, config, release);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            releaseDeploy(baseDir, repository, config, release, outputStream);
+            return release;
         }
     }
 
@@ -700,50 +700,37 @@ public class ReleaseRunner {
         release.setPushedToGit(true);
     }
 
-    void releaseDeploy(String baseDir, RepositoryInfo repositoryInfo, Path outputFilePath, Config config, RepositoryRelease release) {
-        try {
-            Path repositoryDirPath = Paths.get(baseDir, repositoryInfo.getDir());
-            List<String> arguments = new ArrayList<>();
-            arguments.add("skipTests");
-            if (config.getMavenAltDeploymentRepository() != null) {
-                arguments.add("altDeploymentRepository=" + config.getMavenAltDeploymentRepository());
-            }
-            String argsString = String.join(" ", arguments.stream().map(arg -> "-D" + arg).toList());
-            List<String> cmd = Stream.of("mvn", "-B", "release:perform",
-                            "-DlocalCheckout=true",
-                            "-DautoVersionSubmodules=true",
-                            warpPropertyInQuotes(String.format("-Darguments=%s", argsString)))
-                    .collect(Collectors.toList());
-            log.info("Repository: {}\nCmd: '{}' started", repositoryInfo.getUrl(), String.join(" ", cmd));
+    void releaseDeploy(String baseDir, RepositoryInfo repositoryInfo, Config config, RepositoryRelease release, OutputStream outputStream) throws Exception {
+        Path repositoryDirPath = Paths.get(baseDir, repositoryInfo.getDir());
+        List<String> arguments = new ArrayList<>();
+        arguments.add("skipTests");
+        if (config.getMavenAltDeploymentRepository() != null) {
+            arguments.add("altDeploymentRepository=" + config.getMavenAltDeploymentRepository());
+        }
+        String argsString = String.join(" ", arguments.stream().map(arg -> "-D" + arg).toList());
+        List<String> cmd = Stream.of("mvn", "-B", "release:perform",
+                        "-DlocalCheckout=true",
+                        "-DautoVersionSubmodules=true",
+                        warpPropertyInQuotes(String.format("-Darguments=%s", argsString)))
+                .collect(Collectors.toList());
+        log.info("Repository: {}\nCmd: '{}' started", repositoryInfo.getUrl(), String.join(" ", cmd));
 
-            ProcessBuilder processBuilder = new ProcessBuilder(cmd).directory(repositoryDirPath.toFile());
-            Optional.ofNullable(release.getJavaVersion()).map(v -> config.getJavaVersionToJavaHomeEnv().get(v))
-                    .ifPresent(javaHome -> processBuilder.environment().put("JAVA_HOME", javaHome));
-            // maven envs
-            if (config.getMavenUser() != null && config.getMavenPassword() != null) {
-                processBuilder.environment().put("MAVEN_USER", config.getMavenUser());
-                processBuilder.environment().put("MAVEN_TOKEN", config.getMavenPassword());
-            }
-            Process process = processBuilder.start();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            OutputStream umbrellaOutStream = new OutputStream() {
-                @Override
-                public void write(int b) throws IOException {
-                    baos.write(b);
-                    byte[] byteArray = new byte[]{(byte) b};
-                    Files.write(outputFilePath, byteArray, StandardOpenOption.APPEND);
-                }
-            };
-            process.getInputStream().transferTo(umbrellaOutStream);
-            process.getErrorStream().transferTo(umbrellaOutStream);
-            process.waitFor();
-            log.info("Repository: {}\nCmd: '{}' ended with code: {}, output:\n{}",
-                    repositoryInfo.getUrl(), String.join(" ", cmd), process.exitValue(), baos);
-            if (process.exitValue() != 0) {
-                throw new RuntimeException(String.format("Failed to execute cmd, error: %s", baos));
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        ProcessBuilder processBuilder = new ProcessBuilder(cmd).directory(repositoryDirPath.toFile());
+        Optional.ofNullable(release.getJavaVersion()).map(v -> config.getJavaVersionToJavaHomeEnv().get(v))
+                .ifPresent(javaHome -> processBuilder.environment().put("JAVA_HOME", javaHome));
+        // maven envs
+        if (config.getMavenUser() != null && config.getMavenPassword() != null) {
+            processBuilder.environment().put("MAVEN_USER", config.getMavenUser());
+            processBuilder.environment().put("MAVEN_TOKEN", config.getMavenPassword());
+        }
+        Process process = processBuilder.start();
+        process.getInputStream().transferTo(outputStream);
+        process.getErrorStream().transferTo(outputStream);
+        process.waitFor();
+        log.info("Repository: {}\nCmd: '{}' ended with code: {}",
+                repositoryInfo.getUrl(), String.join(" ", cmd), process.exitValue());
+        if (process.exitValue() != 0) {
+            throw new RuntimeException("Failed to execute cmd");
         }
         release.setDeployed(true);
     }
