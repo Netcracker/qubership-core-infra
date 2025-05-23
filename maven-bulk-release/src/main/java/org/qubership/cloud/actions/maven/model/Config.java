@@ -29,6 +29,7 @@ public class Config {
     String mavenAltDeploymentRepository;
     boolean skipTests;
     boolean dryRun;
+    @JsonIgnore
     OutputStream summaryOutputStream;
 
     @Builder(builderMethodName = "")
