@@ -78,7 +78,7 @@ jobs:
         id: prepare_tags
         run: |
           BASE_TAG="${{ steps.metadata.outputs.result }}"
-          EXTRA_TAG="${{ github.event.inputs.tags }}"
+          EXTRA_TAG="${{ inputs.tags }}"
           if [ -n "$EXTRA_TAG" ]; then
             TAGS="${BASE_TAG}, ${EXTRA_TAG}"
           else
