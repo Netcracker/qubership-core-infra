@@ -20,7 +20,6 @@ import org.qubership.cloud.actions.maven.model.Repository;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
@@ -47,13 +46,6 @@ public class ReleaseRunner {
     public Result release(Config config) {
         Result result = new Result();
         log.info("Config: {}", yamlMapper.writeValueAsString(config));
-        PrintWriter summaryWriter = new PrintWriter(config.getSummaryOutputStream(), true) {
-            @Override
-            public void println(String x) {
-                super.println(x);
-                log.info(x);
-            }
-        };
         // set up git creds if necessary
         setupGit(config);
 
@@ -67,10 +59,9 @@ public class ReleaseRunner {
 
         List<RepositoryRelease> allReleases = dependencyGraph.entrySet().stream().flatMap(entry -> {
             int level = entry.getKey() + 1;
-            String prepareMsg = String.format("Running 'prepare' - processing level %s/%s, %s repositories:%n%s", level, dependencyGraph.size(), entry.getValue().size(),
-                    String.join("\n", entry.getValue().stream().map(Repository::getUrl).toList()));
-            summaryWriter.println(prepareMsg);
             List<RepositoryInfo> reposInfoList = entry.getValue();
+            log.info("Running 'prepare' - processing level {}/{}, {} repositories:\n{}", level, dependencyGraph.size(), reposInfoList.size(),
+                    String.join("\n", reposInfoList.stream().map(Repository::getUrl).toList()));
             int threads = reposInfoList.size();
             AtomicInteger activeProcessCount = new AtomicInteger(0);
             try (ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
@@ -85,14 +76,12 @@ public class ReleaseRunner {
                                 return future.get();
                             } catch (Exception e) {
                                 if (e instanceof InterruptedException) Thread.currentThread().interrupt();
-                                String msg = String.format("'prepare' process %s/%s at level %s/%s failed: %s",
+                                log.info("'prepare' process {}/{} at level {}/{} failed: {}",
                                         activeProcessCount.decrementAndGet(), threads, level + 1, dependencyGraph.size(), e.getMessage());
-                                summaryWriter.println(msg);
                                 throw new RuntimeException(e);
                             } finally {
-                                String msg = String.format("Remaining 'prepare' processes: %s/%s at level %s/%s",
+                                log.info("Remaining 'prepare' processes: {}/{} at level {}/{}",
                                         activeProcessCount.decrementAndGet(), threads, level, dependencyGraph.size());
-                                summaryWriter.println(msg);
                             }
                         })
                         .toList();
@@ -105,9 +94,8 @@ public class ReleaseRunner {
         if (!config.isDryRun()) {
             dependencyGraph.forEach((level, repos) -> {
                 int threads = repos.size();
-                String prepareMsg = String.format("Running 'perform' - processing level %s/%s, %s repositories:%n%s", level + 1, dependencyGraph.size(), threads,
+                log.info("Running 'perform' - processing level {}/{}, {} repositories:\n{}", level + 1, dependencyGraph.size(), threads,
                         String.join("\n", repos.stream().map(Repository::getUrl).toList()));
-                summaryWriter.println(prepareMsg);
                 AtomicInteger activeProcessCount = new AtomicInteger(0);
                 try (ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
                     allReleases.stream()
@@ -120,14 +108,12 @@ public class ReleaseRunner {
                                     future.get();
                                 } catch (Exception e) {
                                     if (e instanceof InterruptedException) Thread.currentThread().interrupt();
-                                    String msg = String.format("'perform' process %s/%s at level %s/%s failed: %s",
+                                    log.info("'perform' process {}/{} at level {}/{} failed: {}",
                                             activeProcessCount.decrementAndGet(), threads, level + 1, dependencyGraph.size(), e.getMessage());
-                                    summaryWriter.println(msg);
                                     throw new RuntimeException(e);
                                 } finally {
-                                    String remainingMsg = String.format("Remaining 'perform' processes: %s/%s at level %s/%s",
+                                    log.info("Remaining 'perform' processes: {}/{} at level {}/{}",
                                             activeProcessCount.decrementAndGet(), threads, level + 1, dependencyGraph.size());
-                                    summaryWriter.println(remainingMsg);
                                 }
                             });
                 }

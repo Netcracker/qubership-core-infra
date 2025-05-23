@@ -4,8 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.qubership.cloud.actions.maven.model.*;
 import picocli.CommandLine;
 
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -117,16 +115,6 @@ public class MavenBulkReleaseCli implements Runnable {
                     .toList();
 
             GitConfig gitConfig = GitConfig.builder().url(gitURL).username(gitUsername).email(gitEmail).password(gitPassword).build();
-            OutputStream summaryStream;
-            if (summaryFile != null && !summaryFile.isBlank()) {
-                summaryStream = new FileOutputStream(summaryFile);
-            } else {
-                summaryStream = new OutputStream() {
-                    @Override
-                    public void write(int b)  {
-                    }
-                };
-            }
             Config config = Config.builder(baseDir, gitConfig, repositories, dependenciesFilter)
                     .repositoriesToReleaseFrom(repositoriesToReleaseFrom)
                     .versionIncrementType(versionIncrementType)
@@ -137,7 +125,6 @@ public class MavenBulkReleaseCli implements Runnable {
                     .gavs(gavs)
                     .skipTests(skipTests)
                     .dryRun(dryRun)
-                    .summaryOutputStream(summaryStream)
                     .build();
             Result result = new ReleaseRunner().release(config);
             if (summaryFile != null && !summaryFile.isBlank()) {
