@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @CommandLine.Command(description = "maven bulk release cli")
 @Slf4j
@@ -116,7 +117,7 @@ public class MavenBulkReleaseCli implements Runnable {
 
             GitConfig gitConfig = GitConfig.builder().url(gitURL).username(gitUsername).email(gitEmail).password(gitPassword).build();
             Config config = Config.builder(baseDir, gitConfig, repositories, dependenciesFilter)
-                    .repositoriesToReleaseFrom(repositoriesToReleaseFrom)
+                    .repositoriesToReleaseFrom(repositoriesToReleaseFrom.stream().filter(r -> !r.isBlank()).collect(Collectors.toSet()))
                     .versionIncrementType(versionIncrementType)
                     .mavenAltDeploymentRepository(mavenAltDeploymentRepository)
                     .javaVersionToJavaHomeEnv(javaVersionToJavaHomeEnv)
