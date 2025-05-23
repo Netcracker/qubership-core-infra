@@ -126,8 +126,7 @@ public class MavenBulkReleaseCli implements Runnable {
                     .skipTests(skipTests)
                     .dryRun(dryRun)
                     .build();
-            ReleaseRunner releaseRunner = new ReleaseRunner();
-            Result result = releaseRunner.release(config);
+            Result result = new ReleaseRunner().release(config);
             if (summaryFile != null && !summaryFile.isBlank()) {
                 // write summary
                 try {
@@ -173,6 +172,17 @@ public class MavenBulkReleaseCli implements Runnable {
                 }
             }
         } catch (Exception e) {
+            if (summaryFile != null && !summaryFile.isBlank()) {
+                // write summary
+                try {
+                    Path summaryPath = Paths.get(summaryFile);
+                    String msg = String.format("Failed to perform maven bulk release: %s", e.getMessage());
+                    log.info("Writing to {} summary:\n{}", summaryPath, msg);
+                    Files.writeString(summaryPath, msg, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                } catch (Exception we) {
+                    log.error("Failed to write summary to file {}", summaryFile, we);
+                }
+            }
             throw new IllegalStateException("Failed to perform maven bulk release", e);
         }
     }
