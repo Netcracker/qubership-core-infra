@@ -48,7 +48,8 @@ public class ReleaseRunner {
         // set up git creds if necessary
         setupGit(config);
 
-        Map<GA, String> dependenciesGavs = config.getGavs().stream().map(GAV::new).collect(Collectors.toMap(gav -> new GA(gav.getGroupId(), gav.getArtifactId()), GAV::getVersion));
+        Map<GA, String> dependenciesGavs = config.getGavs().stream().map(GAV::new)
+                .collect(Collectors.toMap(gav -> new GA(gav.getGroupId(), gav.getArtifactId()), GAV::getVersion));
         // build dependency graph
         Map<Integer, List<RepositoryInfo>> dependencyGraph = buildDependencyGraph(config);
         result.setDependencyGraph(dependencyGraph);
@@ -64,14 +65,16 @@ public class ReleaseRunner {
             int threads = reposInfoList.size();
             AtomicInteger activeProcessCount = new AtomicInteger(0);
             try (ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
-                Set<GAV> gavList = dependenciesGavs.entrySet().stream().map(e -> new GAV(e.getKey().getGroupId(), e.getKey().getArtifactId(), e.getValue())).collect(Collectors.toSet());
+                Set<GAV> gavList = dependenciesGavs.entrySet().stream()
+                        .map(e -> new GAV(e.getKey().getGroupId(), e.getKey().getArtifactId(), e.getValue()))
+                        .collect(Collectors.toSet());
                 List<RepositoryRelease> releases = reposInfoList.stream()
                         .map(repo -> {
                             try {
                                 PipedOutputStream out = new PipedOutputStream();
                                 PipedInputStream pipedInputStream = new PipedInputStream(out, 16384);
                                 Future<RepositoryRelease> future = executorService.submit(() -> releasePrepare(config, repo, gavList, out));
-                                return new TraceableFuture<>(future, pipedInputStream);
+                                return new TraceableFuture<>(future, pipedInputStream, repo);
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
@@ -85,8 +88,7 @@ public class ReleaseRunner {
                                 return future.getFuture().get();
                             } catch (Exception e) {
                                 if (e instanceof InterruptedException) Thread.currentThread().interrupt();
-                                log.info("'prepare' process {}/{} at level {}/{} failed: {}",
-                                        activeProcessCount.decrementAndGet(), threads, level, dependencyGraph.size(), e.getMessage());
+                                log.error("'prepare' process for repository '{}' has failed. Error: {}", future.getObject().getUrl(), e.getMessage());
                                 throw new RuntimeException(e);
                             } finally {
                                 log.info("Remaining 'prepare' processes: {}/{} at level {}/{}",
@@ -108,13 +110,14 @@ public class ReleaseRunner {
                 AtomicInteger activeProcessCount = new AtomicInteger(0);
                 try (ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
                     allReleases.stream()
-                            .filter(release -> repos.stream().map(Repository::getUrl).anyMatch(repo -> Objects.equals(repo, release.getRepository().getUrl())))
+                            .filter(release -> repos.stream().map(Repository::getUrl)
+                                    .anyMatch(repo -> Objects.equals(repo, release.getRepository().getUrl())))
                             .map(release -> {
                                 try {
                                     PipedOutputStream out = new PipedOutputStream();
                                     PipedInputStream pipedInputStream = new PipedInputStream(out, 16384);
                                     Future<RepositoryRelease> future = executorService.submit(() -> performRelease(config, release, out));
-                                    return new TraceableFuture<>(future, pipedInputStream);
+                                    return new TraceableFuture<>(future, pipedInputStream, release);
                                 } catch (IOException e) {
                                     throw new RuntimeException(e);
                                 }
@@ -127,8 +130,8 @@ public class ReleaseRunner {
                                     future.getFuture().get();
                                 } catch (Exception e) {
                                     if (e instanceof InterruptedException) Thread.currentThread().interrupt();
-                                    log.info("'perform' process {}/{} at level {}/{} failed: {}",
-                                            activeProcessCount.decrementAndGet(), threads, level + 1, dependencyGraph.size(), e.getMessage());
+                                    log.error("'perform' process for repository '{}' has failed. Error: {}",
+                                            future.getObject().getRepository().getUrl(), e.getMessage());
                                     throw new RuntimeException(e);
                                 } finally {
                                     log.info("Remaining 'perform' processes: {}/{} at level {}/{}",
@@ -197,8 +200,10 @@ public class ReleaseRunner {
                         .filter(ri -> repositoryInfos.stream().anyMatch(riFrom -> Objects.equals(riFrom.getUrl(), ri.getUrl())))
                         .forEach(ri -> graph.addEdge(ri.getUrl(), repositoryInfo.getUrl()));
             }
-            List<RepositoryInfo> independentRepos = repositoryInfos.stream().filter(ri -> graph.incomingEdgesOf(ri.getUrl()).isEmpty()).toList();
-            List<RepositoryInfo> dependentRepos = repositoryInfos.stream().filter(ri -> !graph.incomingEdgesOf(ri.getUrl()).isEmpty()).collect(Collectors.toList());
+            List<RepositoryInfo> independentRepos = repositoryInfos.stream()
+                    .filter(ri -> graph.incomingEdgesOf(ri.getUrl()).isEmpty()).toList();
+            List<RepositoryInfo> dependentRepos = repositoryInfos.stream()
+                    .filter(ri -> !graph.incomingEdgesOf(ri.getUrl()).isEmpty()).collect(Collectors.toList());
             Map<Integer, List<RepositoryInfo>> groupedReposMap = new TreeMap<>();
             groupedReposMap.put(0, independentRepos);
             int level = 1;
@@ -206,7 +211,8 @@ public class ReleaseRunner {
                 List<RepositoryInfo> prevLevelRepos = IntStream.range(0, level).boxed().flatMap(lvl -> groupedReposMap.get(lvl).stream()).toList();
                 List<RepositoryInfo> thisLevelRepos = dependentRepos.stream()
                         .filter(ri -> graph.incomingEdgesOf(ri.getUrl()).stream().map(StringEdge::getSource)
-                                .allMatch(dependentRepoUrl -> prevLevelRepos.stream().map(RepositoryInfo::getUrl).collect(Collectors.toSet()).contains(dependentRepoUrl))).toList();
+                                .allMatch(dependentRepoUrl -> prevLevelRepos.stream().map(RepositoryInfo::getUrl)
+                                        .collect(Collectors.toSet()).contains(dependentRepoUrl))).toList();
                 groupedReposMap.put(level, thisLevelRepos);
                 dependentRepos.removeAll(thisLevelRepos);
                 level++;
@@ -485,7 +491,9 @@ public class ReleaseRunner {
                         (s1, s2) -> {
                             if (!Objects.equals(s1, s2)) {
                                 throw new IllegalStateException(String.format("Different java versions %s and %s specified in properties in poms: %s",
-                                        s1, s2, String.join("\n", poms.stream().map(ph -> String.format("%s:%s", ph.getGroupId(), ph.getArtifactId())).toList())));
+                                        s1, s2, String.join("\n", poms.stream()
+                                                .map(ph -> String.format("%s:%s", ph.getGroupId(), ph.getArtifactId()))
+                                                .toList())));
                             }
                             return s1;
                         }));
@@ -495,14 +503,17 @@ public class ReleaseRunner {
     void updateDependencies(String baseDir, RepositoryInfo repositoryInfo, List<PomHolder> poms, Collection<GAV> dependencies) {
         updateDepVersionsNew(repositoryInfo, poms, dependencies);
         // check all versions were updated
-        Predicate<GA> filter = ga -> dependencies.stream().anyMatch(gav -> gav.getGroupId().equals(ga.getGroupId()) && gav.getArtifactId().equals(ga.getArtifactId()));
+        Predicate<GA> filter = ga -> dependencies.stream()
+                .anyMatch(gav -> gav.getGroupId().equals(ga.getGroupId()) && gav.getArtifactId().equals(ga.getArtifactId()));
         List<PomHolder> updatedPoms = getPoms(baseDir, repositoryInfo);
         resolveDependencies(repositoryInfo, updatedPoms, filter);
         Set<GAV> updatedModuleDependencies = repositoryInfo.getModuleDependencies();
         Set<GAV> missedDependencies = updatedModuleDependencies.stream()
                 .filter(gav -> {
                     Optional<GAV> foundGav = dependencies.stream()
-                            .filter(dGav -> Objects.equals(gav.getGroupId(), dGav.getGroupId()) && Objects.equals(gav.getArtifactId(), dGav.getArtifactId())).findFirst();
+                            .filter(dGav -> Objects.equals(gav.getGroupId(), dGav.getGroupId()) &&
+                                            Objects.equals(gav.getArtifactId(), dGav.getArtifactId()))
+                            .findFirst();
                     if (foundGav.isEmpty()) return false;
                     GAV g = foundGav.get();
                     return !Objects.equals(gav.getVersion(), g.getVersion());
@@ -539,7 +550,9 @@ public class ReleaseRunner {
             GA dependencyGA = new GA(groupId, artifactId);
             GAV newGav = dependencies.stream()
                     // exclude our's own modules
-                    .filter(gav -> repositoryInfo.getModules().stream().noneMatch(ga -> Objects.equals(ga.getGroupId(), gav.getGroupId()) && Objects.equals(ga.getArtifactId(), gav.getArtifactId())))
+                    .filter(gav -> repositoryInfo.getModules().stream()
+                            .noneMatch(ga -> Objects.equals(ga.getGroupId(), gav.getGroupId()) &&
+                                             Objects.equals(ga.getArtifactId(), gav.getArtifactId())))
                     .filter(gav -> Objects.equals(gav.getGroupId(), dependencyGA.getGroupId()) &&
                                    Objects.equals(gav.getArtifactId(), dependencyGA.getArtifactId()))
                     .findFirst().orElse(null);
@@ -611,7 +624,8 @@ public class ReleaseRunner {
         }
     }
 
-    RepositoryRelease releasePrepare(RepositoryInfo repositoryInfo, Config config, String releaseVersion, String javaVersion, OutputStream outputStream) throws Exception {
+    RepositoryRelease releasePrepare(RepositoryInfo repositoryInfo, Config config, String releaseVersion,
+                                     String javaVersion, OutputStream outputStream) throws Exception {
         Path repositoryDirPath = Paths.get(config.getBaseDir(), repositoryInfo.getDir());
         List<String> arguments = new ArrayList<>();
         if (config.isSkipTests()) {
@@ -671,10 +685,9 @@ public class ReleaseRunner {
 
     RepositoryRelease performRelease(Config config, RepositoryRelease release, OutputStream outputStream) throws Exception {
         try (outputStream) {
-            String baseDir = config.getBaseDir();
             RepositoryInfo repository = release.getRepository();
             pushChanges(config, repository, release);
-            releaseDeploy(baseDir, repository, config, release, outputStream);
+            releaseDeploy(repository, config, release, outputStream);
             return release;
         }
     }
@@ -700,8 +713,9 @@ public class ReleaseRunner {
         release.setPushedToGit(true);
     }
 
-    void releaseDeploy(String baseDir, RepositoryInfo repositoryInfo, Config config, RepositoryRelease release, OutputStream outputStream) throws Exception {
-        Path repositoryDirPath = Paths.get(baseDir, repositoryInfo.getDir());
+    void releaseDeploy(RepositoryInfo repositoryInfo, Config config,
+                       RepositoryRelease release, OutputStream outputStream) throws Exception {
+        Path repositoryDirPath = Paths.get(config.getBaseDir(), repositoryInfo.getDir());
         List<String> arguments = new ArrayList<>();
         arguments.add("skipTests");
         if (config.getMavenAltDeploymentRepository() != null) {
@@ -744,7 +758,8 @@ public class ReleaseRunner {
         for (RepositoryInfo repositoryInfo : repositoryInfoList) {
             repositoryInfo.getRepoDependencies()
                     .stream()
-                    .filter(ri -> dependencyGraph.values().stream().flatMap(Collection::stream).anyMatch(ri2 -> Objects.equals(ri2.getUrl(), ri.getUrl())))
+                    .filter(ri -> dependencyGraph.values().stream()
+                            .flatMap(Collection::stream).anyMatch(ri2 -> Objects.equals(ri2.getUrl(), ri.getUrl())))
                     .forEach(ri -> graph.addEdge(ri.getUrl(), repositoryInfo.getUrl()));
         }
         Function<String, String> vertexIdProvider = vertex -> {

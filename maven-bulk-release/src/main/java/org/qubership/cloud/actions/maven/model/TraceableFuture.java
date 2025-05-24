@@ -8,7 +8,8 @@ import java.util.concurrent.Future;
 
 @Data
 @AllArgsConstructor
-public class TraceableFuture<T> {
+public class TraceableFuture<T, S> {
     Future<T> future;
     PipedInputStream pipedInputStream;
+    S object;
 }
