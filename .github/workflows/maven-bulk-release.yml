@@ -11,8 +11,8 @@ on:
         required: false
         type: choice
         options:
-          - "core-java-libs-repositories"
-          - "core-java-services-repositories"
+          - "core-libs-repositories"
+          - "core-services-repositories"
           - "test-repositories"
         default: "core-repositories"
       repositoriesToReleaseFrom:
