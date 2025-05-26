@@ -3,6 +3,7 @@ package org.qubership.cloud.actions.maven.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
@@ -13,6 +14,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Data
+@ToString(exclude = "mavenPassword")
 public class Config {
     final String baseDir;
     final GitConfig gitConfig;
@@ -27,6 +29,7 @@ public class Config {
     // particular repository(ies) to start release from (the rest of the tree will be calculated automatically)
     Set<String> repositoriesToReleaseFrom = new LinkedHashSet<>();
     String mavenUser;
+    @JsonIgnore
     String mavenPassword;
     String mavenAltDeploymentRepository;
     boolean skipTests;

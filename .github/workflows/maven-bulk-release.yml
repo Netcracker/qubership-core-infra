@@ -124,7 +124,6 @@ jobs:
           REPOSITORIES_FILE: ${{ inputs.repositoriesFile }}
         # language="shell script"
         run: |
-          set -x
           repositories=$(cat ".github/config/${REPOSITORIES_FILE}.txt")
           echo "repositories=\n${repositories}"
           repositories=$(echo "${repositories}" | tr '\n' ',')
