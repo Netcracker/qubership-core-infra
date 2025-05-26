@@ -8,7 +8,9 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 import java.io.OutputStream;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Data
 public class Config {
@@ -57,8 +59,8 @@ public class Config {
         this.mavenAltDeploymentRepository = mavenAltDeploymentRepository;
         this.mavenPassword = mavenPassword;
         this.mavenUser = mavenUser;
-        this.repositories = repositories;
-        this.repositoriesToReleaseFrom = repositoriesToReleaseFrom;
+        this.repositories = repositories.stream().map(normalizeGitUrl).collect(Collectors.toSet());
+        this.repositoriesToReleaseFrom = repositoriesToReleaseFrom.stream().map(normalizeGitUrl).collect(Collectors.toSet());
         this.skipTests = skipTests;
         this.dryRun = dryRun;
         this.versionIncrementType = versionIncrementType;
@@ -96,4 +98,6 @@ public class Config {
     public Set<String> getRepositoriesToReleaseFrom() {
         return repositoriesToReleaseFrom == null ? Collections.emptySet() : repositoriesToReleaseFrom;
     }
+
+    Function<String, String> normalizeGitUrl = (url) -> url.endsWith(".git") ? url.substring(0, url.length() - 4) : url;
 }
