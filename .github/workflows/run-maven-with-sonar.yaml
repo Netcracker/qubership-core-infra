@@ -67,6 +67,8 @@ jobs:
 
       - name: Prepare variables
         id: prepare
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           # Store input variables
           ACTOR="${{ inputs.actor }}"
@@ -103,7 +105,7 @@ jobs:
           fi
 
           # Set sonar run flag
-          if [ -z "${{ inputs.sonar-project-key }}" ] || [ -z "${{ secrets.SONAR_TOKEN }}" ]; then
+          if [ -z "${{ inputs.sonar-project-key }}" ] || [ -z "$SONAR_TOKEN" ]; then
             echo "::info:: Sonar configuration is missing, skipping Sonar analysis"
             echo "run-sonar=false" >> $GITHUB_OUTPUT
           elif [ "$IS_RESTRICTED_ACTOR" = true ]; then
