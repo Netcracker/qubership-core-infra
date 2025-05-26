@@ -46,7 +46,7 @@ on:
 
       # Sonar configuration
       sonar-project-key:
-        description: 'Sonar project key for analysis'
+        description: 'Sonar project key for analysis. It must be specified explicitly, as the qubership-core-infra repository may have its own sonar-project-key. '
         required: false
         type: string
 
@@ -122,8 +122,8 @@ jobs:
 
       - name: Output build configuration
         run: |
-          echo "Maven goal: ${{ steps.prepare.outputs.maven-goal }}"
-          echo "Run Sonar: ${{ steps.prepare.outputs.run-sonar }}"
+          echo "::info:: Maven goal: ${{ steps.prepare.outputs.maven-goal }}"
+          echo "::info:: Run Sonar: ${{ steps.prepare.outputs.run-sonar }}"
 
   mvn-with-sonar:
     name: Build with Sonar analysis
