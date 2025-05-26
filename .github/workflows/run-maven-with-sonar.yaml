@@ -46,17 +46,9 @@ on:
 
       # Sonar configuration
       sonar-project-key:
-        description: 'Sonar project key for analysis'
+        description: 'Sonar project key for analysis. It must be specified explicitly, as the qubership-core-infra repository may have its own sonar-project-key. '
         required: false
         type: string
-
-    secrets:
-      maven-token:
-        description: 'Token for Maven repository authentication'
-        required: true
-      sonar-token:
-        description: 'Token for Sonar authentication'
-        required: false
 
 jobs:
   prepare-variables:
@@ -111,8 +103,8 @@ jobs:
           fi
 
           # Set sonar run flag
-          if [ -z "${{ inputs.sonar-project-key }}" ] || [ -z "${{ secrets.sonar-token }}" ]; then
-            echo "::info:: Sonar configuration is missing, skipping Sonar analysis"
+          if [ -z "${{ inputs.sonar-project-key }}" ]; then
+            echo "::info:: Sonar key is missing, skipping Sonar analysis"
             echo "run-sonar=false" >> $GITHUB_OUTPUT
           elif [ "$IS_RESTRICTED_ACTOR" = true ]; then
             echo "run-sonar=false" >> $GITHUB_OUTPUT
@@ -122,8 +114,8 @@ jobs:
 
       - name: Output build configuration
         run: |
-          echo "Maven goal: ${{ steps.prepare.outputs.maven-goal }}"
-          echo "Run Sonar: ${{ steps.prepare.outputs.run-sonar }}"
+          echo "::info:: Maven goal: ${{ steps.prepare.outputs.maven-goal }}"
+          echo "::info:: Run Sonar: ${{ steps.prepare.outputs.run-sonar }}"
 
   mvn-with-sonar:
     name: Build with Sonar analysis
@@ -142,8 +134,8 @@ jobs:
       java-version: ${{ inputs.java-version }}
       ref: ${{ github.head_ref }}
     secrets:
-      maven-token: ${{ secrets.maven-token }}
-      sonar-token: ${{ secrets.sonar-token }}
+      maven-token: ${{ secrets.GITHUB_TOKEN }}
+      sonar-token: ${{ secrets.SONAR_TOKEN }}
 
   mvn-without-sonar:
     name: Build without Sonar analysis
@@ -158,4 +150,4 @@ jobs:
       java-version: ${{ inputs.java-version }}
       ref: ${{ github.head_ref }}
     secrets:
-      maven-token: ${{ secrets.maven-token }}
+      maven-token: ${{ secrets.GITHUB_TOKEN }}
