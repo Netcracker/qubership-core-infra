@@ -70,7 +70,7 @@ jobs:
         with:
           configuration-path: .github/metadata-action-config.yml
           short-sha: 11
-          default-template: '{{ref-name}}-{{timestamp}}-{{run-number}}'
+          default-template: '{{ref-name}}-{{timestamp}}-{{github.context.runNumber}}'
 
       - name: Echo metadata
         run: echo "Metadata result ${{ steps.metadata.outputs.result }}" >> $GITHUB_STEP_SUMMARY
