@@ -18,11 +18,11 @@
 # - Requires proper Sonar configuration (organization, host URL, etc.)
 #
 # Restricted actors:
-# - Defined in .github/config/maven-build-config.yaml
+# - Defined in .github/config/build-config.yaml
 # - Cannot deploy artifacts
 # - Cannot run Sonar analysis
 
-name: Run maven + Sonar
+name: Maven build + Sonar
 
 on:
   workflow_call:
@@ -46,7 +46,7 @@ on:
 
       # Sonar configuration
       sonar-project-key:
-        description: 'Sonar project key for analysis. It must be specified explicitly, as the qubership-core-infra repository may have its own sonar-project-key. '
+        description: 'Sonar project key for analysis'
         required: false
         type: string
 
@@ -73,18 +73,24 @@ jobs:
       - name: Prepare variables
         id: prepare
         run: |
-          # Store input variables
+          echo "::info:: Storing input variables..."
           ACTOR="${{ inputs.actor }}"
           EVENT_NAME="${{ inputs.event-name }}"
-          CONFIG_FILE="workflow-repo/.github/config/maven-build-config.yaml"
+          CONFIG_FILE="workflow-repo/.github/config/build-config.yaml"
 
-          # Validate config file exists
+          echo "::info:: Validating config file exists..."
           if [ ! -f "$CONFIG_FILE" ]; then
             echo "::error:: Configuration file not found: $CONFIG_FILE"
             exit 1
           fi
 
-          # Check if actor is restricted
+          echo "::info:: Validating event..."
+          if [ "$EVENT_NAME" != "pull_request" ] && [ "$EVENT_NAME" != "push" ]; then
+            echo "::error:: Unsupported event name: $EVENT_NAME. Only 'pull_request' and 'push' are supported."
+            exit 1
+          fi
+
+          echo "::info:: Checking if actor is restricted..."
           if yq e '.restricted-actors[]' "$CONFIG_FILE" | grep -Fxq "$ACTOR"; then
             IS_RESTRICTED_ACTOR=true
             echo "::info:: Actor $ACTOR is restricted"
@@ -93,21 +99,18 @@ jobs:
             echo "::info:: Actor $ACTOR is not restricted"
           fi
 
-          # Set maven goal based on event type and actor
+          echo "::info:: Setting maven goal based on event type and actor..."
           if [ "$EVENT_NAME" = "pull_request" ]; then
             echo "maven-goal=verify" >> $GITHUB_OUTPUT
           elif [ "$EVENT_NAME" = "push" ]; then
             if [ "$IS_RESTRICTED_ACTOR" = true ]; then
               echo "maven-goal=verify" >> $GITHUB_OUTPUT
             else
-              echo "maven-goal=deploy" >> $GITHUB_OUTPUT
+              echo "maven-goal=install" >> $GITHUB_OUTPUT
             fi
-          else
-            echo "::error:: Unsupported event name: $EVENT_NAME. Only 'pull_request' and 'push' are supported."
-            exit 1
           fi
 
-          # Set sonar run flag
+          echo "::info:: Setting sonar run flag..."
           if [ -z "${{ inputs.sonar-project-key }}" ] || [ -z "${{ secrets.sonar-token }}" ]; then
             echo "::info:: Sonar configuration is missing, skipping Sonar analysis"
             echo "run-sonar=false" >> $GITHUB_OUTPUT
