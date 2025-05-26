@@ -50,14 +50,6 @@ on:
         required: false
         type: string
 
-    secrets:
-      maven-token:
-        description: 'Token for Maven repository authentication'
-        required: true
-      sonar-token:
-        description: 'Token for Sonar authentication'
-        required: false
-
 jobs:
   prepare-variables:
     name: Prepare build variables
@@ -111,7 +103,7 @@ jobs:
           fi
 
           # Set sonar run flag
-          if [ -z "${{ inputs.sonar-project-key }}" ] || [ -z "${{ secrets.sonar-token }}" ]; then
+          if [ -z "${{ inputs.sonar-project-key }}" ] || [ -z "${{ secrets.SONAR_TOKEN }}" ]; then
             echo "::info:: Sonar configuration is missing, skipping Sonar analysis"
             echo "run-sonar=false" >> $GITHUB_OUTPUT
           elif [ "$IS_RESTRICTED_ACTOR" = true ]; then
@@ -142,8 +134,8 @@ jobs:
       java-version: ${{ inputs.java-version }}
       ref: ${{ github.head_ref }}
     secrets:
-      maven-token: ${{ secrets.maven-token }}
-      sonar-token: ${{ secrets.sonar-token }}
+      maven-token: ${{ secrets.GITHUB_TOKEN }}
+      sonar-token: ${{ secrets.SONAR_TOKEN }}
 
   mvn-without-sonar:
     name: Build without Sonar analysis
@@ -158,4 +150,4 @@ jobs:
       java-version: ${{ inputs.java-version }}
       ref: ${{ github.head_ref }}
     secrets:
-      maven-token: ${{ secrets.maven-token }}
+      maven-token: ${{ secrets.GITHUB_TOKEN }}
