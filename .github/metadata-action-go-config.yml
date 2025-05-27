@@ -1,0 +1,6 @@
+branches-template:
+  - main: "latest, {{ref-name}}-{{timestamp}}-{{github.context.runNumber}}, {{ref-name}}-{{short-sha}}"
+  - tag: "v{{major}}.{{minor}}.{{patch}}"
+
+distribution-tag:
+  - main: "latest"
