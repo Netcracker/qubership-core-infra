@@ -65,10 +65,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Get configuration file
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          curl -H "Authorization: token ${GITHUB_TOKEN}" https://raw.github.com/Netcracker/qubership-core-infra/feature/docker_build/.github/metadata-action-go-config.yml -o .github/metadata-action-go-config.yml
+          curl https://raw.githubusercontent.com/Netcracker/qubership-core-infra/feature/docker_build/.github/metadata-action-go-config.yml -o .github/metadata-action-go-config.yml
 
       - name: Create name
         uses: netcracker/qubership-workflow-hub/actions/metadata-action@main
