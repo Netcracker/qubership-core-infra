@@ -31,6 +31,12 @@ on:
         required: true
         type: string
 
+      # Go module configuration
+      go-module-dir:
+        description: 'Optional directory containing go.mod file. If not specified, will search for go.mod files in the repository.'
+        required: false
+        type: string
+
       # Sonar configuration
       sonar-project-key:
         description: 'Sonar project key for analysis. It must be specified explicitly, as the qubership-core-infra repository may have its own sonar-project-key. '
@@ -104,26 +110,48 @@ jobs:
       - name: Find go.mod files
         id: find
         run: |
-          echo "::info:: Searching for go.mod files..."
-          GO_MOD_FILES=$(find . -name go.mod)
-          if [ -z "$GO_MOD_FILES" ]; then
-            echo "::error:: No go.mod files found in the repository"
-            exit 1
-          fi
+          echo "::info:: Processing go.mod file location..."
           
-          echo "::info:: Counting go.mod files..."
-          GO_MOD_COUNT=$(echo "$GO_MOD_FILES" | wc -l)
-          if [ "$GO_MOD_COUNT" -gt 1 ]; then
-            echo "::warning:: Multiple go.mod files found. Using the first one."
+          if [ -n "${{ inputs.go-module-dir }}" ]; then
+            # If go-module-dir is specified, only look in that directory
+            GO_MOD_DIR="${{ inputs.go-module-dir }}"
+            GO_MOD_FILE="${GO_MOD_DIR}/go.mod"
+            
+            if [ ! -d "$GO_MOD_DIR" ]; then
+              echo "::error:: Directory not found: ${GO_MOD_DIR}"
+              exit 1
+            fi
+            
+            if [ ! -f "$GO_MOD_FILE" ]; then
+              echo "::error:: go.mod file not found in directory: ${GO_MOD_DIR}"
+              exit 1
+            fi
+            
+            echo "::info:: Using specified Go module directory: ${GO_MOD_DIR}"
+          else
+            # Search for go.mod files in the repository
+            echo "::info:: Searching for go.mod files..."
+            GO_MOD_FILES=$(find . -name go.mod)
+            
+            if [ -z "$GO_MOD_FILES" ]; then
+              echo "::error:: No go.mod files found in the repository"
+              exit 1
+            fi
+            
+            echo "::info:: Counting go.mod files..."
+            GO_MOD_COUNT=$(echo "$GO_MOD_FILES" | wc -l)
+            if [ "$GO_MOD_COUNT" -gt 1 ]; then
+              echo "::error:: Multiple go.mod files found. Please specify go-module-dir input parameter."
+              exit 1
+            fi
+            
+            GO_MOD_FILE=$(echo "$GO_MOD_FILES" | head -n 1)
+            GO_MOD_DIR=$(dirname "${GO_MOD_FILE}")
+            echo "::info:: Using Go module at ${GO_MOD_DIR}"
           fi
-          
-          echo "::info:: Selecting first go.mod file..."
-          GO_MOD_FILE=$(echo "$GO_MOD_FILES" | head -n 1)
-          GO_MOD_DIR=$(dirname "${GO_MOD_FILE}")
           
           echo "GO_MOD_FILE=${GO_MOD_FILE}" >> $GITHUB_ENV
           echo "GO_MOD_DIR=${GO_MOD_DIR}" >> $GITHUB_ENV
-          echo "::info:: Using Go module at ${GO_MOD_DIR}"
         shell: bash
 
       - name: Set up Go
