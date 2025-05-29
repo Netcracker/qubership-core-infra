@@ -43,6 +43,10 @@ on:
         required: false
         type: string
         default: "21"
+      pom-file-path:
+        description: 'Optional path to a specific pom.xml file. If not provided, the default pom.xml will be used without -f flag'
+        required: false
+        type: string
 
       # Sonar configuration
       sonar-project-key:
@@ -137,7 +141,8 @@ jobs:
         org.sonarsource.scanner.maven:sonar-maven-plugin:${{ vars.SONAR_PLUGIN_VERSION }}:sonar 
         -Dsonar.projectKey=${{ inputs.sonar-project-key }}
         -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }} 
-        -Dsonar.host.url=${{ vars.SONAR_HOST_URL }}
+        -Dsonar.host.url=${{ vars.SONAR_HOST_URL }} 
+        ${{ inputs.pom-file-path && format('-f {0}', inputs.pom-file-path) || '' }}
       server-id: github
       java-version: ${{ inputs.java-version }}
       ref: ${{ github.head_ref }}
@@ -154,6 +159,7 @@ jobs:
       maven-command: >
         --batch-mode ${{ needs.prepare-variables.outputs.maven-goal }}
         -Dgpg.skip=true
+        ${{ inputs.pom-file-path && format('-f {0}', inputs.pom-file-path) || '' }}
       server-id: github
       java-version: ${{ inputs.java-version }}
       ref: ${{ github.head_ref }}
