@@ -1,0 +1,15 @@
+name: Renovate 3rd party BOMs
+on:
+  workflow_dispatch:
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+      - name: Renovate
+        uses: renovatebot/github-action@v42.0.4
+        with:
+          configurationFile: renovate/3rd-party-config.js
+          token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
