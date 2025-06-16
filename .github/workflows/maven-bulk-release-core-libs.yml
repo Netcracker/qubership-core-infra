@@ -126,9 +126,9 @@ jobs:
       - name: "Read repositories"
         id: read-repositories
         shell: bash
-        env:
-          REPOSITORIES: |-
-            https://github.com/Netcracker/qubership-core-utils
+        # language="shell script"
+        run: |
+          repositories="https://github.com/Netcracker/qubership-core-utils
             https://github.com/Netcracker/qubership-core-error-handling
             https://github.com/Netcracker/qubership-core-process-orchestrator
             https://github.com/Netcracker/qubership-core-context-propagation
@@ -149,10 +149,7 @@ jobs:
             https://github.com/Netcracker/qubership-core-quarkus-extensions
             https://github.com/Netcracker/qubership-core-blue-green-state-monitor-quarkus
             https://github.com/Netcracker/qubership-maas-client-quarkus
-            https://github.com/Netcracker/qubership-maas-declarative-client-quarkus
-        # language="shell script"
-        run: |
-          repositories=${REPOSITORIES_FILE}
+            https://github.com/Netcracker/qubership-maas-declarative-client-quarkus"
           echo "repositories=\n${repositories}"
           repositories=$(echo "${repositories}" | tr '\n' ',')
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
