@@ -13,6 +13,7 @@ on:
           - all
           - qubership-core-blue-green-state-monitor
           - qubership-core-blue-green-state-monitor-quarkus
+          - qubership-core-bulk-release
           - qubership-core-context-propagation
           - qubership-core-context-propagation-quarkus
           - qubership-core-error-handling
@@ -128,7 +129,8 @@ jobs:
         shell: bash
         # language="shell script"
         run: |
-          repositories="https://github.com/Netcracker/qubership-core-utils
+          repositories="https://github.com/Netcracker/qubership-core-bulk-release
+          https://github.com/Netcracker/qubership-core-utils
           https://github.com/Netcracker/qubership-core-error-handling
           https://github.com/Netcracker/qubership-core-process-orchestrator
           https://github.com/Netcracker/qubership-core-context-propagation
