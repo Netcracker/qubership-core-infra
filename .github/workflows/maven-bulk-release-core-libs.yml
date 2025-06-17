@@ -1,7 +1,7 @@
 # $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-workflow.json
 
 name: "Maven bulk release of core libs"
-run-name: Maven bulk release of core-libs by @${{ github.actor }}'
+run-name: Maven bulk release of core-libs [${{ inputs.repositoryToRelease }}] by @${{ github.actor }}'
 
 on:
   workflow_dispatch:
