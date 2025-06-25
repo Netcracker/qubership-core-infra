@@ -106,6 +106,8 @@ jobs:
 
       - name: Download artifacts (Docker images) from previous workflows
         uses: actions/download-artifact@v4
+        with:
+          path: /tmp
 
       - name: Load Docker images from previous workflows
         if: ${{ hashFiles('tmp/test-service.tar') != '' }}
