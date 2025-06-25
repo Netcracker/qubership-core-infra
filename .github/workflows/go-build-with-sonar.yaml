@@ -43,6 +43,12 @@ on:
         required: false
         type: string
 
+      # Additional artifact
+      test-service-image:
+        description: 'Optional key, can be specified if component requires to share docker artefacts here '
+        required: false
+        type: string
+
     secrets:
       sonar-token:
         description: 'Token for Sonar authentication'
@@ -67,7 +73,7 @@ jobs:
         run: |
           # Store input variables
           ACTOR="${{ inputs.actor }}"
-          CONFIG_FILE="workflow-repo/.github/config/build-config.yaml"
+            CONFIG_FILE="workflow-repo/.github/config/build-config.yaml"
 
           # Validate config file exists
           if [ ! -f "$CONFIG_FILE" ]; then
@@ -97,6 +103,15 @@ jobs:
       - name: Output build configuration
         run: |
           echo "::info:: Run Sonar: ${{ steps.prepare.outputs.run-sonar }}"
+
+      - name: Download artifacts (Docker images) from previous workflows
+        uses: actions/download-artifact@v2
+
+      - name: Load Docker images from previous workflows
+        if: ${{ hashFiles('tmp/test-service.tar') != '' }}
+        run: |
+          docker load --input ${{ inputs.test-service-image }}
+
 
   build:
     needs: prepare-variables
