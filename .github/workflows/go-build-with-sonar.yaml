@@ -168,33 +168,22 @@ jobs:
       - name: Set up Docker Buildx
         if: ${{ inputs.build-test-service-image }}
         uses: docker/setup-buildx-action@v3
-    
-      - name: Build and load test-service image
-        if: ${{ inputs.build-test-service-image }}
-        uses: docker/build-push-action@v6
-        with:
-              load: true
-              tags: |
-                  ${{ needs.prepare-variables.outputs.test-service-tags }}
-              context: ${{ needs.prepare-variables.outputs.test-service-context }}
-              file: ${{ needs.prepare-variables.outputs.test-service-file }}
-              platforms: ${{ needs.prepare-variables.outputs.test-service-platforms }}  
 
       - name: Build and load test-service image
         if: ${{ inputs.build-test-service-image }}
         uses: docker/build-push-action@v6
         with:
-              load: true
-              tags: |
-                  ${{ needs.prepare-variables.outputs.test-service-tags }}
-              context: ${{ needs.prepare-variables.outputs.test-service-context }}
-              file: ${{ needs.prepare-variables.outputs.test-service-file }}
-              platforms: ${{ needs.prepare-variables.outputs.test-service-platforms }}  
+          load: true
+          tags: |
+            ${{ needs.prepare-variables.outputs.test-service-tags }}
+          context: ${{ needs.prepare-variables.outputs.test-service-context }}
+          file: ${{ needs.prepare-variables.outputs.test-service-file }}
+          platforms: ${{ needs.prepare-variables.outputs.test-service-platforms }}  
 
       - name: Docker pull test-service image
         if: ${{ inputs.build-test-service-image }}
         run: |
-          docker pull  ${{ needs.prepare-variables.outputs.test-service-tags }}  
+          docker images && docker pull ${{ needs.prepare-variables.outputs.test-service-tags }}  
 
       - name: Find go.mod files
         id: find
