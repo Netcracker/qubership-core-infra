@@ -44,10 +44,10 @@ on:
         type: string
 
       # Additional artifact
-      test-service-image:
-        description: 'Optional key, can be specified if component requires to share docker artefacts here '
+      build-test-service-image:
+        description: 'Optional key, can be specified if component tests require docker artefacts'
         required: false
-        type: string
+        type: boolean
 
     secrets:
       sonar-token:
@@ -60,6 +60,10 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       run-sonar: ${{ steps.prepare.outputs.run-sonar }}
+      test-service-tags: ${{ steps.load_component.outputs.tags }}
+      test-service-context: ${{ steps.load_component.outputs.context }}
+      test-service-file: ${{ steps.load_component.outputs.file }}
+      test-service-platforms: ${{ steps.load_component.outputs.platforms }}
     steps:
       - name: Checkout workflow repository
         uses: actions/checkout@v4
@@ -102,20 +106,39 @@ jobs:
 
       - name: Output build configuration
         run: |
-          echo "::info:: Run Sonar: ${{ steps.prepare.outputs.run-sonar }}"
-
-      - name: Download artifacts (Docker images) from previous workflows
-        uses: actions/download-artifact@v4
-        with:
-          name: test-service.tar
-          path: /tmp
-
-      - name: Load Docker images from previous workflows
-        if: ${{ hashFiles('tmp/test-service.tar') != '' }}
+          echo "::info:: Run Sonar: ${{ steps.prepare.outputs.run-sonar }}" 
+          
+      - name: Load Test Service Docker Configuration
+        if: ${{ inputs.build-test-service-image }}
+        id: load_component
+        shell: bash
         run: |
-          docker load --input ${{ inputs.test-service-image }}
-
-
+            config_file="$GITHUB_WORKSPACE/.github/test-service-config.json"
+            verify=$(cat "$config_file" | jq '
+              def verify_structure:
+                .components as $components
+                | .platforms as $platforms
+                | ($components | type == "array")
+                and (all($components[]; has("tags") and has("file") and has("context")))
+                and ($platforms | type == "string");
+              verify_structure
+              | if . then true else false end
+            ')
+            if [ "${verify}" == "true" ]; then
+              echo "✅ $config_file file is valid"
+              tags=$(jq -c ".components.tags" "$config_file")
+              platforms=$(jq -c ".platforms" "$config_file")
+              context=$(jq -c ".components.context" "$config_file")
+              file=$(jq -c ".components.file" "$config_file")
+            else
+              echo "❗ $config_file file is invalid"
+              echo "❗ $config_file file is invalid" >> $GITHUB_STEP_SUMMARY
+              exit 1
+            fi
+            echo "tags=${tags}" >> "$GITHUB_OUTPUT"
+            echo "platforms=${platforms}" >> "$GITHUB_OUTPUT"
+            echo "context=${context}" >> "$GITHUB_OUTPUT"
+            echo "file=${file}" >> "$GITHUB_OUTPUT"
   build:
     needs: prepare-variables
     runs-on: ubuntu-latest
@@ -124,6 +147,21 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        if: ${{ inputs.build-test-service-image }}
+        uses: docker/setup-buildx-action@v3
+    
+      - name: Build and load test-service image
+        if: ${{ inputs.build-test-service-image }}
+        uses: docker/build-push-action@v6
+        with:
+              load: true
+              tags: |
+                  ${{ needs.prepare-variables.outputs.test-service-tags }}
+              context: ${{ needs.prepare-variables.outputs.test-service-context }}
+              file: ${{ needs.prepare-variables.outputs.test-service-file }}
+              platforms: ${{ needs.prepare-variables.outputs.test-service-platforms }}  
 
       - name: Find go.mod files
         id: find
