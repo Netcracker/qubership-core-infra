@@ -156,6 +156,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up QEMU
         if: ${{ inputs.build-test-service-image }}
         uses: docker/setup-qemu-action@v3
