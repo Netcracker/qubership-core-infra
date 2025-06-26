@@ -132,10 +132,10 @@ jobs:
             ')
             if [ "${verify}" == "true" ]; then
               echo "✅ $config_file file is valid"
-              tags=$(jq -c ".components[].tags" "$config_file")
-              platforms=$(jq -c ".platforms" "$config_file")
-              context=$(jq -c ".components[].context" "$config_file")
-              file=$(jq -c ".components[].file" "$config_file")
+              tags=$(jq -r ".components[].tags" "$config_file")
+              platforms=$(jq -r ".platforms" "$config_file")
+              context=$(jq -r ".components[].context" "$config_file")
+              file=$(jq -r ".components[].file" "$config_file")
 
               echo "context=${context}" 
             else
