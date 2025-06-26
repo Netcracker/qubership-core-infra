@@ -183,7 +183,8 @@ jobs:
       - name: Docker pull test-service image
         if: ${{ inputs.build-test-service-image }}
         run: |
-          docker images && docker pull ${{ needs.prepare-variables.outputs.test-service-tags }}  
+          docker images 
+          docker run --entrypoint ls -l app ${{ needs.prepare-variables.outputs.test-service-tags }}
 
       - name: Find go.mod files
         id: find
