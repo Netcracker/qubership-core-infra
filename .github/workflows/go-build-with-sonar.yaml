@@ -156,6 +156,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up QEMU
+        if: ${{ inputs.build-test-service-image }}
+        uses: docker/setup-qemu-action@v3
+  
       - name: Set up Docker Buildx
         if: ${{ inputs.build-test-service-image }}
         uses: docker/setup-buildx-action@v3
