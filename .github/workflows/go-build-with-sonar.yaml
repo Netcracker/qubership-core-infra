@@ -154,13 +154,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Set up QEMU
         if: ${{ inputs.build-test-service-image }}
         uses: docker/setup-qemu-action@v3
@@ -179,12 +172,6 @@ jobs:
           context: ${{ needs.prepare-variables.outputs.test-service-context }}
           file: ${{ needs.prepare-variables.outputs.test-service-file }}
           platforms: ${{ needs.prepare-variables.outputs.test-service-platforms }}  
-
-      - name: Docker pull test-service image
-        if: ${{ inputs.build-test-service-image }}
-        run: |
-          docker images 
-          docker run --entrypoint ls -l app ${{ needs.prepare-variables.outputs.test-service-tags }}
 
       - name: Find go.mod files
         id: find
