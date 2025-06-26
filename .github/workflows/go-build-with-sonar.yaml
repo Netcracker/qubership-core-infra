@@ -77,7 +77,7 @@ jobs:
         run: |
           # Store input variables
           ACTOR="${{ inputs.actor }}"
-            CONFIG_FILE="workflow-repo/.github/config/build-config.yaml"
+          CONFIG_FILE="workflow-repo/.github/config/build-config.yaml"
 
           # Validate config file exists
           if [ ! -f "$CONFIG_FILE" ]; then
@@ -107,7 +107,13 @@ jobs:
       - name: Output build configuration
         run: |
           echo "::info:: Run Sonar: ${{ steps.prepare.outputs.run-sonar }}" 
-          
+
+      - name: Checkout repository
+        if: ${{ inputs.build-test-service-image }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Load Test Service Docker Configuration
         if: ${{ inputs.build-test-service-image }}
         id: load_component
