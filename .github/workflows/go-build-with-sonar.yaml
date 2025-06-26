@@ -136,8 +136,6 @@ jobs:
               platforms=$(jq -r ".platforms" "$config_file")
               context=$(jq -r ".components[].context" "$config_file")
               file=$(jq -r ".components[].file" "$config_file")
-
-              echo "context=${context}" 
             else
               echo "❗ $config_file file is invalid"
               echo "❗ $config_file file is invalid" >> $GITHUB_STEP_SUMMARY
@@ -181,6 +179,22 @@ jobs:
               context: ${{ needs.prepare-variables.outputs.test-service-context }}
               file: ${{ needs.prepare-variables.outputs.test-service-file }}
               platforms: ${{ needs.prepare-variables.outputs.test-service-platforms }}  
+
+      - name: Build and load test-service image
+        if: ${{ inputs.build-test-service-image }}
+        uses: docker/build-push-action@v6
+        with:
+              load: true
+              tags: |
+                  ${{ needs.prepare-variables.outputs.test-service-tags }}
+              context: ${{ needs.prepare-variables.outputs.test-service-context }}
+              file: ${{ needs.prepare-variables.outputs.test-service-file }}
+              platforms: ${{ needs.prepare-variables.outputs.test-service-platforms }}  
+
+      - name: Docker pull test-service image
+        if: ${{ inputs.build-test-service-image }}
+        run: |
+          docker pull  ${{ needs.prepare-variables.outputs.test-service-tags }}  
 
       - name: Find go.mod files
         id: find
