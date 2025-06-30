@@ -89,7 +89,7 @@ jobs:
           #libs=$(cat ".github/config/core-libs-repositories.txt" | tr '\n' ',')
           #services=$(cat ".github/config/core-services-repositories.txt" | tr '\n' ',')
           #repositories="${libs},${services}"
-          repositories=$(cat ".github/config/test-repositories.txt" | tr -d 'https://github.com/' | tr '\n' ',')
+          repositories=$(cat ".github/config/test-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
           
           args="--platform=github"
           args="${args} --repositories=${repositories}"
