@@ -46,10 +46,10 @@ jobs:
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${name}/${cliVersion}/${name}-${cliVersion}-jar-with-dependencies.jar"
           curl -L -v -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
           
-          #libs=$(cat ".github/config/core-libs-repositories.txt" | tr '\n' ',')
-          #services=$(cat ".github/config/core-services-repositories.txt" | tr '\n' ',')
-          #repositories="${libs},${services}"
-          repositories=$(cat ".github/config/test-repositories.txt" | tr '\n' ',')
+          libs=$(cat ".github/config/core-libs-repositories.txt" | tr '\n' ',')
+          services=$(cat ".github/config/core-services-repositories.txt" | tr '\n' ',')
+          repositories="${libs},${services}"
+          #repositories=$(cat ".github/config/test-repositories.txt" | tr '\n' ',')
           
           args="--baseDir=$GITHUB_WORKSPACE"
           args="${args} --type1=spring"
