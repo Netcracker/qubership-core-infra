@@ -34,9 +34,9 @@ jobs:
         # language="shell script"
         run: |
           cliVersion="1.1.0"
-          name="maven-effective-dependencies-cli"          
+          name="maven-effective-dependencies-cli"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${name}/${cliVersion}/${name}-${cliVersion}-jar-with-dependencies.jar"
-          curl -L -o "${name}" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
+          curl -L -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
           
           #libs=$(cat ".github/config/core-libs-repositories.txt" | tr '\n' ',')
           #services=$(cat ".github/config/core-services-repositories.txt" | tr '\n' ',')
@@ -55,7 +55,7 @@ jobs:
           args="${args} --repositories=${repositories}"
           args="${args} --resultOutputFile=/tmp/diff.yaml"
           args="${args} --gavsResultFile=/tmp/gavs.txt"
-          cmd="java -jar ${name} ${args}"
+          cmd="java -jar ${name}.jar ${args}"
           echo "running cmd: ${cmd}"
           eval "${cmd}"
 
@@ -79,7 +79,7 @@ jobs:
           cliVersion="1.1.0"
           name="renovate-config-cli"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${name}/${cliVersion}/${name}-${cliVersion}-jar-with-dependencies.jar"
-          curl -L -o "${name}" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
+          curl -L -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
           
           gavs=$(cat "/tmp/gavs.txt" | tr '\n' ',')
           #libs=$(cat ".github/config/core-libs-repositories.txt" | tr '\n' ',')
@@ -92,7 +92,7 @@ jobs:
           args="${args} --gavs=${gavs}"
           args="${args} --renovateConfigOutputFile=/tmp/renovate-config.js"
           args="${args} --dryRun=full"
-          cmd="java -jar ${name} ${args}"
+          cmd="java -jar ${name}.jar ${args}"
           echo "running cmd: ${cmd}"
           eval "${cmd}"
 
