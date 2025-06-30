@@ -12,8 +12,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4.2.2
-        with:
-          path: workflow-repo
 
       - name: "Cache maven dependencies"
         uses: actions/cache@v4
@@ -47,9 +45,9 @@ jobs:
           #libs=$(cat ".github/config/core-libs-repositories.txt" | tr '\n' ',')
           #services=$(cat ".github/config/core-services-repositories.txt" | tr '\n' ',')
           #repositories="${libs},${services}"
-          repositories=$(cat "workflow-repo/.github/config/test-repositories.txt" | tr '\n' ',')
+          repositories=$(cat ".github/config/test-repositories.txt" | tr '\n' ',')
           
-          args="--baseDir=workflow-repo"
+          args="--baseDir=$GITHUB_WORKSPACE"
           args="${args} --type1=spring"
           args="${args} --type2=quarkus"
           args="${args} --type1PomRelativeDir=dependencies/spring-dependencies/pom.xml"
@@ -59,8 +57,8 @@ jobs:
           args="${args} --gitEmail=actions@github.com"
           args="${args} --gitPassword=${MAVEN_TOKEN}"
           args="${args} --repositories=${repositories}"
-          args="${args} --resultOutputFile=workflow-repo/diff.yaml"
-          args="${args} --gavsOutputFile=workflow-repo/gavs.txt"
+          args="${args} --resultOutputFile=diff.yaml"
+          args="${args} --gavsOutputFile=gavs.txt"
           cmd="java -jar ${name}.jar ${args}"
           echo "running cmd: ${cmd}"
           eval "${cmd}"
@@ -69,13 +67,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: gavs.txt
-          path: workflow-repo/gavs.txt
+          path: gavs.txt
 
       - name: "Upload diff.yaml artifact"
         uses: actions/upload-artifact@v4
         with:
           name: diff.yaml
-          path: workflow-repo/diff.yaml
+          path: diff.yaml
 
       - name: "Run renovate-config-cli"
         id: run-renovate-config-cli
@@ -87,16 +85,16 @@ jobs:
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${name}/${cliVersion}/${name}-${cliVersion}-jar-with-dependencies.jar"
           curl -L -v -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
           
-          gavs=$(cat "workflow-repo/gavs.txt" | tr '\n' ',')
+          gavs=$(cat "gavs.txt" | tr '\n' ',')
           #libs=$(cat ".github/config/core-libs-repositories.txt" | tr '\n' ',')
           #services=$(cat ".github/config/core-services-repositories.txt" | tr '\n' ',')
           #repositories="${libs},${services}"
-          repositories=$(cat "workflow-repo/.github/config/test-repositories.txt" | tr '\n' ',')
+          repositories=$(cat ".github/config/test-repositories.txt" | tr '\n' ',')
           
           args="--platform=github"
           args="${args} --repositories=${repositories}"
           args="${args} --gavs=${gavs}"
-          args="${args} --renovateConfigOutputFile=workflow-repo/renovate-config.js"
+          args="${args} --renovateConfigOutputFile=renovate-config.js"
           args="${args} --dryRun=full"
           cmd="java -jar ${name}.jar ${args}"
           echo "running cmd: ${cmd}"
@@ -106,10 +104,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: renovate-config.js
-          path: workflow-repo/renovate-config.js
+          path: renovate-config.js
 
       - name: Renovate
         uses: renovatebot/github-action@v42.0.4
         with:
-          configurationFile: workflow-repo/renovate-config.js
+          configurationFile: renovate-config.js
           token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
