@@ -1,6 +1,10 @@
 name: Renovate core repositories
 on:
   workflow_dispatch:
+    inputs:
+      dryRun:
+        type: boolean
+        description: "dry run"
 
 jobs:
   renovate:
@@ -78,6 +82,8 @@ jobs:
       - name: "Run renovate-config-cli"
         id: run-renovate-config-cli
         shell: bash
+        env:
+          DRY_RUN: ${{ inputs.dryRun }}
         # language="shell script"
         run: |
           cliVersion="1.1.0"
@@ -86,15 +92,17 @@ jobs:
           curl -L -v -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
           
           gavs=$(cat "gavs.txt" | tr '\n' ',')
-          #libs=$(cat ".github/config/core-libs-repositories.txt" | tr '\n' ',')
-          #services=$(cat ".github/config/core-services-repositories.txt" | tr '\n' ',')
+          #libs=$(cat ".github/config/core-libs-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
+          #services=$(cat ".github/config/core-services-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
           #repositories="${libs},${services}"
           repositories=$(cat ".github/config/test-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
-          
           args="--platform=github"
           args="${args} --repositories=${repositories}"
           args="${args} --gavs=${gavs}"
           args="${args} --renovateConfigOutputFile=renovate-config.js"
+          if [ "${DRY_RUN}" = "true" ]; then
+            args="${args} --dryRun=full"
+          fi
           cmd="java -jar ${name}.jar ${args}"
           echo "running cmd: ${cmd}"
           eval "${cmd}"
