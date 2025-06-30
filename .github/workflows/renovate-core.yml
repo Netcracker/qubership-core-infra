@@ -1,4 +1,4 @@
-name: Renovate 3rd party BOMs
+name: Renovate core repositories
 on:
   workflow_dispatch:
 
