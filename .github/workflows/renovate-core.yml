@@ -47,7 +47,7 @@ jobs:
           #libs=$(cat ".github/config/core-libs-repositories.txt" | tr '\n' ',')
           #services=$(cat ".github/config/core-services-repositories.txt" | tr '\n' ',')
           #repositories="${libs},${services}"
-          repositories=$(cat ".github/config/test-repositories.txt" | tr '\n' ',')
+          repositories=$(cat "workflow-repo/.github/config/test-repositories.txt" | tr '\n' ',')
           
           args="--baseDir=workflow-repo"
           args="${args} --type1=spring"
@@ -91,7 +91,7 @@ jobs:
           #libs=$(cat ".github/config/core-libs-repositories.txt" | tr '\n' ',')
           #services=$(cat ".github/config/core-services-repositories.txt" | tr '\n' ',')
           #repositories="${libs},${services}"
-          repositories=$(cat ".github/config/test-repositories.txt" | tr '\n' ',')
+          repositories=$(cat "workflow-repo/.github/config/test-repositories.txt" | tr '\n' ',')
           
           args="--platform=github"
           args="${args} --repositories=${repositories}"
