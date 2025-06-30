@@ -58,7 +58,7 @@ jobs:
           args="${args} --gitPassword=${MAVEN_TOKEN}"
           args="${args} --repositories=${repositories}"
           args="${args} --resultOutputFile=/tmp/diff.yaml"
-          args="${args} --gavsResultFile=/tmp/gavs.txt"
+          args="${args} --gavsOutputFile=/tmp/gavs.txt"
           cmd="java -jar ${name}.jar ${args}"
           echo "running cmd: ${cmd}"
           eval "${cmd}"
@@ -83,7 +83,7 @@ jobs:
           cliVersion="1.1.0"
           name="renovate-config-cli"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${name}/${cliVersion}/${name}-${cliVersion}-jar-with-dependencies.jar"
-          curl -L -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
+          curl -L -v -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
           
           gavs=$(cat "/tmp/gavs.txt" | tr '\n' ',')
           #libs=$(cat ".github/config/core-libs-repositories.txt" | tr '\n' ',')
