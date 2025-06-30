@@ -1,0 +1,107 @@
+name: Renovate 3rd party BOMs
+on:
+  workflow_dispatch:
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: "Cache maven dependencies"
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-maven-
+
+      - name: "Set up java"
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          architecture: 'x64'
+          distribution: 'temurin'
+          server-id: github
+          server-username: MAVEN_USER
+          server-password: MAVEN_TOKEN
+          gpg-private-key: ${{ inputs.maven-gpg-private-key }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: "Run maven-effective-dependencies-cli"
+        id: run-maven-effective-dependencies-cli
+        shell: bash
+        # language="shell script"
+        run: |
+          cliVersion="1.1.0"          
+          url="https://maven.pkg.github.com/Netcracker/qubership-core-infra/org.qubership.cloud/maven-effective-dependencies-cli/${cliVersion}/maven-effective-dependencies-cli-${cliVersion}-jar-with-dependencies.jar"
+          curl -L -o "maven-effective-dependencies-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
+          
+          #libs=$(cat ".github/config/core-libs-repositories.txt" | tr '\n' ',')
+          #services=$(cat ".github/config/core-services-repositories.txt" | tr '\n' ',')
+          #repositories="${libs},${services}"
+          repositories=$(cat ".github/config/test-repositories.txt" | tr '\n' ',')
+          
+          args="--baseDir=/tmp"
+          args="${args} --type1=spring"
+          args="${args} --type2=quarkus"
+          args="${args} --type1PomRelativeDir=dependencies/spring-dependencies/pom.xml"
+          args="${args} --type2PomRelativeDir=dependencies/quarkus-dependencies/pom.xml"
+          args="${args} --gitURL=https://github.com"
+          args="${args} --gitUsername=actions"
+          args="${args} --gitEmail=actions@github.com"
+          args="${args} --gitPassword=${MAVEN_TOKEN}"
+          args="${args} --repositories=${repositories}"
+          args="${args} --resultOutputFile=/tmp/diff.yaml"
+          args="${args} --gavsResultFile=/tmp/gavs.txt"
+          cmd="java -jar maven-effective-dependencies-cli.jar ${args}"
+          echo "running cmd: ${cmd}"
+          eval "${cmd}"
+
+      - name: "Upload gavs.txt artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: gavs.txt
+          path: /tmp/gavs.txt
+
+      - name: "Upload diff.yaml artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: diff.yaml
+          path: /tmp/diff.yaml
+
+      - name: "Run renovate-config-cli"
+        id: run-renovate-config-cli
+        shell: bash
+        # language="shell script"
+        run: |
+          cliVersion="1.1.0"          
+          url="https://maven.pkg.github.com/Netcracker/qubership-core-infra/org.qubership.cloud/renovate-config-cli/${cliVersion}/renovate-config-cli-${cliVersion}-jar-with-dependencies.jar"
+          curl -L -o "renovate-config-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
+          
+          gavs=$(cat "/tmp/gavs.txt" | tr '\n' ',')
+          #libs=$(cat ".github/config/core-libs-repositories.txt" | tr '\n' ',')
+          #services=$(cat ".github/config/core-services-repositories.txt" | tr '\n' ',')
+          #repositories="${libs},${services}"
+          repositories=$(cat ".github/config/test-repositories.txt" | tr '\n' ',')
+          
+          args="--platform=github"
+          args="${args} --repositories=${repositories}"
+          args="${args} --gavs=${gavs}"
+          args="${args} --renovateConfigOutputFile=/tmp/renovate-config.js"
+          args="${args} --dryRun=full"
+          cmd="java -jar renovate-config-cli.jar ${args}"
+          echo "running cmd: ${cmd}"
+          eval "${cmd}"
+
+      - name: "Upload renovate-config.js artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: renovate-config.js
+          path: /tmp/renovate-config.js
+
+      - name: Renovate
+        uses: renovatebot/github-action@v42.0.4
+        with:
+          configurationFile: /tmp/renovate-config.js
+          token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
