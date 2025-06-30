@@ -92,10 +92,10 @@ jobs:
           curl -L -v -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
           
           gavs=$(cat "gavs.txt" | tr '\n' ',')
-          #libs=$(cat ".github/config/core-libs-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
-          #services=$(cat ".github/config/core-services-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
-          #repositories="${libs},${services}"
-          repositories=$(cat ".github/config/test-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
+          libs=$(cat ".github/config/core-libs-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
+          services=$(cat ".github/config/core-services-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
+          repositories="${libs},${services}"
+          #repositories=$(cat ".github/config/test-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
           args="--platform=github"
           args="${args} --repositories=${repositories}"
           args="${args} --gavs=${gavs}"
