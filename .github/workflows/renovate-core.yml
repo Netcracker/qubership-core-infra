@@ -5,6 +5,10 @@ on:
 jobs:
   renovate:
     runs-on: ubuntu-latest
+    env:
+      MAVEN_USER: "x-access-token"
+      MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+      MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4.2.2
