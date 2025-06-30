@@ -95,7 +95,6 @@ jobs:
           args="${args} --repositories=${repositories}"
           args="${args} --gavs=${gavs}"
           args="${args} --renovateConfigOutputFile=renovate-config.js"
-          args="${args} --dryRun=full"
           cmd="java -jar ${name}.jar ${args}"
           echo "running cmd: ${cmd}"
           eval "${cmd}"
