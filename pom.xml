@@ -10,8 +10,8 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>spring-dependencies</module>
-        <module>quarkus-dependencies</module>
+        <module>dependencies/spring-dependencies</module>
+        <module>dependencies/quarkus-dependencies</module>
     </modules>
 
 </project>
