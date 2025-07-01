@@ -13,6 +13,7 @@ jobs:
       MAVEN_USER: "x-access-token"
       MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
+      CLI_VERSION: "1.1.4"
     steps:
       - name: Checkout
         uses: actions/checkout@v4.2.2
@@ -41,7 +42,7 @@ jobs:
         shell: bash
         # language="shell script"
         run: |
-          cliVersion="1.1.3"
+          cliVersion="${CLI_VERSION}"
           name="maven-effective-dependencies-cli"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${name}/${cliVersion}/${name}-${cliVersion}-jar-with-dependencies.jar"
           curl -L -v -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
@@ -86,7 +87,7 @@ jobs:
           DRY_RUN: ${{ inputs.dryRun }}
         # language="shell script"
         run: |
-          cliVersion="1.1.3"
+          cliVersion="${CLI_VERSION}"
           name="renovate-config-cli"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${name}/${cliVersion}/${name}-${cliVersion}-jar-with-dependencies.jar"
           curl -L -v -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
@@ -98,7 +99,7 @@ jobs:
           repositories=$(cat ".github/config/test-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
           args="--platform=github"
           args="${args} --repositories=${repositories}"
-          args="${args} --mavenRepositories=id=github;url=https://maven.pkg.github.com/Netcracker/**;username=env:MAVEN_USER;password=env:MAVEN_TOKEN"
+          args="${args} --mavenRepositories=github[url=https://maven.pkg.github.com/Netcracker/**;username=env:MAVEN_USER;password=env:MAVEN_TOKEN]"
           args="${args} --gavs=${gavs}"
           args="${args} --renovateConfigOutputFile=renovate-config.js"
           if [ "${DRY_RUN}" = "true" ]; then
