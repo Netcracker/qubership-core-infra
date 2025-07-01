@@ -41,7 +41,7 @@ jobs:
         shell: bash
         # language="shell script"
         run: |
-          cliVersion="1.1.1"
+          cliVersion="1.1.2"
           name="maven-effective-dependencies-cli"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${name}/${cliVersion}/${name}-${cliVersion}-jar-with-dependencies.jar"
           curl -L -v -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
@@ -86,7 +86,7 @@ jobs:
           DRY_RUN: ${{ inputs.dryRun }}
         # language="shell script"
         run: |
-          cliVersion="1.1.1"
+          cliVersion="1.1.2"
           name="renovate-config-cli"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${name}/${cliVersion}/${name}-${cliVersion}-jar-with-dependencies.jar"
           curl -L -v -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
@@ -98,6 +98,7 @@ jobs:
           repositories=$(cat ".github/config/test-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
           args="--platform=github"
           args="${args} --repositories=${repositories}"
+          args="${args} --mavenRepositories=id=github;url=https://maven.pkg.github.com/Netcracker/**;username=env:MAVEN_USER;password=env:MAVEN_TOKEN"
           args="${args} --gavs=${gavs}"
           args="${args} --renovateConfigOutputFile=renovate-config.js"
           if [ "${DRY_RUN}" = "true" ]; then
