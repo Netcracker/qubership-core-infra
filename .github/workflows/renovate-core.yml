@@ -41,15 +41,15 @@ jobs:
         shell: bash
         # language="shell script"
         run: |
-          cliVersion="1.1.0"
+          cliVersion="1.1.1"
           name="maven-effective-dependencies-cli"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${name}/${cliVersion}/${name}-${cliVersion}-jar-with-dependencies.jar"
           curl -L -v -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
           
-          libs=$(cat ".github/config/core-libs-repositories.txt" | tr '\n' ',')
-          services=$(cat ".github/config/core-services-repositories.txt" | tr '\n' ',')
-          repositories="${libs},${services}"
-          #repositories=$(cat ".github/config/test-repositories.txt" | tr '\n' ',')
+          #libs=$(cat ".github/config/core-libs-repositories.txt" | tr '\n' ',')
+          #services=$(cat ".github/config/core-services-repositories.txt" | tr '\n' ',')
+          #repositories="${libs},${services}"
+          repositories=$(cat ".github/config/test-repositories.txt" | tr '\n' ',')
           
           args="--baseDir=$GITHUB_WORKSPACE"
           args="${args} --type1=spring"
@@ -86,16 +86,16 @@ jobs:
           DRY_RUN: ${{ inputs.dryRun }}
         # language="shell script"
         run: |
-          cliVersion="1.1.0"
+          cliVersion="1.1.1"
           name="renovate-config-cli"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${name}/${cliVersion}/${name}-${cliVersion}-jar-with-dependencies.jar"
           curl -L -v -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
           
-          gavs=$(cat "gavs.txt" | tr '\n' ',')
-          libs=$(cat ".github/config/core-libs-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
-          services=$(cat ".github/config/core-services-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
-          repositories="${libs},${services}"
-          #repositories=$(cat ".github/config/test-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
+          #gavs=$(cat "gavs.txt" | tr '\n' ',')
+          #libs=$(cat ".github/config/core-libs-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
+          #services=$(cat ".github/config/core-services-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
+          #repositories="${libs},${services}"
+          repositories=$(cat ".github/config/test-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
           args="--platform=github"
           args="${args} --repositories=${repositories}"
           args="${args} --gavs=${gavs}"
