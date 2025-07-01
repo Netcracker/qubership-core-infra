@@ -13,7 +13,7 @@ jobs:
       MAVEN_USER: "x-access-token"
       MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
-      CLI_VERSION: "1.1.6"
+      CLI_VERSION: "1.1.7"
     steps:
       - name: Checkout
         uses: actions/checkout@v4.2.2
@@ -97,7 +97,8 @@ jobs:
           #services=$(cat ".github/config/core-services-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
           #repositories="${libs},${services}"
           repositories=$(cat ".github/config/test-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
-          mavenRepositories="maven[matchHost=https://maven.pkg.github.com/Netcracker/**;username=process.env.MAVEN_USER;password=process.env.MAVEN_TOKEN]"
+          mavenRepositories="maven[matchHost=https://repo.maven.apache.org/maven2;username=process.env.MAVEN_USER;password=process.env.MAVEN_TOKEN],\
+          maven[matchHost=https://maven.pkg.github.com/Netcracker/**;username=process.env.MAVEN_USER;password=process.env.MAVEN_TOKEN]"
           
           args="--platform=github"
           args="${args} --repositories=${repositories}"
