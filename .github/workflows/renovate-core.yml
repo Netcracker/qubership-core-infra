@@ -97,8 +97,8 @@ jobs:
           #services=$(cat ".github/config/core-services-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
           #repositories="${libs},${services}"
           repositories=$(cat ".github/config/test-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
-          hostRules="maven[matchHost=https://repo.maven.apache.org/maven2;username=process.env.MAVEN_USER;password=process.env.MAVEN_TOKEN],\
-          maven[matchHost=https://maven.pkg.github.com/Netcracker/**;username=process.env.MAVEN_USER;password=process.env.MAVEN_TOKEN]"
+          hostRules="maven[matchHost=https://repo.maven.apache.org/maven2;username=process.env.RENOVATE_MAVEN_USER;password=process.env.RENOVATE_MAVEN_TOKEN],\
+          maven[matchHost=https://maven.pkg.github.com/Netcracker/**;username=process.env.RENOVATE_MAVEN_USER;password=process.env.RENOVATE_MAVEN_TOKEN]"
           
           args="--platform=github"
           args="${args} --repositories=${repositories}"
@@ -120,6 +120,9 @@ jobs:
 
       - name: Renovate
         uses: renovatebot/github-action@v42.0.4
+        env:
+          RENOVATE_MAVEN_USER: "x-access-token"
+          RENOVATE_MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
         with:
           configurationFile: renovate-config.js
           token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
