@@ -97,11 +97,11 @@ jobs:
           #services=$(cat ".github/config/core-services-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
           #repositories="${libs},${services}"
           repositories=$(cat ".github/config/test-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
-          mavenRepositories="github[url=https://maven.pkg.github.com/Netcracker;username=env:MAVEN_USER;password=env:MAVEN_TOKEN]"
+          mavenRepositories="github[url=https://maven.pkg.github.com/Netcracker/**;username=env:MAVEN_USER;password=env:MAVEN_TOKEN]"
           
           args="--platform=github"
           args="${args} --repositories=${repositories}"
-          args="${args} --mavenRepositories=${mavenRepositories}"
+          args="${args} \"--mavenRepositories=${mavenRepositories}\""
           args="${args} --gavs=${gavs}"
           args="${args} --renovateConfigOutputFile=renovate-config.js"
           if [ "${DRY_RUN}" = "true" ]; then
