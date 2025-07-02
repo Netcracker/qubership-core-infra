@@ -24,7 +24,7 @@ jobs:
       MAVEN_USER: "x-access-token"
       MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
-      CLI_VERSION: "1.1.9"
+      CLI_VERSION: "1.1.10"
       DRY_RUN: ${{ github.event.inputs.dry-run || 'true' }}
       LOG_LEVEL: ${{ github.event.inputs.log-level || 'info' }}
 
@@ -114,7 +114,6 @@ jobs:
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${name}/${cliVersion}/${name}-${cliVersion}-jar-with-dependencies.jar"
           curl -L -v -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
           
-          gavs=$(cat "gavs.txt" | tr '\n' ',')
           repositories=$(echo -n "${REPOSITORIES}" | sed 's|https://github.com/||g' | tr '\n' ',')
           
           hostRules="maven[matchHost=https://repo.maven.apache.org/maven2;username=process.env.RENOVATE_MAVEN_USER;password=process.env.RENOVATE_MAVEN_TOKEN],\
@@ -123,7 +122,7 @@ jobs:
           args="--platform=github"
           args="${args} --repositories=${repositories}"
           args="${args} \"--hostRules=${hostRules}\""
-          args="${args} --gavs=${gavs}"
+          args="${args} --gavsFile=gavs.txt"
           args="${args} --renovateConfigOutputFile=renovate-config.js"
           if [ "${DRY_RUN}" = "true" ]; then
             args="${args} --dryRun=full"
