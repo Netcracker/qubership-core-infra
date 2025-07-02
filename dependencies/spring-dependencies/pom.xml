@@ -14,7 +14,7 @@
         <!--todo insert link to doc when compatibility is specified-->
         <spring-cloud.version>2025.0.1</spring-cloud.version>
         <!--todo insert link to doc when compatibility is specified-->
-        <spring-data.version>2024.1.7</spring-data.version>
+        <spring-data.version>2025.0.1</spring-data.version>
     </properties>
 
     <dependencyManagement>
