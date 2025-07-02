@@ -104,7 +104,7 @@ jobs:
           curl -L -v -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
           
           gavs=$(cat "gavs.txt" | tr '\n' ',')
-          repositories=$(echo "${REPOSITORIES}" | sed 's|https://github.com/||g' | tr '\n' ',')
+          repositories=$(echo -n "${REPOSITORIES}" | sed 's|https://github.com/||g' | tr '\n' ',')
           hostRules="maven[matchHost=https://repo.maven.apache.org/maven2;username=process.env.RENOVATE_MAVEN_USER;password=process.env.RENOVATE_MAVEN_TOKEN],\
           maven[matchHost=https://maven.pkg.github.com/Netcracker/**;username=process.env.RENOVATE_MAVEN_USER;password=process.env.RENOVATE_MAVEN_TOKEN]"
           
