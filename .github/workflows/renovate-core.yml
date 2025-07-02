@@ -2,9 +2,15 @@ name: Renovate core repositories
 on:
   workflow_dispatch:
     inputs:
-      dryRun:
+      dry-run:
         type: boolean
         description: "dry run"
+      log-level:
+        type: choice
+        description: "LOG_LEVEL for renovate"
+        options:
+          - info
+          - debug
 
 jobs:
   renovate:
@@ -95,7 +101,7 @@ jobs:
         id: run-renovate-config-cli
         shell: bash
         env:
-          DRY_RUN: ${{ inputs.dryRun }}
+          DRY_RUN: ${{ inputs.dry-run }}
           REPOSITORIES: ${{ steps.read-repositories.outputs.repositories }}
         # language="shell script"
         run: |
@@ -132,6 +138,7 @@ jobs:
         env:
           RENOVATE_MAVEN_USER: "x-access-token"
           RENOVATE_MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+          LOG_LEVEL:  ${{ inputs.log-level }}
         with:
           configurationFile: renovate-config.js
           token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
