@@ -10,9 +10,9 @@
     <packaging>pom</packaging>
 
     <properties>
-        <spring.boot.version>3.4.7</spring.boot.version>
+        <spring.boot.version>3.5.0</spring.boot.version>
         <!--todo insert link to the doc where compatibility is specified-->
-        <spring-cloud.version>2024.0.1</spring-cloud.version>
+        <spring-cloud.version>2025.0.0</spring-cloud.version>
     </properties>
 
     <dependencyManagement>
