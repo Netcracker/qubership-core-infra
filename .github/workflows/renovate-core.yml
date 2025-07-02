@@ -13,7 +13,7 @@ jobs:
       MAVEN_USER: "x-access-token"
       MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
-      CLI_VERSION: "1.1.7"
+      CLI_VERSION: "1.1.8"
     steps:
       - name: Checkout
         uses: actions/checkout@v4.2.2
