@@ -11,9 +11,9 @@
 
     <properties>
         <spring.boot.version>3.5.0</spring.boot.version>
-        <!--todo insert link to doc when compatibility is specified-->
+        <!--todo insert link to the doc where compatibility is specified-->
         <spring-cloud.version>2024.0.1</spring-cloud.version>
-        <!--todo insert link to doc when compatibility is specified-->
+        <!--todo insert link to the doc where compatibility is specified-->
         <spring-data.version>2024.1.7</spring-data.version>
     </properties>
 
