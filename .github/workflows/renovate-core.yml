@@ -109,7 +109,7 @@ jobs:
           maven[matchHost=https://maven.pkg.github.com/Netcracker/**;username=process.env.RENOVATE_MAVEN_USER;password=process.env.RENOVATE_MAVEN_TOKEN]"
           
           args="--platform=github"
-          args="${args} --repositories=${REPOSITORIES}"
+          args="${args} --repositories=Netcracker/qubership-dbaas"
           args="${args} \"--hostRules=${hostRules}\""
           args="${args} --gavs=${gavs}"
           args="${args} --renovateConfigOutputFile=renovate-config.js"
