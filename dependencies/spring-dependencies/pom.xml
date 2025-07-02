@@ -10,7 +10,11 @@
     <packaging>pom</packaging>
 
     <properties>
-        <spring.boot.version>3.4.7</spring.boot.version>
+        <spring.boot.version>3.5.0</spring.boot.version>
+        <!--todo insert link to doc when compatibility is specified-->
+        <spring-cloud.version>2025.0.1</spring-cloud.version>
+        <!--todo insert link to doc when compatibility is specified-->
+        <spring-data.version>2024.1.7</spring-data.version>
     </properties>
 
     <dependencyManagement>
@@ -39,14 +43,14 @@
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
-                <version>2024.0.1</version>
+                <version>${spring-cloud.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>org.springframework.data</groupId>
                 <artifactId>spring-data-bom</artifactId>
-                <version>2024.1.7</version>
+                <version>${spring-data.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

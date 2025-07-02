@@ -1,13 +1,15 @@
-name: Renovate core repositories
+name: Renovate core libs repositories
 on:
   workflow_dispatch:
     inputs:
       dry-run:
         type: boolean
         description: "dry run"
+        default: true
       log-level:
         type: choice
         description: "LOG_LEVEL for renovate"
+        default: info
         options:
           - info
           - debug
@@ -48,12 +50,9 @@ jobs:
         shell: bash
         # language="shell script"
         run: |
-          #libs=$(cat ".github/config/core-libs-repositories.txt" | tr '\n' ',')
-          #services=$(cat ".github/config/core-services-repositories.txt" | tr '\n' ',')
-          #repositories="${libs},${services}"
-          #repositories=$(cat ".github/config/test-repositories.txt" | tr '\n' ',')
-          repositories="https://github.com/Netcracker/qubership-dbaas"
-          echo "repositories=\n${repositories}"
+          repositories=$(cat ".github/config/core-libs-repositories.txt")
+          echo "repositories:
+          ${repositories}"
           repositories=$(echo -n "${repositories}" | tr '\n' ',')
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
 
@@ -112,6 +111,7 @@ jobs:
           
           gavs=$(cat "gavs.txt" | tr '\n' ',')
           repositories=$(echo -n "${REPOSITORIES}" | sed 's|https://github.com/||g' | tr '\n' ',')
+          
           hostRules="maven[matchHost=https://repo.maven.apache.org/maven2;username=process.env.RENOVATE_MAVEN_USER;password=process.env.RENOVATE_MAVEN_TOKEN],\
           maven[matchHost=https://maven.pkg.github.com/Netcracker/**;username=process.env.RENOVATE_MAVEN_USER;password=process.env.RENOVATE_MAVEN_TOKEN]"
           
