@@ -96,6 +96,7 @@ jobs:
         shell: bash
         env:
           DRY_RUN: ${{ inputs.dryRun }}
+          REPOSITORIES: ${{ steps.read-repositories.outputs.repositories }}
         # language="shell script"
         run: |
           cliVersion="${CLI_VERSION}"
@@ -109,7 +110,7 @@ jobs:
           maven[matchHost=https://maven.pkg.github.com/Netcracker/**;username=process.env.RENOVATE_MAVEN_USER;password=process.env.RENOVATE_MAVEN_TOKEN]"
           
           args="--platform=github"
-          args="${args} --repositories=Netcracker/qubership-dbaas"
+          args="${args} --repositories=${repositories}"
           args="${args} \"--hostRules=${hostRules}\""
           args="${args} --gavs=${gavs}"
           args="${args} --renovateConfigOutputFile=renovate-config.js"
