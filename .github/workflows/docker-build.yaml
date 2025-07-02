@@ -13,6 +13,11 @@ on:
         type: boolean
         default: false
         description: 'Dry run'
+      config-filename:
+        required: false
+        type: string
+        default: 'docker-dev-config.json'
+        description: 'Set name only or short path inside .github folder if required'
 permissions:
   contents: read
   packages: write
@@ -31,8 +36,9 @@ jobs:
       - name: Load Docker Configuration
         id: load_component
         shell: bash
-        run: |
-          verify=$(cat "$GITHUB_WORKSPACE/.github/docker-dev-config.json" | jq '
+        run: | 
+          config_file="$GITHUB_WORKSPACE/.github/${{ inputs.dry-run }}"
+          verify=$(cat "$config_file" | jq '
             def verify_structure:
               .components as $components
               | .platforms as $platforms
@@ -43,12 +49,12 @@ jobs:
             | if . then true else false end
           ')
           if [ "${verify}" == "true" ]; then
-            echo "✅ $GITHUB_WORKSPACE/.github/docker-dev-config.json file is valid"
-            components=$(jq -c ".components" "$GITHUB_WORKSPACE/.github/docker-dev-config.json")
-            platforms=$(jq -c ".platforms" "$GITHUB_WORKSPACE/.github/docker-dev-config.json")
+            echo "✅ $config_file file is valid"
+            components=$(jq -c ".components" "$config_file")
+            platforms=$(jq -c ".platforms" "$config_file")
           else
-            echo "❗ $GITHUB_WORKSPACE/.github/docker-dev-config.json file is invalid"
-            echo "❗ $GITHUB_WORKSPACE/.github/docker-dev-config.json file is invalid" >> $GITHUB_STEP_SUMMARY
+            echo "❗ $config_file file is invalid"
+            echo "❗ $config_file file is invalid" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
           echo "components=${components}" >> "$GITHUB_OUTPUT"
