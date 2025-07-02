@@ -37,21 +37,32 @@ jobs:
           gpg-private-key: ${{ inputs.maven-gpg-private-key }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
+      - name: "Read repositories"
+        id: read-repositories
+        shell: bash
+        # language="shell script"
+        run: |
+          #libs=$(cat ".github/config/core-libs-repositories.txt" | tr '\n' ',')
+          #services=$(cat ".github/config/core-services-repositories.txt" | tr '\n' ',')
+          #repositories="${libs},${services}"
+          #repositories=$(cat ".github/config/test-repositories.txt" | tr '\n' ',')
+          repositories="https://github.com/Netcracker/qubership-dbaas"
+          echo "repositories=\n${repositories}"
+          repositories=$(echo "${repositories}" | tr '\n' ',')
+          echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
+
       - name: "Run maven-effective-dependencies-cli"
         id: run-maven-effective-dependencies-cli
         shell: bash
+        env:
+          REPOSITORIES: ${{ steps.read-repositories.outputs.repositories }}
         # language="shell script"
         run: |
           cliVersion="${CLI_VERSION}"
           name="maven-effective-dependencies-cli"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${name}/${cliVersion}/${name}-${cliVersion}-jar-with-dependencies.jar"
           curl -L -v -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
-          
-          #libs=$(cat ".github/config/core-libs-repositories.txt" | tr '\n' ',')
-          #services=$(cat ".github/config/core-services-repositories.txt" | tr '\n' ',')
-          #repositories="${libs},${services}"
-          repositories=$(cat ".github/config/test-repositories.txt" | tr '\n' ',')
-          
+                   
           args="--baseDir=$GITHUB_WORKSPACE"
           args="${args} --type1=spring"
           args="${args} --type2=quarkus"
@@ -61,7 +72,7 @@ jobs:
           args="${args} --gitUsername=actions"
           args="${args} --gitEmail=actions@github.com"
           args="${args} --gitPassword=${MAVEN_TOKEN}"
-          args="${args} --repositories=${repositories}"
+          args="${args} --repositories=${REPOSITORIES}"
           args="${args} --resultOutputFile=diff.yaml"
           args="${args} --gavsOutputFile=gavs.txt"
           cmd="java -jar ${name}.jar ${args}"
@@ -93,15 +104,12 @@ jobs:
           curl -L -v -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
           
           gavs=$(cat "gavs.txt" | tr '\n' ',')
-          #libs=$(cat ".github/config/core-libs-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
-          #services=$(cat ".github/config/core-services-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
-          #repositories="${libs},${services}"
-          repositories=$(cat ".github/config/test-repositories.txt" | sed 's|https://github.com/||g' | tr '\n' ',')
+          repositories=$(cat "${REPOSITORIES}" | sed 's|https://github.com/||g' | tr '\n' ',')
           hostRules="maven[matchHost=https://repo.maven.apache.org/maven2;username=process.env.RENOVATE_MAVEN_USER;password=process.env.RENOVATE_MAVEN_TOKEN],\
           maven[matchHost=https://maven.pkg.github.com/Netcracker/**;username=process.env.RENOVATE_MAVEN_USER;password=process.env.RENOVATE_MAVEN_TOKEN]"
           
           args="--platform=github"
-          args="${args} --repositories=${repositories}"
+          args="${args} --repositories=${REPOSITORIES}"
           args="${args} \"--hostRules=${hostRules}\""
           args="${args} --gavs=${gavs}"
           args="${args} --renovateConfigOutputFile=renovate-config.js"
