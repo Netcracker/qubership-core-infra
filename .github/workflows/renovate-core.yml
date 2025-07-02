@@ -48,7 +48,7 @@ jobs:
           #repositories=$(cat ".github/config/test-repositories.txt" | tr '\n' ',')
           repositories="https://github.com/Netcracker/qubership-dbaas"
           echo "repositories=\n${repositories}"
-          repositories=$(echo "${repositories}" | tr '\n' ',')
+          repositories=$(echo -n "${repositories}" | tr '\n' ',')
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
 
       - name: "Run maven-effective-dependencies-cli"
