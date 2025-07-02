@@ -37,7 +37,7 @@ jobs:
         id: load_component
         shell: bash
         run: | 
-          config_file="$GITHUB_WORKSPACE/.github/${{ inputs.dry-run }}"
+          config_file="$GITHUB_WORKSPACE/.github/${{ inputs.config-filename }}"
           verify=$(cat "$config_file" | jq '
             def verify_structure:
               .components as $components
