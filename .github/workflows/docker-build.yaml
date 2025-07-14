@@ -108,7 +108,7 @@ jobs:
         component: ${{ fromJson(needs.load_config.outputs.components) }}
     steps:
       - name: Docker
-        uses: ./.github/actions/docker-action
+        uses: netcracker/qubership-core-infra/.github/actions/docker-action@feature/java-docker-multi-stage
         with:
           ref: ${{ github.ref }}
           dry-run: ${{ inputs.dry-run }}
