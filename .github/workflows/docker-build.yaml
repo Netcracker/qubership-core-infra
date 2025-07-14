@@ -108,7 +108,7 @@ jobs:
         component: ${{ fromJson(needs.load_config.outputs.components) }}
     steps:
       - name: Docker
-        uses: netcracker/qubership-workflow-hub/actions/docker-action@main
+        uses: ./.github/actions/docker-action
         with:
           ref: ${{ github.ref }}
           dry-run: ${{ inputs.dry-run }}
