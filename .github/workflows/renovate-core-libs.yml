@@ -56,7 +56,8 @@ jobs:
         shell: bash
         # language="shell script"
         run: |
-          repositories=$(cat ".github/config/core-libs-repositories.txt")
+          #repositories=$(cat ".github/config/core-libs-repositories.txt")
+          repositories=$(cat ".github/config/core-libs-draft-repositories.txt")
           echo "repositories:
           ${repositories}"
           repositories=$(echo -n "${repositories}" | tr '\n' ',')
