@@ -37,6 +37,9 @@ on:
       runIdsWithGAVs:
         type: number
         description: "Comma seperated list of runId(s) of another release workflow(s) to use their dependencies GAVs"
+      gavs:
+        type: string
+        description: "Comma seperated list of GAV(s)"
       versionIncrementType:
         description: "Version part to increment"
         type: choice
@@ -86,9 +89,10 @@ jobs:
         shell: bash
         env:
           RUN_IDS: ${{ inputs.runIdsWithGAVs }}
+          INPUT_GAVS: ${{ inputs.gavs }}
         # language="shell script"
         run: |-
-          GAVS=""
+          GAVS="${INPUT_GAVS}"
           IFS=','
           for runId in ${RUN_IDS}; do
             url="https://api.github.com/repos/Netcracker/qubership-core-infra/actions/runs/${runId}/artifacts"
