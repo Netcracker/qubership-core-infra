@@ -39,6 +39,11 @@
                 <artifactId>quarkus-extension-processor</artifactId>
                 <version>${quarkus.version}</version>
             </dependency>
+            <dependency>
+                <groupId>io.quarkus</groupId>
+                <artifactId>quarkus-maven-plugin</artifactId>
+                <version>${quarkus.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
