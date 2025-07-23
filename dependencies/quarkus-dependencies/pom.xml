@@ -16,16 +16,16 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>io.quarkus</groupId>
+                <artifactId>quarkus-universe-bom</artifactId>
+                <version>${quarkus.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>io.quarkus.platform</groupId>
                 <artifactId>quarkus-bom</artifactId>
                 <version>${quarkus.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>io.quarkus</groupId>
-                <artifactId>quarkus-universe-bom</artifactId>
-                <version>${quarkus.version}</version>
             </dependency>
             <!--            <dependency>-->
             <!--                <groupId>io.quarkus</groupId>-->
@@ -34,6 +34,11 @@
             <!--                <type>pom</type>-->
             <!--                <scope>import</scope>-->
             <!--            </dependency>-->
+            <dependency>
+                <groupId>io.quarkus</groupId>
+                <artifactId>quarkus-extension-processor</artifactId>
+                <version>${quarkus.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -41,7 +46,7 @@
         <repository>
             <id>github</id>
             <url>https://maven.pkg.github.com/netcracker/*</url>
-            <snapshots />
+            <snapshots/>
         </repository>
     </repositories>
 
