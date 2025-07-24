@@ -40,6 +40,7 @@ on:
       gavs:
         type: string
         description: "Comma seperated list of GAV(s)"
+        default: ""
       versionIncrementType:
         description: "Version part to increment"
         type: choice
@@ -85,7 +86,7 @@ jobs:
 
       - name: "Download GAVs from another release workflow(s)"
         id: download-gavs
-        if: ${{ inputs.runIdsWithGAVs != '' }}
+        if: ${{ inputs.runIdsWithGAVs != '' || inputs.gavs != '' }}
         shell: bash
         env:
           RUN_IDS: ${{ inputs.runIdsWithGAVs }}
