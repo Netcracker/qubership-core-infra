@@ -1,0 +1,201 @@
+# $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-workflow.json
+
+name: "Maven bulk release of core services"
+run-name: Maven bulk release of core-libs [${{ inputs.repositoryToRelease }}] by @${{ github.actor }}'
+
+on:
+  workflow_dispatch:
+    inputs:
+      repositoryToRelease:
+        type: choice
+        description: "Repository to bulk release from. Select 'all' to release all repositories"
+        options:
+          - all
+          - qubership-core-config-server
+          - qubership-core-core-operator
+      runIdsWithGAVs:
+        type: number
+        description: "Comma seperated list of runId(s) of another release workflow(s) to use their dependencies GAVs"
+      gavs:
+        type: string
+        description: "Comma seperated list of GAV(s)"
+        default: ""
+      versionIncrementType:
+        description: "Version part to increment"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+      skipTest:
+        description: "skip tests"
+        type: boolean
+        default: false
+      dryRun:
+        description: "dry run"
+        type: boolean
+        default: false
+
+concurrency:
+  group: "core-libs"
+  cancel-in-progress: false
+
+permissions:
+  actions: write
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      MAVEN_USER: "x-access-token"
+      MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+      MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
+    outputs:
+      result: ${{ steps.run-maven-bulk-release-cli.outputs.result }}
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+        with:
+          ref: "main"
+          token: '${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}'
+
+      - name: "Download GAVs from another release workflow(s)"
+        id: download-gavs
+        if: ${{ inputs.runIdsWithGAVs != '' || inputs.gavs != '' }}
+        shell: bash
+        env:
+          RUN_IDS: ${{ inputs.runIdsWithGAVs }}
+          INPUT_GAVS: ${{ inputs.gavs }}
+        # language="shell script"
+        run: |-
+          GAVS="${INPUT_GAVS}"
+          IFS=','
+          for runId in ${RUN_IDS}; do
+            url="https://api.github.com/repos/Netcracker/qubership-core-infra/actions/runs/${runId}/artifacts"
+            gavsFile="gavs.txt"
+            zipUrl=$(curl -s -L -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}" | jq -r --arg name "${gavsFile}" '.artifacts[] | select(.name == $name) | .archive_download_url')
+            if [ -s "${zipUrl}" ]; then
+              echo "artifacts from ${url} do not contain ${gavsFile} artifact"
+              exit 1
+            fi
+            dir="/tmp/gavs_artifacts/${runId}"
+          
+            mkdir -p "${dir}"
+          
+            zipFile="${dir}/gavs.zip"
+            echo "Downloading ${gavsFile} from ${zipUrl}"
+            curl -o "${zipFile}" -L -H "Authorization: Bearer ${MAVEN_TOKEN}" "${zipUrl}" || { echo "Failed to download ${gavsFile}"; exit 1; }
+          
+            echo "Extracting ${zipFile} to ${dir}"
+            unzip -o "${zipFile}" -d "${dir}" || { echo "Failed to extract ${zipFile}"; exit 1; }
+          
+            extractedGAVsFile="${dir}/${gavsFile}"
+            if [ -e "${extractedGAVsFile}" ]; then
+              gavs=$(cat "${extractedGAVsFile}" | tr '\n' ',')
+              if [ -n "${GAVS}" ]; then
+                 GAVS="${GAVS},${gavs}"
+              else
+                 GAVS="${gavs}"
+              fi
+            else
+              echo "File ${extractedGAVsFile} not found"
+              exit 1
+            fi
+          done
+          echo "gavs=${GAVS}" >> "${GITHUB_OUTPUT}"
+
+      - name: "Read repositories"
+        id: read-repositories
+        shell: bash
+        # language="shell script"
+        run: |
+          repositories="https://github.com/Netcracker/qubership-core-config-server
+          https://github.com/Netcracker/qubership-core-core-operator"
+          echo "repositories=\n${repositories}"
+          repositories=$(echo "${repositories}" | tr '\n' ',')
+          echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
+
+      - name: "Cache Maven dependencies"
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-maven-
+
+      - name: "Set up java"
+        uses: actions/setup-java@v4
+        with:
+          java-version: |
+            17
+            21
+          architecture: 'x64'
+          distribution: 'temurin'
+          server-id: github
+          server-username: MAVEN_USER
+          server-password: MAVEN_TOKEN
+          gpg-private-key: ${{ inputs.maven-gpg-private-key }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: "Run maven-bulk-release-cli"
+        id: run-maven-bulk-release-cli
+        shell: bash
+        env:
+          GAVS: ${{ steps.download-gavs.outputs.gavs }}
+          REPOSITORIES: ${{ steps.read-repositories.outputs.repositories }}
+          REPOSITORY_TO_RELEASE: ${{ inputs.repositoryToRelease }}
+          VERSION_INCREMENT_TYPE: ${{ inputs.versionIncrementType }}
+          SKIP_TEST: ${{ inputs.skipTest }}
+          DRY_RUN: ${{ inputs.dryRun }}
+        # language="shell script"
+        run: |
+          cliVersion="1.0.0"          
+          url="https://maven.pkg.github.com/Netcracker/qubership-core-infra/org.qubership.cloud/maven-bulk-release-cli/${cliVersion}/maven-bulk-release-cli-${cliVersion}-jar-with-dependencies.jar"
+          curl -L -o "maven-bulk-release-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
+                    
+          options=""
+          if [ "${SKIP_TEST}" = "true" ]; then
+            options="${options} --skipTests"
+          fi
+          if [ "${DRY_RUN}" = "true" ]; then
+            options="${options} --dryRun"
+          fi
+          repositoryToRelease=""
+          if [ "${REPOSITORY_TO_RELEASE}" = "all" ]; then
+            repositoryToRelease=""
+          else 
+            repositoryToRelease="https://github.com/Netcracker/${REPOSITORY_TO_RELEASE}"
+          fi
+          args="--baseDir=/tmp"
+          args="${args} --gitURL=https://github.com"
+          args="${args} --gitUsername=actions"
+          args="${args} --gitEmail=actions@github.com"
+          args="${args} --gitPassword=${MAVEN_TOKEN}"
+          args="${args} --repositories=${REPOSITORIES}"
+          args="${args} --repositoriesToReleaseFrom=${repositoryToRelease}"
+          args="${args} --gavs=${GAVS}"
+          args="${args} --versionIncrementType=${VERSION_INCREMENT_TYPE}"
+          args="${args} --javaVersionToJavaHomeEnv=17=${JAVA_HOME_17_X64},21=${JAVA_HOME_21_X64}"
+          args="${args} --resultOutputFile=${GITHUB_OUTPUT}"
+          args="${args} --summaryFile=${GITHUB_STEP_SUMMARY}"
+          args="${args} --gavsResultFile=/tmp/gavs.txt"
+          args="${args} --dependencyGraphFile=/tmp/graph.dot"
+          args="${args} ${options}"
+          cmd="java -jar maven-bulk-release-cli.jar ${args}"
+          echo "running cmd: ${cmd}"
+          eval "${cmd}"
+
+      - name: "Upload gavs artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: gavs.txt
+          path: /tmp/gavs.txt
+
+      - name: "Upload graph artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: graph.dot
+          path: /tmp/graph.dot
