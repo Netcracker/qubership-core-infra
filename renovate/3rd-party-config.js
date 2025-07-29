@@ -5,14 +5,20 @@ module.exports = {
     platform: 'github',
     repositories: ['Netcracker/qubership-core-infra'],
     labels: ['renovate'],
-    packageRules: [
-        {
-            matchUpdateTypes: ["minor", "major"],
-            enabled: false
-        },
-        {
-            matchUpdateTypes: ["patch"],
-            enabled: true
-        }
-    ]
+    hostRules: [{
+        hostType: "maven",
+        matchHost: "https://repo.maven.apache.org/maven2",
+        username: process.env.RENOVATE_MAVEN_USER,
+        password: process.env.RENOVATE_MAVEN_TOKEN
+    }],
+    packageRules: [{
+        matchDatasources: ["maven"],
+        registryUrls: ["https://repo.maven.apache.org/maven2"]
+    }, {
+        matchUpdateTypes: ["minor", "major"],
+        enabled: false
+    }, {
+        matchUpdateTypes: ["patch"],
+        enabled: true
+    }]
 };
