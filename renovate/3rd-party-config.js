@@ -4,6 +4,7 @@ module.exports = {
     onboarding: false,
     platform: 'github',
     repositories: ['Netcracker/qubership-core-infra'],
+    labels: ['renovate'],
     packageRules: [
         {
             matchUpdateTypes: ["minor", "major"],
