@@ -7,6 +7,10 @@ module.exports = {
     labels: ['renovate'],
     packageRules: [
         {
+            matchUpdateTypes: ["minor", "major"],
+            enabled: false
+        },
+        {
             matchUpdateTypes: ["patch"],
             enabled: true
         }
