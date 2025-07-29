@@ -1,6 +1,17 @@
 name: Renovate 3rd party BOMs
 on:
   workflow_dispatch:
+    inputs:
+      log-level:
+        type: choice
+        description: "LOG_LEVEL"
+        default: info
+        options:
+          - info
+          - debug
+
+  schedule:
+    - cron: '35 10 * * *'
 
 jobs:
   renovate:
@@ -13,7 +24,7 @@ jobs:
         env:
           RENOVATE_MAVEN_USER: "x-access-token"
           RENOVATE_MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
-          LOG_LEVEL: debug
+          LOG_LEVEL: ${{ github.event.inputs.log-level || 'info' }}
         with:
           configurationFile: renovate/3rd-party-config.js
           token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
