@@ -19,7 +19,7 @@ module.exports = {
         enabled: false
     }, {
         matchUpdateTypes: ["patch"],
-        rangeStrategy: "bump",
+        rangeStrategy: "bump-patch",
         enabled: true
     }]
 };
