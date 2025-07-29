@@ -6,12 +6,12 @@ module.exports = {
     repositories: ['Netcracker/qubership-core-infra'],
     packageRules: [
         {
-            matchUpdateTypes: ["patch"],
-            enabled: true
-        },
-        {
             matchUpdateTypes: ["minor", "major"],
             enabled: false
+        },
+        {
+            matchUpdateTypes: ["patch"],
+            enabled: true
         }
     ]
 };
