@@ -18,8 +18,7 @@ module.exports = {
         matchUpdateTypes: ["minor", "major"],
         enabled: false
     }, {
-        matchPackagePatterns: [".*"],
-        rangeStrategy: "bump-patch",
+        matchUpdateTypes: ["patch"],
         enabled: true
     }]
 };
