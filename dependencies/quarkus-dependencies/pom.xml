@@ -11,15 +11,17 @@
 
     <properties>
         <quarkus.version>3.15.5</quarkus.version>
+        <quarkus.universe.version>3.15.5</quarkus.universe.version>
         <jandex.version>3.2.6</jandex.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <!--TODO do not use 'quarkus-universe-bom' dependency in your projects because its release is delayed in comparison to other io.quarkus artifacts-->
             <dependency>
                 <groupId>io.quarkus</groupId>
                 <artifactId>quarkus-universe-bom</artifactId>
-                <version>${quarkus.version}</version>
+                <version>${quarkus.universe.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.quarkus.platform</groupId>
