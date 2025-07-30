@@ -29,3 +29,4 @@ jobs:
             --exclude-all-private
           format: markdown
           fail: true
+          failIfEmpty: false
