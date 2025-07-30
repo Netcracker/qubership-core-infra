@@ -110,7 +110,7 @@ jobs:
             if [ "$IS_RESTRICTED_ACTOR" = true ]; then
               echo "maven-goal=verify" >> $GITHUB_OUTPUT
             else
-              echo "maven-goal=install" >> $GITHUB_OUTPUT
+              echo "maven-goal=deploy" >> $GITHUB_OUTPUT
             fi
           fi
 
