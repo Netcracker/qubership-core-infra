@@ -20,3 +20,4 @@ https://github.com/Netcracker/qubership-core-quarkus-extensions
 https://github.com/Netcracker/qubership-core-blue-green-state-monitor-quarkus
 https://github.com/Netcracker/qubership-maas-client-quarkus
 https://github.com/Netcracker/qubership-maas-declarative-client-quarkus
+https://github.com/Netcracker/qubership-core-bulk-release
