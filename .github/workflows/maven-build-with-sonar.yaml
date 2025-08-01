@@ -89,8 +89,8 @@ jobs:
           fi
 
           echo "::info:: Validating event..."
-          if [ "$EVENT_NAME" != "pull_request" ] && [ "$EVENT_NAME" != "push" ]; then
-            echo "::error:: Unsupported event name: $EVENT_NAME. Only 'pull_request' and 'push' are supported."
+          if [ "$EVENT_NAME" != "pull_request" ] && [ "$EVENT_NAME" != "push" ] && [ "$EVENT_NAME" != "workflow_dispatch" ]; then
+            echo "::error:: Unsupported event name: $EVENT_NAME. Only 'pull_request', 'push' and 'workflow_dispatch' are supported."
             exit 1
           fi
 
@@ -106,7 +106,7 @@ jobs:
           echo "::info:: Setting maven goal based on event type and actor..."
           if [ "$EVENT_NAME" = "pull_request" ]; then
             echo "maven-goal=verify" >> $GITHUB_OUTPUT
-          elif [ "$EVENT_NAME" = "push" ]; then
+          elif [ "$EVENT_NAME" = "push" ] || [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             if [ "$IS_RESTRICTED_ACTOR" = true ]; then
               echo "maven-goal=verify" >> $GITHUB_OUTPUT
             else
@@ -146,6 +146,8 @@ jobs:
       server-id: github
       java-version: ${{ inputs.java-version }}
       ref: ${{ github.head_ref }}
+      upload-artifact: true
+      name: ${{ github.repository }}
     secrets:
       maven-token: ${{ secrets.GITHUB_TOKEN }}
       sonar-token: ${{ secrets.sonar-token }}
@@ -163,5 +165,7 @@ jobs:
       server-id: github
       java-version: ${{ inputs.java-version }}
       ref: ${{ github.head_ref }}
+      upload-artifact: true
+      name: ${{ github.repository }}
     secrets:
       maven-token: ${{ secrets.GITHUB_TOKEN }}
