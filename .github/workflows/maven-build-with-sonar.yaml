@@ -47,6 +47,10 @@ on:
         description: 'Optional path to a specific pom.xml file. If not provided, the default pom.xml will be used without -f flag'
         required: false
         type: string
+      output-artifact-name:
+        description: 'Name of the output artifact. TODO: made it not required'
+        required: true
+        type: string
 
       # Sonar configuration
       sonar-project-key:
@@ -147,7 +151,7 @@ jobs:
       java-version: ${{ inputs.java-version }}
       ref: ${{ github.head_ref }}
       upload-artifact: true
-      artifact-id: ${{ github.repository }}
+      artifact-id: ${{ inputs.output-artifact-name }}
     secrets:
       maven-token: ${{ secrets.GITHUB_TOKEN }}
       sonar-token: ${{ secrets.sonar-token }}
@@ -166,6 +170,6 @@ jobs:
       java-version: ${{ inputs.java-version }}
       ref: ${{ github.head_ref }}
       upload-artifact: true
-      artifact-id: ${{ github.repository }}
+      artifact-id: ${{ inputs.output-artifact-name }}
     secrets:
       maven-token: ${{ secrets.GITHUB_TOKEN }}
