@@ -50,19 +50,11 @@ jobs:
           ')
           if [ "${verify}" == "true" ]; then
             echo "✅ $config_file file is valid"
-            # Add default download-artifact to components that don't have it
-            components=$(jq -c '
-              .components | map(
-                if has("download-artifact") then . 
-                else . + {"download-artifact": false} 
-                end
-              )
-            ' "$config_file")
             
             # Validate that download-artifact-path is provided when download-artifact is true
-            validation_result=$(echo "$components" | jq -r '
-              map(
-                if .download-artifact == true and (.download-artifact-path | not) then
+            validation_result=$(cat "$config_file" | jq -r '
+              .components | map(
+                if has("download-artifact") and .download-artifact == true and (.download-artifact-path | not) then
                   "Component \(.name) has download-artifact=true but missing download-artifact-path"
                 else
                   null
@@ -76,6 +68,15 @@ jobs:
               echo "$validation_result" >> $GITHUB_STEP_SUMMARY
               exit 1
             fi
+            
+            # Add default download-artifact to components that don't have it
+            components=$(jq -c '
+              .components | map(
+                if has("download-artifact") then . 
+                else . + {"download-artifact": false} 
+                end
+              )
+            ' "$config_file")
             
             platforms=$(jq -c ".platforms" "$config_file")
           else
