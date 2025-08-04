@@ -48,6 +48,17 @@ on:
         required: false
         type: string
 
+      # Artifact configuration
+      upload-artifact:
+        description: 'Whether to upload build artifacts'
+        required: false
+        type: boolean
+        default: false
+      upload-artifact-name:
+        description: 'Name for the uploaded artifact'
+        required: false
+        type: string
+
       # Sonar configuration
       sonar-project-key:
         description: 'Sonar project key for analysis'
@@ -146,6 +157,8 @@ jobs:
       server-id: github
       java-version: ${{ inputs.java-version }}
       ref: ${{ github.head_ref }}
+      upload-artifact: ${{ inputs.upload-artifact }}
+      artifact-id: ${{ inputs.upload-artifact-name }}
     secrets:
       maven-token: ${{ secrets.GITHUB_TOKEN }}
       sonar-token: ${{ secrets.sonar-token }}
@@ -163,5 +176,7 @@ jobs:
       server-id: github
       java-version: ${{ inputs.java-version }}
       ref: ${{ github.head_ref }}
+      upload-artifact: ${{ inputs.upload-artifact }}
+      artifact-id: ${{ inputs.upload-artifact-name }}
     secrets:
       maven-token: ${{ secrets.GITHUB_TOKEN }}
