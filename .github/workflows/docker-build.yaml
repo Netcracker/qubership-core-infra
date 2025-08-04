@@ -54,7 +54,7 @@ jobs:
             # Validate that download-artifact-path is provided when download-artifact is true
             validation_result=$(cat "$config_file" | jq -r '
               .components | map(
-                if has("download-artifact") and .download-artifact == true and (.download-artifact-path | not) then
+                if has("download-artifact") and .["download-artifact"] == true and (.["download-artifact-path"] | not) then
                   "Component \(.name) has download-artifact=true but missing download-artifact-path"
                 else
                   null
