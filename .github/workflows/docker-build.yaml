@@ -50,25 +50,7 @@ jobs:
           ')
           if [ "${verify}" == "true" ]; then
             echo "✅ $config_file file is valid"
-            
-            # Validate that download-artifact-path is provided when download-artifact is true
-            validation_result=$(cat "$config_file" | jq -r '
-              .components | map(
-                if has("download-artifact") and .["download-artifact"] == true and (.["download-artifact-path"] | not) then
-                  "Component \(.name) has download-artifact=true but missing download-artifact-path"
-                else
-                  null
-                end
-              ) | map(select(. != null)) | join("\n")
-            ')
-            
-            if [ -n "$validation_result" ]; then
-              echo "❗ Validation failed:"
-              echo "$validation_result"
-              echo "$validation_result" >> $GITHUB_STEP_SUMMARY
-              exit 1
-            fi
-            
+           
             # Add default download-artifact to components that don't have it
             components=$(jq -c '
               .components | map(
@@ -77,6 +59,26 @@ jobs:
                 end
               )
             ' "$config_file")
+            
+            # Add default download-artifact-path to components that have download-artifact=true but no path
+            components=$(echo "$components" | jq -c '
+              map(
+                if .["download-artifact"] == true and (.["download-artifact-path"] | not) then
+                  . + {"download-artifact-path": "./artifacts"}
+                else
+                  .
+                end
+              )
+            ')
+            
+            # Log component configurations to step summary
+            echo "## Component Configuration Summary" >> $GITHUB_STEP_SUMMARY
+            echo "$components" | jq -r '
+              .[] | 
+              "**\(.name):**\n" +
+              "- download-artifact: \(.["download-artifact"])\n" +
+              (if .["download-artifact"] == true then "- download-artifact-path: \(.["download-artifact-path"])\n" else "" end)
+            ' >> $GITHUB_STEP_SUMMARY
             
             platforms=$(jq -c ".platforms" "$config_file")
           else
