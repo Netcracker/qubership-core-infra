@@ -141,7 +141,7 @@ jobs:
             ARTIFACT_ID="${{ inputs.upload-artifact-name }}"
             echo "::info:: Using provided artifact name: $ARTIFACT_ID"
           else
-            ARTIFACT_ID="${{ github.event.repository.name }}"
+            ARTIFACT_ID="pre-built-artifact"
             echo "::info:: Using repository name as artifact-id: $ARTIFACT_ID"
           fi
           echo "artifact-id=$ARTIFACT_ID" >> $GITHUB_OUTPUT
