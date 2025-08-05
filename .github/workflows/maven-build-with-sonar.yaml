@@ -158,7 +158,7 @@ jobs:
       java-version: ${{ inputs.java-version }}
       ref: ${{ github.head_ref }}
       upload-artifact: ${{ inputs.upload-artifact }}
-      artifact-id: ${{ inputs.upload-artifact-name }}
+      artifact-id: ${{ inputs.upload-artifact-name || github.repository }}
     secrets:
       maven-token: ${{ secrets.GITHUB_TOKEN }}
       sonar-token: ${{ secrets.sonar-token }}
@@ -177,6 +177,6 @@ jobs:
       java-version: ${{ inputs.java-version }}
       ref: ${{ github.head_ref }}
       upload-artifact: ${{ inputs.upload-artifact }}
-      artifact-id: ${{ inputs.upload-artifact-name }}
+      artifact-id: ${{ inputs.upload-artifact-name || github.repository }}
     secrets:
       maven-token: ${{ secrets.GITHUB_TOKEN }}
