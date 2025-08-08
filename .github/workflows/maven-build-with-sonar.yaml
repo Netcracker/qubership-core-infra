@@ -1,6 +1,6 @@
 # This workflow handles Maven builds with optional Sonar analysis.
 # It can be called from other workflows and supports different build modes based on:
-# - Event type (pull_request or push)
+# - Event type (pull_request or push or workflow_dispatch)
 # - Actor type (bot or user)
 #
 # Build modes:
@@ -10,6 +10,10 @@
 # 2. Push:
 #    - Uses 'verify' goal for restricted actors
 #    - Uses 'deploy' goal for non-restricted actors
+#    - Sonar analysis is skipped for restricted actors
+# 3. Workflow Dispatch:
+#    - Uses 'verify' goal for dry-run
+#    - Uses 'deploy' goal for non-dry-run
 #    - Sonar analysis is skipped for restricted actors
 #
 # Sonar analysis:
@@ -48,10 +52,9 @@ on:
         required: false
         type: string
       ref:
-        description: 'Git reference to use for the build. If not provided, github.ref will be used'
+        description: 'Git reference to use for the build'
         required: false
         type: string
-        default: ${{ github.ref }}
       dry-run:
         description: 'Whether to run the build in dry-run mode'
         required: false
