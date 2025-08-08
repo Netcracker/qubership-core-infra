@@ -47,6 +47,11 @@ on:
         description: 'Optional path to a specific pom.xml file. If not provided, the default pom.xml will be used without -f flag'
         required: false
         type: string
+      ref:
+        description: 'Git reference to use for the build. If not provided, github.head_ref will be used'
+        required: false
+        type: string
+        default: ${{ github.ref }}
 
       # Artifact configuration
       upload-artifact:
@@ -55,7 +60,7 @@ on:
         type: boolean
         default: false
       upload-artifact-name:
-        description: 'Name for the uploaded artifact'
+        description: 'Name for the uploaded artifact. If not provided, "pre-built-artifact" will be used'
         required: false
         type: string
 
@@ -168,7 +173,7 @@ jobs:
         ${{ inputs.pom-file-path && format('-f {0}', inputs.pom-file-path) || '' }}
       server-id: github
       java-version: ${{ inputs.java-version }}
-      ref: ${{ github.head_ref }}
+      ref: ${{ inputs.ref }}
       upload-artifact: ${{ inputs.upload-artifact }}
       artifact-id: ${{ needs.prepare-variables.outputs.artifact-id }}
     secrets:
@@ -187,7 +192,7 @@ jobs:
         ${{ inputs.pom-file-path && format('-f {0}', inputs.pom-file-path) || '' }}
       server-id: github
       java-version: ${{ inputs.java-version }}
-      ref: ${{ github.head_ref }}
+      ref: ${{ inputs.ref }}
       upload-artifact: ${{ inputs.upload-artifact }}
       artifact-id: ${{ needs.prepare-variables.outputs.artifact-id }}
     secrets:

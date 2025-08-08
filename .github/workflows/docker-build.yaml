@@ -18,6 +18,11 @@ on:
         type: string
         default: 'docker-dev-config.json'
         description: 'Set name only or short path inside .github folder if required'
+      ref:
+        required: false
+        type: string
+        default: ${{ github.ref }}
+        description: 'Git reference to use for the build'
 permissions:
   contents: read
   packages: write
@@ -32,6 +37,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Load Docker Configuration
         id: load_component
@@ -98,6 +105,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Get configuration file
         run: |
@@ -110,6 +119,7 @@ jobs:
           configuration-path: .github/metadata-action-go-config.yml
           short-sha: 7
           default-template: "{{ref-name}}-{{timestamp}}-{{github.context.runNumber}}, {{ref-name}}-{{short-sha}}, {{ref-name}}-snapshot"
+          ref: ${{ inputs.ref }}
 
       - name: Echo metadata
         run: echo "Metadata result ${{ steps.metadata.outputs.result }}" >> $GITHUB_STEP_SUMMARY
@@ -139,7 +149,7 @@ jobs:
       - name: Docker
         uses: netcracker/qubership-workflow-hub/actions/docker-action@main
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ inputs.ref }}
           dry-run: ${{ inputs.dry-run }}
           download-artifact: ${{ matrix.component.download-artifact }}
           download-artifact-path: ${{ matrix.component.download-artifact-path }}
