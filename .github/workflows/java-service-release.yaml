@@ -49,7 +49,7 @@ jobs:
       
   cleanup-on-dry-run:
     needs: docker-build
-    if: ${{ inputs.dry-run == 'true' }}
+    if: ${{ inputs.dry-run }}
     runs-on: ubuntu-latest
     steps:
       - name: Delete Tag
@@ -61,7 +61,7 @@ jobs:
 
   github-release:
     needs: [ docker-build ]
-    if: ${{ inputs.dry-run == 'false' }}
+    if: ${{ !inputs.dry-run }}
     uses: netcracker/qubership-workflow-hub/.github/workflows/release-drafter.yml@v1.0.3
     with:
       version: ${{ inputs.version }}
