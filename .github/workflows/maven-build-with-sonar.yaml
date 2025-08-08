@@ -106,8 +106,8 @@ jobs:
           fi
 
           echo "::info:: Validating event..."
-          if [ "$EVENT_NAME" != "pull_request" ] && [ "$EVENT_NAME" != "push" ]; then
-            echo "::error:: Unsupported event name: $EVENT_NAME. Only 'pull_request' and 'push' are supported."
+          if [ "$EVENT_NAME" != "pull_request" ] && [ "$EVENT_NAME" != "push" ] && [ "$EVENT_NAME" != "workflow_dispatch" ]; then
+            echo "::error:: Unsupported event name: $EVENT_NAME. Only 'pull_request', 'push' and 'workflow_dispatch' are supported."
             exit 1
           fi
 
