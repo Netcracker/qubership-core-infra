@@ -21,7 +21,6 @@ on:
       ref:
         required: false
         type: string
-        default: ${{ github.ref }}
         description: 'Git reference to use for the build'
 permissions:
   contents: read

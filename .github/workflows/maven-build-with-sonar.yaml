@@ -68,6 +68,7 @@ on:
         description: 'Name for the uploaded artifact. If not provided, "pre-built-artifact" will be used'
         required: false
         type: string
+        default: "pre-built-artifact"
 
       # Sonar configuration
       sonar-project-key:
@@ -87,7 +88,6 @@ jobs:
     outputs:
       maven-goal: ${{ steps.prepare.outputs.maven-goal }}
       run-sonar: ${{ steps.prepare.outputs.run-sonar }}
-      artifact-id: ${{ steps.prepare.outputs.artifact-id }}
     steps:
       - name: Checkout workflow repository
         uses: actions/checkout@v4
@@ -153,21 +153,10 @@ jobs:
             echo "run-sonar=true" >> $GITHUB_OUTPUT
           fi
 
-          echo "::info:: Calculating artifact-id..."
-          if [ -n "${{ inputs.upload-artifact-name }}" ]; then
-            ARTIFACT_ID="${{ inputs.upload-artifact-name }}"
-            echo "::info:: Using provided artifact name: $ARTIFACT_ID"
-          else
-            ARTIFACT_ID="pre-built-artifact"
-            echo "::info:: Using repository name as artifact-id: $ARTIFACT_ID"
-          fi
-          echo "artifact-id=$ARTIFACT_ID" >> $GITHUB_OUTPUT
-
       - name: Output build configuration
         run: |
           echo "::info:: Maven goal: ${{ steps.prepare.outputs.maven-goal }}"
           echo "::info:: Run Sonar: ${{ steps.prepare.outputs.run-sonar }}"
-          echo "::info:: Artifact ID: ${{ steps.prepare.outputs.artifact-id }}"
 
   mvn-with-sonar:
     name: Build with Sonar analysis
@@ -187,7 +176,7 @@ jobs:
       java-version: ${{ inputs.java-version }}
       ref: ${{ inputs.ref }}
       upload-artifact: ${{ inputs.upload-artifact }}
-      artifact-id: ${{ needs.prepare-variables.outputs.artifact-id }}
+      artifact-id: ${{ inputs.upload-artifact-name }}
     secrets:
       maven-token: ${{ secrets.GITHUB_TOKEN }}
       sonar-token: ${{ secrets.sonar-token }}
@@ -206,6 +195,6 @@ jobs:
       java-version: ${{ inputs.java-version }}
       ref: ${{ inputs.ref }}
       upload-artifact: ${{ inputs.upload-artifact }}
-      artifact-id: ${{ needs.prepare-variables.outputs.artifact-id }}
+      artifact-id: ${{ inputs.upload-artifact-name }}
     secrets:
       maven-token: ${{ secrets.GITHUB_TOKEN }}
