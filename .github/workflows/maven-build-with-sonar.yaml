@@ -48,10 +48,15 @@ on:
         required: false
         type: string
       ref:
-        description: 'Git reference to use for the build. If not provided, github.head_ref will be used'
+        description: 'Git reference to use for the build. If not provided, github.ref will be used'
         required: false
         type: string
         default: ${{ github.ref }}
+      dry-run:
+        description: 'Whether to run the build in dry-run mode'
+        required: false
+        type: boolean
+        default: false
 
       # Artifact configuration
       upload-artifact:
@@ -125,6 +130,12 @@ jobs:
             echo "maven-goal=verify" >> $GITHUB_OUTPUT
           elif [ "$EVENT_NAME" = "push" ]; then
             if [ "$IS_RESTRICTED_ACTOR" = true ]; then
+              echo "maven-goal=verify" >> $GITHUB_OUTPUT
+            else
+              echo "maven-goal=deploy" >> $GITHUB_OUTPUT
+            fi
+          elif [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ "${{ inputs.dry-run }}" = true ]; then
               echo "maven-goal=verify" >> $GITHUB_OUTPUT
             else
               echo "maven-goal=deploy" >> $GITHUB_OUTPUT
