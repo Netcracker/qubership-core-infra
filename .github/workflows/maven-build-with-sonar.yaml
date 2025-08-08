@@ -135,7 +135,7 @@ jobs:
               echo "maven-goal=deploy" >> $GITHUB_OUTPUT
             fi
           elif [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-            if [ "${{ inputs.dry-run }}" = true ]; then
+            if [ {{ inputs.dry-run }} ]; then
               echo "maven-goal=verify" >> $GITHUB_OUTPUT
             else
               echo "maven-goal=deploy" >> $GITHUB_OUTPUT
