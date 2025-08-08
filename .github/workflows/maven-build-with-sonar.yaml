@@ -103,6 +103,7 @@ jobs:
           ACTOR="${{ inputs.actor }}"
           EVENT_NAME="${{ inputs.event-name }}"
           CONFIG_FILE="workflow-repo/.github/config/build-config.yaml"
+          DRY_RUN="${{ inputs.dry-run }}"
 
           echo "::info:: Validating config file exists..."
           if [ ! -f "$CONFIG_FILE" ]; then
@@ -135,7 +136,7 @@ jobs:
               echo "maven-goal=deploy" >> $GITHUB_OUTPUT
             fi
           elif [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-            if [ ${{ inputs.dry-run }} ]; then
+            if [ "$DRY_RUN" = "true" ]; then
               echo "maven-goal=verify" >> $GITHUB_OUTPUT
             else
               echo "maven-goal=deploy" >> $GITHUB_OUTPUT
