@@ -1,7 +1,7 @@
 name: Renovate core libs repositories
 on:
-#  schedule:
-#    - cron: '25 5-13 * * *'
+  schedule:
+    - cron: '25 5-15 * * *'
 
   workflow_dispatch:
     inputs:
