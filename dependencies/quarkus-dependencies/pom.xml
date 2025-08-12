@@ -11,7 +11,6 @@
 
     <properties>
         <quarkus.version>3.15.6</quarkus.version>
-        <quarkus.universe.version>3.15.5</quarkus.universe.version>
         <jandex.version>3.2.6</jandex.version>
     </properties>
 
@@ -21,7 +20,7 @@
             <dependency>
                 <groupId>io.quarkus</groupId>
                 <artifactId>quarkus-universe-bom</artifactId>
-                <version>${quarkus.universe.version}</version>
+                <version>${quarkus.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.quarkus.platform</groupId>

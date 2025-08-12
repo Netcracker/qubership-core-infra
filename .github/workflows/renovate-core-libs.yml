@@ -1,7 +1,7 @@
 name: Renovate core libs repositories
 on:
-  schedule:
-    - cron: '25 * * * *'
+#  schedule:
+#    - cron: '25 5-13 * * *'
 
   workflow_dispatch:
     inputs:
@@ -24,7 +24,7 @@ jobs:
       MAVEN_USER: "x-access-token"
       MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
-      CLI_VERSION: "1.1.16"
+      CLI_VERSION: "1.2.4"
       DRY_RUN: ${{ github.event.inputs.dry-run || 'false' }}
       LOG_LEVEL: ${{ github.event.inputs.log-level || 'info' }}
 
@@ -78,10 +78,8 @@ jobs:
           curl -L -v -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
                    
           args="--baseDir=$GITHUB_WORKSPACE"
-          args="${args} --type1=spring"
-          args="${args} --type2=quarkus"
-          args="${args} --type1PomRelativeDir=dependencies/spring-dependencies/pom.xml"
-          args="${args} --type2PomRelativeDir=dependencies/quarkus-dependencies/pom.xml"
+          args="${args} --type1PomRelativeDir=dependencies/spring-dependencies"
+          args="${args} --type2PomRelativeDir=dependencies/quarkus-dependencies"
           args="${args} --gitURL=https://github.com"
           args="${args} --gitUsername=actions"
           args="${args} --gitEmail=actions@github.com"
@@ -116,17 +114,35 @@ jobs:
           name="renovate-config-cli"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${name}/${cliVersion}/${name}-${cliVersion}-jar-with-dependencies.jar"
           curl -L -v -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
-          
-          repositories=$(echo -n "${REPOSITORIES}" | sed 's|https://github.com/||g' | tr '\n' ',')
-          
-          hostRules="maven[matchHost=https://repo.maven.apache.org/maven2;username=process.env.RENOVATE_MAVEN_USER;password=process.env.RENOVATE_MAVEN_TOKEN],\
-          maven[matchHost=https://maven.pkg.github.com/Netcracker/**;username=process.env.RENOVATE_MAVEN_USER;password=process.env.RENOVATE_MAVEN_TOKEN]"
-          
+                   
+          defLabels="renovate"                            
           args="--platform=github"
-          args="${args} --repositories=${repositories}"
-          args="${args} \"--hostRules=${hostRules}\""
-          args="${args} \"--packageRules=[matchManagers=maven;matchDatasources=maven;matchUpdateTypes=minor&patch;groupName=Default Maven]\""
-          args="${args} --gavsFile=gavs.txt"
+          
+          repositories=$(echo -n "${REPOSITORIES}" | tr '\n' ',')
+          
+          IFS=',' read -ra items <<< "${repositories}"
+          for repository in "${items[@]}"; do
+            args="${args} --repository=${repository}"
+          fi
+          
+          args="${args} \"--param=globalExtends=[:ignoreModulesAndTests,:dependencyDashboard]\""
+          args="${args} --param=prCreation=not-pending"
+          args="${args} --param=printConfig=false"
+          args="${args} --param=rebaseWhen=conflicted"
+          args="${args} --param=recreateWhen=always"
+          args="${args} --param=platformAutomerge=true"
+          args="${args} --param=prHourlyLimit=10"
+          args="${args} --param=prConcurrentLimit=20"
+          args="${args} --param=branchConcurrentLimit=20"
+          args="${args} \"--param=labels=[${defLabels}]\""
+          args="${args} \"--param=enabledManagers=[maven,dockerfile]\""
+          args="${args} \"--hostRule=hostType=maven;matchHost=https://repo.maven.apache.org/maven2;username=process.env.RENOVATE_MAVEN_USER;password=process.env.RENOVATE_MAVEN_TOKEN\""
+          args="${args} \"--hostRule=hostType=maven;matchHost=matchHost=https://maven.pkg.github.com/Netcracker/**;username=process.env.RENOVATE_MAVEN_USER;password=process.env.RENOVATE_MAVEN_TOKEN\""
+          args="${args} \"--packageRule=matchPackageNames=[/.*/];allowedVersions=!/.*(redhat|composite|groovyless|jboss|atlassian|preview|-SNAPSHOT).*/\""
+          args="${args} \"--packageRule=matchPackageNames=[/.*/];matchUpdateTypes=[major];enabled=true;automerge=false;labels=[${defLabels},type:major]\""
+          args="${args} \"--packageRule=matchPackageNames=[/.*/];matchUpdateTypes=[minor];enabled=true;automerge=false;labels=[${defLabels},type:minor]\""
+          args="${args} \"--packageRule=matchPackageNames=[/.*/];matchUpdateTypes=[patch];enabled=true;automerge=false;labels=[${defLabels},type:patch]\""
+          args="${args} --strictGavsFile=gavs.txt"
           args="${args} --renovateConfigOutputFile=renovate-config.js"
           if [ "${DRY_RUN}" = "true" ]; then
             args="${args} --dryRun=full"
