@@ -145,7 +145,7 @@ jobs:
           args="${args} --strictGavsFile=gavs.txt"
           args="${args} --renovateConfigOutputFile=renovate-config.js"
           if [ "${DRY_RUN}" = "true" ]; then
-            args="${args} --dryRun=full"
+            args="${args} --param=dryRun=full"
           fi
           cmd="java -jar ${name}.jar ${args}"
           echo "running cmd: ${cmd}"
