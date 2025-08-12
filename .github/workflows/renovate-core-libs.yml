@@ -123,7 +123,7 @@ jobs:
           IFS=',' read -ra items <<< "${repositories}"
           for repository in "${items[@]}"; do
             args="${args} --repository=${repository}"
-          fi
+          done
           
           args="${args} \"--param=globalExtends=[:ignoreModulesAndTests,:dependencyDashboard]\""
           args="${args} --param=prCreation=not-pending"
