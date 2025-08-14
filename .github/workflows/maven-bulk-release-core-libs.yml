@@ -195,7 +195,7 @@ jobs:
         # language="shell script"
         run: |
           cliVersion="1.2.9-SNAPSHOT"   
-          cliVersionSpecific="1.2.9-20250814.161710-4"
+          cliVersionSpecific="1.2.9-20250814.164243-5"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-infra/org.qubership.cloud/maven-bulk-release-cli/${cliVersion}/maven-bulk-release-cli-${cliVersionSpecific}-jar-with-dependencies.jar"
           curl -L -o "maven-bulk-release-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
                     
