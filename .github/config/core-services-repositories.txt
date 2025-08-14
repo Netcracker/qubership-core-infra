@@ -1,3 +1,3 @@
-https://github.com/Netcracker/qubership-core-config-server
-https://github.com/Netcracker/qubership-core-core-operator
-https://github.com/Netcracker/qubership-dbaas
+https://github.com/Netcracker/qubership-core-config-server[branch=master]
+https://github.com/Netcracker/qubership-core-core-operator[branch=master]
+https://github.com/Netcracker/qubership-dbaas[branch=master]
