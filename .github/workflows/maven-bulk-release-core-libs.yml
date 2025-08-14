@@ -219,7 +219,7 @@ jobs:
           args="${args} --gitEmail=actions@github.com"
           args="${args} --gitPassword=${MAVEN_TOKEN}"
           args="${args} --repositories=${REPOSITORIES}"
-          args="${args} --repositoriesToReleaseFrom=${repositoryToRelease}"
+          args="${args} \"--repositoriesToReleaseFrom=${repositoryToRelease}\""
           args="${args} --gavs=${GAVS}"
           args="${args} --versionIncrementType=${VERSION_INCREMENT_TYPE}"
           args="${args} --javaVersionToJavaHomeEnv=17=${JAVA_HOME_17_X64},21=${JAVA_HOME_21_X64}"
@@ -243,3 +243,9 @@ jobs:
         with:
           name: graph.dot
           path: /tmp/graph.dot
+
+      - name: "Upload logs artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs
+          path: /tmp/logs/

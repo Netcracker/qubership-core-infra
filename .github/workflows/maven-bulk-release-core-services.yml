@@ -201,3 +201,9 @@ jobs:
         with:
           name: graph.dot
           path: /tmp/graph.dot
+
+      - name: "Upload logs artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs
+          path: /tmp/logs/
