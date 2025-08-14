@@ -134,29 +134,29 @@ jobs:
         shell: bash
         # language="shell script"
         run: |
-          repositories="https://github.com/Netcracker/qubership-core-bulk-release
-          https://github.com/Netcracker/qubership-core-utils
-          https://github.com/Netcracker/qubership-core-error-handling
-          https://github.com/Netcracker/qubership-core-process-orchestrator
-          https://github.com/Netcracker/qubership-core-context-propagation
-          https://github.com/Netcracker/qubership-core-microservice-framework-extensions
-          https://github.com/Netcracker/qubership-core-mongo-evolution
-          https://github.com/Netcracker/qubership-core-restclient
-          https://github.com/Netcracker/qubership-core-rest-libraries
-          https://github.com/Netcracker/qubership-core-blue-green-state-monitor
-          https://github.com/Netcracker/qubership-maas-client
-          https://github.com/Netcracker/qubership-maas-client-spring
-          https://github.com/Netcracker/qubership-maas-declarative-client-commons
-          https://github.com/Netcracker/qubership-maas-declarative-client-spring
-          https://github.com/Netcracker/qubership-dbaas-client
-          https://github.com/Netcracker/qubership-core-microservice-dependencies
-          https://github.com/Netcracker/qubership-core-microservice-framework
-          https://github.com/Netcracker/qubership-core-springboot-starter
-          https://github.com/Netcracker/qubership-core-context-propagation-quarkus
-          https://github.com/Netcracker/qubership-core-quarkus-extensions
-          https://github.com/Netcracker/qubership-core-blue-green-state-monitor-quarkus
-          https://github.com/Netcracker/qubership-maas-client-quarkus
-          https://github.com/Netcracker/qubership-maas-declarative-client-quarkus"
+          repositories="https://github.com/Netcracker/qubership-core-bulk-release[branch=main]
+          https://github.com/Netcracker/qubership-core-utils[branch=main]
+          https://github.com/Netcracker/qubership-core-error-handling[branch=main]
+          https://github.com/Netcracker/qubership-core-process-orchestrator[branch=main]
+          https://github.com/Netcracker/qubership-core-context-propagation[branch=main]
+          https://github.com/Netcracker/qubership-core-microservice-framework-extensions[branch=main]
+          https://github.com/Netcracker/qubership-core-mongo-evolution[branch=main]
+          https://github.com/Netcracker/qubership-core-restclient[branch=main]
+          https://github.com/Netcracker/qubership-core-rest-libraries[branch=main]
+          https://github.com/Netcracker/qubership-core-blue-green-state-monitor[branch=main]
+          https://github.com/Netcracker/qubership-maas-client[branch=main]
+          https://github.com/Netcracker/qubership-maas-client-spring[branch=main]
+          https://github.com/Netcracker/qubership-maas-declarative-client-commons[branch=main]
+          https://github.com/Netcracker/qubership-maas-declarative-client-spring[branch=main]
+          https://github.com/Netcracker/qubership-dbaas-client[branch=main]
+          https://github.com/Netcracker/qubership-core-microservice-dependencies[branch=main]
+          https://github.com/Netcracker/qubership-core-microservice-framework[branch=main]
+          https://github.com/Netcracker/qubership-core-springboot-starter[branch=main]
+          https://github.com/Netcracker/qubership-core-context-propagation-quarkus[branch=main]
+          https://github.com/Netcracker/qubership-core-quarkus-extensions[branch=main]
+          https://github.com/Netcracker/qubership-core-blue-green-state-monitor-quarkus[branch=main]
+          https://github.com/Netcracker/qubership-maas-client-quarkus[branch=main]
+          https://github.com/Netcracker/qubership-maas-declarative-client-quarkus[branch=main]"
           echo "repositories=\n${repositories}"
           repositories=$(echo "${repositories}" | tr '\n' ',')
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
@@ -206,11 +206,12 @@ jobs:
           if [ "${DRY_RUN}" = "true" ]; then
             options="${options} --dryRun"
           fi
+          repositories=$(echo "${REPOSITORIES}" | tr ',' '\n')
           repositoryToRelease=""
           if [ "${REPOSITORY_TO_RELEASE}" = "all" ]; then
             repositoryToRelease=""
           else 
-            repositoryToRelease="https://github.com/Netcracker/${REPOSITORY_TO_RELEASE}"
+            repositoryToRelease=$(echo "${repositories}" | grep "${REPOSITORY_TO_RELEASE_FROM}")
           fi
           args="--baseDir=/tmp"
           args="${args} --gitURL=https://github.com"

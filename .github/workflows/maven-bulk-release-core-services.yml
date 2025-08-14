@@ -113,8 +113,8 @@ jobs:
         shell: bash
         # language="shell script"
         run: |
-          repositories="https://github.com/Netcracker/qubership-core-config-server
-          https://github.com/Netcracker/qubership-core-core-operator"
+          repositories="https://github.com/Netcracker/qubership-core-config-server[branch=main]
+          https://github.com/Netcracker/qubership-core-core-operator[branch=main]"
           echo "repositories=\n${repositories}"
           repositories=$(echo "${repositories}" | tr '\n' ',')
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
@@ -152,8 +152,9 @@ jobs:
           DRY_RUN: ${{ inputs.dryRun }}
         # language="shell script"
         run: |
-          cliVersion="1.2.6"      
-          url="https://maven.pkg.github.com/Netcracker/qubership-core-infra/org.qubership.cloud/maven-bulk-release-cli/${cliVersion}/maven-bulk-release-cli-${cliVersion}-jar-with-dependencies.jar"
+          cliVersion="1.2.8-SNAPSHOT"   
+          cliVersionSpecific="1.2.8-20250814.133140-2"
+          url="https://maven.pkg.github.com/Netcracker/qubership-core-infra/org.qubership.cloud/maven-bulk-release-cli/${cliVersion}/maven-bulk-release-cli-${cliVersionSpecific}-jar-with-dependencies.jar"
           curl -L -o "maven-bulk-release-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
                     
           options=""
@@ -163,11 +164,12 @@ jobs:
           if [ "${DRY_RUN}" = "true" ]; then
             options="${options} --dryRun"
           fi
+          repositories=$(echo "${REPOSITORIES}" | tr ',' '\n')
           repositoryToRelease=""
           if [ "${REPOSITORY_TO_RELEASE}" = "all" ]; then
             repositoryToRelease=""
           else 
-            repositoryToRelease="https://github.com/Netcracker/${REPOSITORY_TO_RELEASE}"
+            repositoryToRelease=$(echo "${repositories}" | grep "${REPOSITORY_TO_RELEASE_FROM}")
           fi
           args="--baseDir=/tmp"
           args="${args} --gitURL=https://github.com"
