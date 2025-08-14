@@ -1,6 +1,6 @@
 # This workflow handles Maven builds with optional Sonar analysis.
 # It can be called from other workflows and supports different build modes based on:
-# - Event type (pull_request or push)
+# - Event type (pull_request or push or workflow_dispatch)
 # - Actor type (bot or user)
 #
 # Build modes:
@@ -10,6 +10,10 @@
 # 2. Push:
 #    - Uses 'verify' goal for restricted actors
 #    - Uses 'deploy' goal for non-restricted actors
+#    - Sonar analysis is skipped for restricted actors
+# 3. Workflow Dispatch:
+#    - Uses 'verify' goal for dry-run
+#    - Uses 'deploy' goal for non-dry-run
 #    - Sonar analysis is skipped for restricted actors
 #
 # Sonar analysis:
@@ -47,6 +51,27 @@ on:
         description: 'Optional path to a specific pom.xml file. If not provided, the default pom.xml will be used without -f flag'
         required: false
         type: string
+      ref:
+        description: 'Git reference to use for the build'
+        required: false
+        type: string
+      dry-run:
+        description: 'Whether to run the build in dry-run mode'
+        required: false
+        type: boolean
+        default: false
+
+      # Artifact configuration
+      upload-artifact:
+        description: 'Whether to upload build artifacts'
+        required: false
+        type: boolean
+        default: false
+      upload-artifact-name:
+        description: 'Name for the uploaded artifact. If not provided, "pre-built-artifact" will be used'
+        required: false
+        type: string
+        default: "pre-built-artifact"
 
       # Sonar configuration
       sonar-project-key:
@@ -81,6 +106,7 @@ jobs:
           ACTOR="${{ inputs.actor }}"
           EVENT_NAME="${{ inputs.event-name }}"
           CONFIG_FILE="workflow-repo/.github/config/build-config.yaml"
+          DRY_RUN="${{ inputs.dry-run }}"
 
           echo "::info:: Validating config file exists..."
           if [ ! -f "$CONFIG_FILE" ]; then
@@ -89,8 +115,8 @@ jobs:
           fi
 
           echo "::info:: Validating event..."
-          if [ "$EVENT_NAME" != "pull_request" ] && [ "$EVENT_NAME" != "push" ]; then
-            echo "::error:: Unsupported event name: $EVENT_NAME. Only 'pull_request' and 'push' are supported."
+          if [ "$EVENT_NAME" != "pull_request" ] && [ "$EVENT_NAME" != "push" ] && [ "$EVENT_NAME" != "workflow_dispatch" ]; then
+            echo "::error:: Unsupported event name: $EVENT_NAME. Only 'pull_request', 'push' and 'workflow_dispatch' are supported."
             exit 1
           fi
 
@@ -108,6 +134,12 @@ jobs:
             echo "maven-goal=verify" >> $GITHUB_OUTPUT
           elif [ "$EVENT_NAME" = "push" ]; then
             if [ "$IS_RESTRICTED_ACTOR" = true ]; then
+              echo "maven-goal=verify" >> $GITHUB_OUTPUT
+            else
+              echo "maven-goal=deploy" >> $GITHUB_OUTPUT
+            fi
+          elif [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ "$DRY_RUN" = "true" ]; then
               echo "maven-goal=verify" >> $GITHUB_OUTPUT
             else
               echo "maven-goal=deploy" >> $GITHUB_OUTPUT
@@ -145,7 +177,9 @@ jobs:
         ${{ inputs.pom-file-path && format('-f {0}', inputs.pom-file-path) || '' }}
       server-id: github
       java-version: ${{ inputs.java-version }}
-      ref: ${{ github.head_ref }}
+      ref: ${{ inputs.ref }}
+      upload-artifact: ${{ inputs.upload-artifact }}
+      artifact-id: ${{ inputs.upload-artifact-name }}
     secrets:
       maven-token: ${{ secrets.GITHUB_TOKEN }}
       sonar-token: ${{ secrets.sonar-token }}
@@ -162,6 +196,8 @@ jobs:
         ${{ inputs.pom-file-path && format('-f {0}', inputs.pom-file-path) || '' }}
       server-id: github
       java-version: ${{ inputs.java-version }}
-      ref: ${{ github.head_ref }}
+      ref: ${{ inputs.ref }}
+      upload-artifact: ${{ inputs.upload-artifact }}
+      artifact-id: ${{ inputs.upload-artifact-name }}
     secrets:
       maven-token: ${{ secrets.GITHUB_TOKEN }}

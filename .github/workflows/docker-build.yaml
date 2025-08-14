@@ -18,6 +18,10 @@ on:
         type: string
         default: 'docker-dev-config.json'
         description: 'Set name only or short path inside .github folder if required'
+      ref:
+        required: false
+        type: string
+        description: 'Git reference to use for the build'
 permissions:
   contents: read
   packages: write
@@ -32,6 +36,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Load Docker Configuration
         id: load_component
@@ -50,7 +56,36 @@ jobs:
           ')
           if [ "${verify}" == "true" ]; then
             echo "✅ $config_file file is valid"
-            components=$(jq -c ".components" "$config_file")
+           
+            # Add default download-artifact to components that don't have it
+            components=$(jq -c '
+              .components | map(
+                if has("download-artifact") then . 
+                else . + {"download-artifact": false} 
+                end
+              )
+            ' "$config_file")
+            
+            # Add default download-artifact-path to components that have download-artifact=true but no path
+            components=$(echo "$components" | jq -c '
+              map(
+                if .["download-artifact"] == true and (.["download-artifact-path"] | not) then
+                  . + {"download-artifact-path": "./artifacts"}
+                else
+                  .
+                end
+              )
+            ')
+            
+            # Log component configurations to step summary
+            echo "## Component Configuration Summary" >> $GITHUB_STEP_SUMMARY
+            echo "$components" | jq -r '
+              .[] | 
+              "**\(.name):**\n" +
+              "- download-artifact: \(.["download-artifact"])\n" +
+              (if .["download-artifact"] == true then "- download-artifact-path: \(.["download-artifact-path"])\n" else "" end)
+            ' >> $GITHUB_STEP_SUMMARY
+            
             platforms=$(jq -c ".platforms" "$config_file")
           else
             echo "❗ $config_file file is invalid"
@@ -69,6 +104,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Get configuration file
         run: |
@@ -81,6 +118,7 @@ jobs:
           configuration-path: .github/metadata-action-go-config.yml
           short-sha: 7
           default-template: "{{ref-name}}-{{timestamp}}-{{github.context.runNumber}}, {{ref-name}}-{{short-sha}}, {{ref-name}}-snapshot"
+          ref: ${{ inputs.ref }}
 
       - name: Echo metadata
         run: echo "Metadata result ${{ steps.metadata.outputs.result }}" >> $GITHUB_STEP_SUMMARY
@@ -110,9 +148,10 @@ jobs:
       - name: Docker
         uses: netcracker/qubership-workflow-hub/actions/docker-action@main
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ inputs.ref }}
           dry-run: ${{ inputs.dry-run }}
-          download-artifact: false
+          download-artifact: ${{ matrix.component.download-artifact }}
+          download-artifact-path: ${{ matrix.component.download-artifact-path }}
           component: ${{ toJson(matrix.component) }}
           platforms: ${{ needs.load_config.outputs.platforms }}
           tags: ${{ needs.perform-version.outputs.tags }}
