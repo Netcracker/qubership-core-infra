@@ -188,7 +188,7 @@ jobs:
         env:
           GAVS: ${{ steps.download-gavs.outputs.gavs }}
           REPOSITORIES: ${{ steps.read-repositories.outputs.repositories }}
-          REPOSITORY_TO_RELEASE: ${{ inputs.repositoryToRelease }}
+          REPOSITORY_TO_RELEASE_FROM: ${{ inputs.repositoryToRelease }}
           VERSION_INCREMENT_TYPE: ${{ inputs.versionIncrementType }}
           SKIP_TEST: ${{ inputs.skipTest }}
           DRY_RUN: ${{ inputs.dryRun }}
@@ -207,7 +207,7 @@ jobs:
             options="${options} --dryRun"
           fi
           repositoriesToReleaseFrom=""
-          if [ "${REPOSITORY_TO_RELEASE}" != "all" ]; then
+          if [ "${REPOSITORY_TO_RELEASE_FROM}" != "all" ]; then
             repositoriesToReleaseFrom=$(echo "${REPOSITORIES}" | tr ',' '\n' | grep "${REPOSITORY_TO_RELEASE_FROM}")
           fi
           args="--baseDir=/tmp"
