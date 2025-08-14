@@ -206,12 +206,9 @@ jobs:
           if [ "${DRY_RUN}" = "true" ]; then
             options="${options} --dryRun"
           fi
-          repositories=$(echo "${REPOSITORIES}" | tr ',' '\n')
-          repositoryToRelease=""
-          if [ "${REPOSITORY_TO_RELEASE}" = "all" ]; then
-            repositoryToRelease=""
-          else 
-            repositoryToRelease=$(echo "${repositories}" | grep "${REPOSITORY_TO_RELEASE_FROM}")
+          repositoriesToReleaseFrom=""
+          if [ "${REPOSITORY_TO_RELEASE}" != "all" ]; then
+            repositoriesToReleaseFrom=$(echo "${REPOSITORIES}" | tr ',' '\n' | grep "${REPOSITORY_TO_RELEASE_FROM}")
           fi
           args="--baseDir=/tmp"
           args="${args} --gitURL=https://github.com"
@@ -219,7 +216,7 @@ jobs:
           args="${args} --gitEmail=actions@github.com"
           args="${args} --gitPassword=${MAVEN_TOKEN}"
           args="${args} --repositories=${REPOSITORIES}"
-          args="${args} \"--repositoriesToReleaseFrom=${repositoryToRelease}\""
+          args="${args} \"--repositoriesToReleaseFrom=${repositoriesToReleaseFrom}\""
           args="${args} --gavs=${GAVS}"
           args="${args} --versionIncrementType=${VERSION_INCREMENT_TYPE}"
           args="${args} --javaVersionToJavaHomeEnv=17=${JAVA_HOME_17_X64},21=${JAVA_HOME_21_X64}"
