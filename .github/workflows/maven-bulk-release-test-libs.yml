@@ -1,6 +1,6 @@
 # $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-workflow.json
 
-name: "Maven bulk release of core services"
+name: "Maven bulk release of test libs"
 run-name: Maven bulk release of core-libs [${{ inputs.repositoryToRelease }}] [dry-run:${{ inputs.dryRun }}] by @${{ github.actor }}'
 
 on:
@@ -11,8 +11,9 @@ on:
         description: "Repository to bulk release from. Select 'all' to release all repositories"
         options:
           - all
-          - qubership-core-config-server
-          - qubership-core-core-operator
+          - qubership-core-release-test-maven-lib-1
+          - qubership-core-release-test-maven-lib-2
+          - qubership-core-release-test-maven-lib-3
       runIdsWithGAVs:
         type: number
         description: "Comma seperated list of runId(s) of another release workflow(s) to use their dependencies GAVs"
@@ -113,8 +114,9 @@ jobs:
         shell: bash
         # language="shell script"
         run: |
-          repositories="https://github.com/Netcracker/qubership-core-config-server[branch=main]
-          https://github.com/Netcracker/qubership-core-core-operator[branch=main]"
+          repositories="https://github.com/Netcracker/qubership-core-release-test-maven-lib-1[branch=main]
+          https://github.com/Netcracker/qubership-core-release-test-maven-lib-2[branch=main]
+          https://github.com/Netcracker/qubership-core-release-test-maven-lib-3[branch=main]"
           echo "repositories=\n${repositories}"
           repositories=$(echo "${repositories}" | tr '\n' ',')
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
