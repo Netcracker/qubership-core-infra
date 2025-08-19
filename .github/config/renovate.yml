@@ -1,5 +1,7 @@
 ---
 assignAutomerge: true
+assigneesFromCodeOwners: true
+reviewersFromCodeOwners: true
 platform: "github"
 binarySource: "install" # install, global
 prCreation: "immediate" # immediate, not-pending
