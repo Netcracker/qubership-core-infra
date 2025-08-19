@@ -161,7 +161,8 @@ jobs:
             # todo filter only for initial runs to take off the load from github
             HOUR_RAW="$(date -u +%H)"
             HOUR=$((10#$HOUR_RAW))
-            if (( HOUR == 0 )); then HOUR=24; fi
+            HOUR=$((HOUR % 12))
+            if (( HOUR == 0 )); then HOUR=12; fi
           
             FILTERED="$(
             awk -v hour="$HOUR" '
