@@ -1,7 +1,7 @@
 ---
 assignAutomerge: true
 platform: "github"
-binarySource: "global"
+binarySource: "install" # install, global
 prCreation: "immediate" # immediate, not-pending
 printConfig: false
 rebaseWhen: "behind-base-branch"
