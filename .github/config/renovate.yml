@@ -8,9 +8,9 @@ rebaseWhen: "behind-base-branch"
 recreateWhen: always
 platformAutomerge: true
 autodiscover: false
-prHourlyLimit: 1 # for initial run
+prHourlyLimit: 5
 prConcurrentLimit: 25
-branchConcurrentLimit: 1
+branchConcurrentLimit: 25
 enabled: true
 enabledManagers:
   - "maven"
