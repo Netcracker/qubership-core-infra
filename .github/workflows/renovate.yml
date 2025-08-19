@@ -35,6 +35,7 @@ jobs:
       MAVEN_USER: "${{ secrets.MAVEN_USER }}"
       MAVEN_TOKEN: ${{ secrets.MAVEN_PASSWORD }}
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
+      GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
       DRY_RUN: ${{ github.event.inputs.dry-run || 'false' }}
       LOG_LEVEL: ${{ github.event.inputs.log-level || 'info' }}
       TYPE: ${{ github.event.inputs.type || 'repositories' }}
@@ -71,15 +72,16 @@ jobs:
           cliVersion="1.2.11-SNAPSHOT"
           cliVersionSpecific="1.2.11-20250816.165735-2"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${cli_name}/${cliVersion}/${cli_name}-${cliVersionSpecific}-jar-with-dependencies.jar"
-          curl -L -v -o "${cli_name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
+          #curl -L -v -o "${cli_name}.jar" -H "Authorization: Basic ${MAVEN_TOKEN}" "${url}"
+          curl -L -v -o "${cli_name}.jar" -u "${MAVEN_USER}:${MAVEN_TOKEN}" "${url}"
                    
-          args="--baseDir=$GITHUB_WORKSPACE"
+          args="--baseDir=${GITHUB_WORKSPACE}"
           args="${args} --type1PomRelativeDir=dependencies/spring-dependencies"
           args="${args} --type2PomRelativeDir=dependencies/quarkus-dependencies"
           args="${args} --gitURL=https://github.com"
           args="${args} --gitUsername=actions"
           args="${args} --gitEmail=actions@github.com"
-          args="${args} --gitPassword=${MAVEN_TOKEN}"
+          args="${args} --gitPassword=${GH_ACCESS_TOKEN}"
           if [[ "${TYPE}" != "configuration" ]]; then
             args="${args} --repositoriesFile=.github/config/renovate-repositories.txt"
           fi
@@ -120,8 +122,9 @@ jobs:
           cliVersion="1.2.11-SNAPSHOT"
           cliVersionSpecific="1.2.11-20250816.193324-5"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${cli_name}/${cliVersion}/${cli_name}-${cliVersionSpecific}-jar-with-dependencies.jar"
-          curl -L -v -o "${cli_name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
-          
+          #curl -L -v -o "${cli_name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
+          curl -L -v -o "${cli_name}.jar" -u "${MAVEN_USER}:${MAVEN_TOKEN}" "${url}"
+
           branchPrefix="renovate-${GITHUB_REF_NAME}/"
           branchPrefixOld="renovate/"
           
