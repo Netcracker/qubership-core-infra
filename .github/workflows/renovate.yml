@@ -69,7 +69,7 @@ jobs:
           cliVersion="1.2.11-SNAPSHOT"
           cliVersionSpecific="1.2.11-20250816.165735-2"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${cli_name}/${cliVersion}/${cli_name}-${cliVersionSpecific}-jar-with-dependencies.jar"
-          curl -L -v -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
+          curl -L -v -o "${cli_name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
                    
           args="--baseDir=$GITHUB_WORKSPACE"
           args="${args} --type1PomRelativeDir=dependencies/spring-dependencies"
@@ -84,7 +84,7 @@ jobs:
           args="${args} --resultOutputFile=diff.yaml"
           args="${args} --effectiveGavsOutputFile=effective-gavs.txt"
           args="${args} --implicitGavsOutputFile=implicit-gavs.txt"
-          cmd="java -jar ${name}.jar ${args}"
+          cmd="java -jar ${cli_name}.jar ${args}"
           echo "running cmd: ${cmd}"
           eval "${cmd}"
 
@@ -118,7 +118,7 @@ jobs:
           cliVersion="1.2.11-SNAPSHOT"
           cliVersionSpecific="1.2.11-20250816.193324-5"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${cli_name}/${cliVersion}/${cli_name}-${cliVersionSpecific}-jar-with-dependencies.jar"
-          curl -L -v -o "${cli_name}.jar" "${url}"
+          curl -L -v -o "${cli_name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
           
           branchPrefix="renovate-${GITHUB_REF_NAME}/"
           branchPrefixOld="renovate/"
