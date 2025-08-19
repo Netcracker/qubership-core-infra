@@ -1,0 +1,13 @@
+name: scheduled renovate for configuration
+
+on:
+  schedule:
+    - cron: '25 3-4 * * *'
+
+jobs:
+  call:
+    uses: ./.github/workflows/renovate.yml
+    with:
+      type: "configuration"
+      dry-run: 'false'
+      log-level: 'info'
