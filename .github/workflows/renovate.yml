@@ -1,4 +1,6 @@
 name: Renovate core repositories
+run-name: Renovate core repositories [${{ inputs.type }}] [dry-run:${{ inputs.dry-run }}] by @${{ github.actor }}'
+
 on:
 #  schedule:
 #    - cron: '25 5-15 * * *'
