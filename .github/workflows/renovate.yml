@@ -118,7 +118,7 @@ jobs:
           cliVersion="1.2.11-SNAPSHOT"
           cliVersionSpecific="1.2.11-20250816.193324-5"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${cli_name}/${cliVersion}/${cli_name}-${cliVersionSpecific}-jar-with-dependencies.jar"
-          curl -L -o "${cli_name}.jar" "${url}"
+          curl -L -v -o "${cli_name}.jar" "${url}"
           
           branchPrefix="renovate-${GITHUB_REF_NAME}/"
           branchPrefixOld="renovate/"
@@ -126,8 +126,8 @@ jobs:
           defLabels="'renovate:core','branch:${GITHUB_REF_NAME}'"
           patchAutoMerge="false"
           if [ "${TYPE}" = "configuration" ]; then
-          defLabels="${defLabels},'target:configuration'"
-          patchAutoMerge="true"
+            defLabels="${defLabels},'target:configuration'"
+            patchAutoMerge="true"
           fi
                     
           args=()
