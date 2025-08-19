@@ -44,12 +44,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4.2.2
 
-      - name: "Cache maven dependencies"
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ github.run_id }}
-          restore-keys: ${{ runner.os }}-maven-
+#      - name: "Cache maven dependencies"
+#        uses: actions/cache@v4
+#        with:
+#          path: ~/.m2/repository
+#          key: ${{ runner.os }}-maven-${{ github.run_id }}
+#          restore-keys: ${{ runner.os }}-maven-
 
       - name: "Set up java"
         uses: actions/setup-java@v4
