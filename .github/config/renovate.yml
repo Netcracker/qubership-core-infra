@@ -10,7 +10,7 @@ platformAutomerge: true
 autodiscover: false
 prHourlyLimit: 1 # for initial run
 prConcurrentLimit: 25
-branchConcurrentLimit: 25
+branchConcurrentLimit: 1
 enabled: true
 enabledManagers:
   - "maven"
