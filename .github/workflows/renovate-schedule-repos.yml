@@ -1,0 +1,13 @@
+name: scheduled renovate for repositories
+
+on:
+  schedule:
+    - cron: '45 * * * *'
+
+jobs:
+  call:
+    uses: ./.github/workflows/renovate.yml
+    with:
+      type: "repositories"
+      dry-run: 'false'
+      log-level: 'info'
