@@ -15,6 +15,15 @@ on:
         type: string
         description: "LOG_LEVEL for renovate"
         default: info
+    secrets:
+      MAVEN_USER:
+        required: true
+      MAVEN_TOKEN:
+        required: true
+      MAVEN_GPG_PASSPHRASE:
+        required: true
+      GH_ACCESS_TOKEN:
+        required: true
 
   workflow_dispatch:
     inputs:
