@@ -1,4 +1,4 @@
-name: scheduled renovate for repositories
+name: renovate schedule for repositories
 
 on:
   schedule:
