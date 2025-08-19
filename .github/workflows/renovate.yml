@@ -2,8 +2,6 @@ name: Renovate core repositories
 run-name: Renovate core repositories [${{ inputs.type }}] [dry-run:${{ inputs.dry-run }}] by @${{ github.actor }}'
 
 on:
-#  schedule:
-#    - cron: '25 5-15 * * *'
 
   workflow_dispatch:
     inputs:
@@ -30,8 +28,6 @@ jobs:
   renovate:
     runs-on: ubuntu-latest
     env:
-#      MAVEN_USER: "x-access-token"
-#      MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
       MAVEN_USER: "${{ secrets.MAVEN_USER }}"
       MAVEN_TOKEN: ${{ secrets.MAVEN_PASSWORD }}
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
