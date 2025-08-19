@@ -11,7 +11,7 @@
 
     <properties>
         <quarkus.version>3.15.6</quarkus.version>
-        <jandex.version>3.2.6</jandex.version>
+        <jandex.version>3.2.7</jandex.version>
     </properties>
 
     <dependencyManagement>
