@@ -10,8 +10,8 @@
     <packaging>pom</packaging>
 
     <properties>
+        <!-- compatibility matrix - https://github.com/spring-cloud/spring-cloud-release/wiki/Supported-Versions#supported-releases-->
         <spring.boot.version>3.4.8</spring.boot.version>
-        <!--todo insert link to the doc where compatibility is specified-->
         <spring-cloud.version>2024.0.2</spring-cloud.version>
     </properties>
 

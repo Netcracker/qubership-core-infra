@@ -1,0 +1,170 @@
+name: Renovate core repositories
+on:
+#  schedule:
+#    - cron: '25 5-15 * * *'
+
+  workflow_dispatch:
+    inputs:
+      type:
+        type: choice
+        description: "type"
+        default: configuration
+        options:
+          - configuration
+          - repositories
+      dry-run:
+        type: boolean
+        description: "dry run"
+        default: true
+      log-level:
+        type: choice
+        description: "LOG_LEVEL for renovate"
+        default: info
+        options:
+          - info
+          - debug
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    env:
+      MAVEN_USER: "x-access-token"
+      MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+      MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
+      DRY_RUN: ${{ github.event.inputs.dry-run || 'false' }}
+      LOG_LEVEL: ${{ github.event.inputs.log-level || 'info' }}
+      TYPE: ${{ github.event.inputs.type || 'repositories' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: "Cache maven dependencies"
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-maven-
+
+      - name: "Set up java"
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          architecture: 'x64'
+          distribution: 'temurin'
+          server-id: github
+          server-username: MAVEN_USER
+          server-password: MAVEN_TOKEN
+          gpg-private-key: ${{ inputs.maven-gpg-private-key }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: "Run maven-effective-dependencies-cli"
+        id: run-maven-effective-dependencies-cli
+        shell: bash
+        # language="shell script"
+        run: |
+          cli_name="maven-effective-dependencies-cli"
+          cliVersion="1.2.11-SNAPSHOT"
+          cliVersionSpecific="1.2.11-20250816.165735-2"
+          url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${name}/${cliVersion}/${name}-${cliVersionSpecific}-jar-with-dependencies.jar"
+          curl -L -v -o "${name}.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
+                   
+          args="--baseDir=$GITHUB_WORKSPACE"
+          args="${args} --type1PomRelativeDir=dependencies/spring-dependencies"
+          args="${args} --type2PomRelativeDir=dependencies/quarkus-dependencies"
+          args="${args} --gitURL=https://github.com"
+          args="${args} --gitUsername=actions"
+          args="${args} --gitEmail=actions@github.com"
+          args="${args} --gitPassword=${MAVEN_TOKEN}"
+          if [[ "${TYPE}" != "configuration" ]]; then
+            args="${args} --repositoriesFile=.github/config/renovate-repositories.txt"
+          fi
+          args="${args} --resultOutputFile=diff.yaml"
+          args="${args} --effectiveGavsOutputFile=effective-gavs.txt"
+          args="${args} --implicitGavsOutputFile=implicit-gavs.txt"
+          cmd="java -jar ${name}.jar ${args}"
+          echo "running cmd: ${cmd}"
+          eval "${cmd}"
+
+      - name: "Upload gavs.txt artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: gavs.txt
+          path: gavs.txt
+
+      - name: "Upload diff.yaml artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: diff.yaml
+          path: diff.yaml
+
+      - name: "Run renovate-config-cli"
+        id: run-renovate-config-cli
+        shell: bash
+        env:
+          PROJECT_URL: ${{ github.server_url }}/${{ github.repository }}
+        # language="shell script"
+        run: |         
+          # run renovate-config-cli
+          cli_name="renovate-config-cli"
+          cliVersionSpecific="1.2.11-20250816.193324-5"
+          url="https://artifactorycn.netcracker.com/maven_pkg_github_com_netcracker.mvn.proxy/org/qubership/cloud/${cli_name}/${cliVersion}/${cli_name}-${cliVersionSpecific}-jar-with-dependencies.jar"
+          curl -L -o "${cli_name}.jar" "${url}"
+          
+          branchPrefix="renovate-${GITHUB_REF_NAME}/"
+          branchPrefixOld="renovate/"
+          
+          defLabels="'renovate:core','branch:${GITHUB_REF_NAME}'"
+          patchAutoMerge="false"
+          if [ "${TYPE}" = "configuration" ]; then
+          defLabels="${defLabels},'target:configuration'"
+          patchAutoMerge="true"
+          fi
+                    
+          args=()
+          args+=("--fromFile=.github/config/renovate.yml")
+          if [ "${TYPE}" = "configuration" ]; then
+            args+=("--repository=${PROJECT_URL}[branch=${GITHUB_REF_NAME}]")
+          else
+            args+=("--repositoriesFile=.github/config/renovate-repositories.txt")
+          fi
+          args+=("--fromJson={'branchPrefix':'${branchPrefix}'}")
+          args+=("--fromJson={'branchPrefixOld':'${branchPrefixOld}'}")
+          args+=("--fromJson={'labels':[${defLabels}]}")
+          args+=("--fromJson={'packageRules':[{'matchPackageNames':['/.*/'],'matchUpdateTypes':['major'],'enabled':false,'automerge':false,'labels':[${defLabels},'type:major']}]}")
+          args+=("--fromJson={'packageRules':[{'matchPackageNames':['/.*/'],'matchUpdateTypes':['minor'],'enabled':false,'automerge':false,'labels':[${defLabels},'type:minor']}]}")
+          args+=("--fromJson={'packageRules':[{'matchPackageNames':['/.*/'],'matchUpdateTypes':['patch'],'enabled':true,'automerge':false,'labels':[${defLabels},'type:patch']}]}")
+          args+=("--fromJson={'packageRules':[{'matchManagers':['maven'],'matchPackageNames':['/^org.qubership.*/'],'groupName':'qubership','labels':[${defLabels},'group:qubership']}]}")
+          args+=("--fromJson={'packageRules':[{'matchManagers':['maven'],'matchPackageNames':['/^com.netcracker.*/'],'groupName':'netcracker','labels':[${defLabels},'group:netcracker']}]}")
+          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchPackageNames':['/^github.com/netcracker.*/'],'groupName':'qubership','labels':[${defLabels},'group:qubership']}]}")
+          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchPackageNames':['/^git.netcracker.*/'],'groupName':'netcracker','labels':[${defLabels},'group:netcracker']}]}")
+          args+=("--groupNameMapping={'netcracker':'com.netcracker.*'}")
+          args+=("--groupNameMapping={'spring':'org.spring.*'}")
+          args+=("--groupNameMapping={'quarkus':'io.quarkus.*'}")
+          args+=("--groupNameMapping={'com.fasterxml.jackson':'com.fasterxml.jackson.*'}")
+          args+=("--groupNameMapping={'k8s.io':'k8s.io.*'}")
+          if [ "${TYPE}" = "configuration" ]; then
+            args+=("--patchGavsFile=implicit-gavs.txt")
+          else
+            args+=("--strictGavsFile=effective-gavs.txt")
+          fi
+          args+=("--renovateConfigOutputFile=renovate-config.js")
+          if [ "${DRY_RUN}" = "true" ]; then
+            args+=("--fromJson={'dryRun':'full'}")
+          fi
+          java -jar "${cli_name}.jar" "${args[@]}"
+
+      - name: "Upload renovate-config.js artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: renovate-config.js
+          path: renovate-config.js
+
+      - name: Renovate
+        uses: renovatebot/github-action@v42.0.4
+        env:
+          RENOVATE_MAVEN_USER: "x-access-token"
+          RENOVATE_MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+        with:
+          configurationFile: renovate-config.js
+          token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}

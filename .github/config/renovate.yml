@@ -1,0 +1,40 @@
+---
+assignAutomerge: true
+platform: "github"
+binarySource: "global"
+prCreation: "not-pending"
+printConfig: false
+rebaseWhen: "behind-base-branch"
+recreateWhen: always
+platformAutomerge: true
+autodiscover: false
+prHourlyLimit: 5
+prConcurrentLimit: 25
+branchConcurrentLimit: 25
+enabled: true
+enabledManagers:
+  - "maven"
+  - "dockerfile"
+  - "gomod"
+globalExtends:
+  - ":ignoreModulesAndTests"
+  - ":dependencyDashboard"
+packageRules:
+  - matchPackageNames:
+      - "/.*/"
+    allowedVersions: "!/.*(redhat|composite|groovyless|jboss|atlassian|preview|-SNAPSHOT).*/"
+  - matchDatasources:
+      - "maven"
+    registryUrls:
+      - "https://repo.maven.apache.org/maven2"
+      - "https://maven.pkg.github.com/Netcracker/**"
+hostRules:
+  - hostType: "maven"
+    matchHost: "https://repo.maven.apache.org/maven2"
+  - hostType: "maven"
+    matchHost: "https://maven.pkg.github.com/Netcracker/**"
+    username: "$process.env.RENOVATE_MAVEN_USER"
+    password: "$process.env.RENOVATE_MAVEN_TOKEN"
+postUpdateOptions:
+  - "gomodUpdateImportPaths"
+  - "gomodTidy"

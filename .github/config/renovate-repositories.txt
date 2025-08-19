@@ -1,0 +1,3 @@
+https://github.com/Netcracker/qubership-core-release-test-maven-lib-1[branch=main]
+https://github.com/Netcracker/qubership-core-release-test-maven-lib-2[branch=main]
+https://github.com/Netcracker/qubership-core-release-test-maven-lib-3[branch=main]
