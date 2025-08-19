@@ -9,5 +9,5 @@ jobs:
     uses: ./.github/workflows/renovate.yml
     with:
       type: "repositories"
-      dry-run: 'false'
+      dry-run: false
       log-level: 'info'
