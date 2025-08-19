@@ -175,8 +175,8 @@ jobs:
       - name: Renovate
         uses: renovatebot/github-action@v42.0.4
         env:
-          RENOVATE_MAVEN_USER: "x-access-token"
-          RENOVATE_MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+          RENOVATE_MAVEN_USER: "${{ secrets.MAVEN_USER }}"
+          RENOVATE_MAVEN_TOKEN: ${{ secrets.MAVEN_PASSWORD }}
         with:
           configurationFile: renovate-config.js
-          token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
