@@ -118,7 +118,7 @@ jobs:
           cliVersionSpecific="1.2.11-20250816.193324-5"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${cli_name}/${cliVersion}/${cli_name}-${cliVersionSpecific}-jar-with-dependencies.jar"
           curl -L -v -o "${cli_name}.jar" -H "Authorization: Bearer ${GH_ACCESS_TOKEN}" "${url}"
-
+          
           branchPrefix="renovate-${GITHUB_REF_NAME}/"
           branchPrefixOld="renovate/"
           
@@ -128,13 +128,30 @@ jobs:
             defLabels="${defLabels},'target:configuration'"
             patchAutoMerge="true"
           fi
-                    
+          
           args=()
           args+=("--fromFile=.github/config/renovate.yml")
           if [ "${TYPE}" = "configuration" ]; then
             args+=("--repository=${PROJECT_URL}[branch=${GITHUB_REF_NAME}]")
           else
-            args+=("--repositoriesFile=.github/config/renovate-repositories.txt")
+          #  args+=("--repositoriesFile=.github/config/renovate-repositories.txt")
+            # todo filter only for initial runs to take off the load from github
+            HOUR_RAW="$(date -u +%H)"
+            HOUR=$((10#$HOUR_RAW))
+            if (( HOUR == 0 )); then HOUR=24; fi
+            
+            FILTERED="$(
+            awk -v hour="$HOUR" '
+            /^[[:space:]]*($|#)/ { next }
+            { if (NR % hour == 0) print $0 }
+            ' ".github/config/renovate-repositories.txt"
+            )"
+          
+            echo "FILTERED: ${FILTERED}"
+          
+            TMPFILE="$(mktemp)"
+            printf "%s\n" "${FILTERED}" > "${TMPFILE}"
+            args+=("--repositoriesFile=${TMPFILE}")
           fi
           args+=("--fromJson={'branchPrefix':'${branchPrefix}'}")
           args+=("--fromJson={'branchPrefixOld':'${branchPrefixOld}'}")
