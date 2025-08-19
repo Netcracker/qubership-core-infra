@@ -2,6 +2,18 @@ name: Renovate core repositories
 run-name: Renovate core repositories [${{ inputs.type }}] [dry-run:${{ inputs.dry-run }}] by @${{ github.actor }}'
 
 on:
+  workflow_call:
+    inputs:
+      type:
+        type: string
+        description: "type"
+      dry-run:
+        type: boolean
+        default: false
+      log-level:
+        type: string
+        description: "LOG_LEVEL for renovate"
+        default: info
 
   workflow_dispatch:
     inputs:
@@ -40,12 +52,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4.2.2
 
-#      - name: "Cache maven dependencies"
-#        uses: actions/cache@v4
-#        with:
-#          path: ~/.m2/repository
-#          key: ${{ runner.os }}-maven-${{ github.run_id }}
-#          restore-keys: ${{ runner.os }}-maven-
+      #      - name: "Cache maven dependencies"
+      #        uses: actions/cache@v4
+      #        with:
+      #          path: ~/.m2/repository
+      #          key: ${{ runner.os }}-maven-${{ github.run_id }}
+      #          restore-keys: ${{ runner.os }}-maven-
 
       - name: "Set up java"
         uses: actions/setup-java@v4
@@ -69,7 +81,7 @@ jobs:
           cliVersionSpecific="1.2.11-20250816.165735-2"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${cli_name}/${cliVersion}/${cli_name}-${cliVersionSpecific}-jar-with-dependencies.jar"
           curl -L -v -o "${cli_name}.jar" -H "Authorization: Bearer ${GH_ACCESS_TOKEN}" "${url}"
-                   
+          
           args="--baseDir=${GITHUB_WORKSPACE}"
           args="${args} --type1PomRelativeDir=dependencies/spring-dependencies"
           args="${args} --type2PomRelativeDir=dependencies/quarkus-dependencies"
@@ -112,7 +124,7 @@ jobs:
         env:
           PROJECT_URL: ${{ github.server_url }}/${{ github.repository }}
         # language="shell script"
-        run: |         
+        run: |
           # run renovate-config-cli
           cli_name="renovate-config-cli"
           cliVersion="1.2.11-SNAPSHOT"
@@ -140,7 +152,7 @@ jobs:
             HOUR_RAW="$(date -u +%H)"
             HOUR=$((10#$HOUR_RAW))
             if (( HOUR == 0 )); then HOUR=24; fi
-            
+          
             FILTERED="$(
             awk -v hour="$HOUR" '
             /^[[:space:]]*($|#)/ { next }
