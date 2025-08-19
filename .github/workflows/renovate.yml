@@ -110,7 +110,7 @@ jobs:
           # run renovate-config-cli
           cli_name="renovate-config-cli"
           cliVersionSpecific="1.2.11-20250816.193324-5"
-          url="https://artifactorycn.netcracker.com/maven_pkg_github_com_netcracker.mvn.proxy/org/qubership/cloud/${cli_name}/${cliVersion}/${cli_name}-${cliVersionSpecific}-jar-with-dependencies.jar"
+          url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${cli_name}/${cliVersion}/${cli_name}-${cliVersionSpecific}-jar-with-dependencies.jar"
           curl -L -o "${cli_name}.jar" "${url}"
           
           branchPrefix="renovate-${GITHUB_REF_NAME}/"
