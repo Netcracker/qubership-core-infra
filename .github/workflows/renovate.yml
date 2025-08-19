@@ -30,14 +30,14 @@ on:
       type:
         type: choice
         description: "type"
-        default: configuration
+        default: repositories
         options:
           - configuration
           - repositories
       dry-run:
         type: boolean
         description: "dry run"
-        default: true
+        default: false
       log-level:
         type: choice
         description: "LOG_LEVEL for renovate"
