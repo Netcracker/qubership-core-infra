@@ -30,8 +30,10 @@ jobs:
   renovate:
     runs-on: ubuntu-latest
     env:
-      MAVEN_USER: "x-access-token"
-      MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+#      MAVEN_USER: "x-access-token"
+#      MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+      MAVEN_USER: "${{ secrets.MAVEN_USER }}"
+      MAVEN_TOKEN: ${{ secrets.MAVEN_PASSWORD }}
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
       DRY_RUN: ${{ github.event.inputs.dry-run || 'false' }}
       LOG_LEVEL: ${{ github.event.inputs.log-level || 'info' }}
