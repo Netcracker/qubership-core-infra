@@ -2,13 +2,13 @@
 assignAutomerge: true
 platform: "github"
 binarySource: "global"
-prCreation: "not-pending"
+prCreation: "immediate" # immediate, not-pending
 printConfig: false
 rebaseWhen: "behind-base-branch"
 recreateWhen: always
 platformAutomerge: true
 autodiscover: false
-prHourlyLimit: 5
+prHourlyLimit: 1 # for initial run
 prConcurrentLimit: 25
 branchConcurrentLimit: 25
 enabled: true
