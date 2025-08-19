@@ -167,7 +167,7 @@ jobs:
             FILTERED="$(
             awk -v hour="$HOUR" '
             /^[[:space:]]*($|#)/ { next }
-            { if ((NR % 24) == hour) print $0 }
+            { if ((NR % 12) == hour) print $0 }
             ' ".github/config/renovate-repositories.txt"
             )"
           
