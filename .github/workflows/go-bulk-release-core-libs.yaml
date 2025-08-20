@@ -150,7 +150,7 @@ jobs:
           mkdir /tmp/GOPROXY
           cp ./.github/goreleaser.yaml /tmp/
           
-          snapshotVersion="1.3.0-20250820.070059-35"
+          snapshotVersion="1.3.0-20250820.081811-39"
           
           url="https://maven.pkg.github.com/netcracker/qubership-core-bulk-release/org/qubership/cloud/go-bulk-release-cli/1.3.0-SNAPSHOT/go-bulk-release-cli-${snapshotVersion}-jar-with-dependencies.jar"
           curl --fail -L -o "go-bulk-release-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
