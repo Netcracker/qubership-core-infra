@@ -2,7 +2,7 @@ name: renovate schedule for repositories
 
 on:
   schedule:
-    - cron: '15,45 * * * *'
+    - cron: '15 5-16 * * *'
 
 jobs:
   call:
