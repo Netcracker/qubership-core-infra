@@ -157,25 +157,7 @@ jobs:
           if [ "${TYPE}" = "configuration" ]; then
             args+=("--repository=${PROJECT_URL}[branch=${GITHUB_REF_NAME}]")
           else
-          #  args+=("--repositoriesFile=.github/config/renovate-repositories.txt")
-            # todo filter only for initial runs to take off the load from github
-            HOUR_RAW="$(date -u +%H)"
-            HOUR=$((10#$HOUR_RAW))
-            HOUR=$((HOUR % 12))
-            if (( HOUR == 0 )); then HOUR=12; fi
-          
-            FILTERED="$(
-            awk -v hour="$HOUR" '
-            /^[[:space:]]*($|#)/ { next }
-            { if ((NR % 12) == hour) print $0 }
-            ' ".github/config/renovate-repositories.txt"
-            )"
-          
-            echo "FILTERED: ${FILTERED}"
-          
-            TMPFILE="$(mktemp)"
-            printf "%s\n" "${FILTERED}" > "${TMPFILE}"
-            args+=("--repositoriesFile=${TMPFILE}")
+            args+=("--repositoriesFile=.github/config/renovate-repositories.txt")
           fi
           args+=("--fromJson={'branchPrefix':'${branchPrefix}'}")
           args+=("--fromJson={'branchPrefixOld':'${branchPrefixOld}'}")

@@ -10,7 +10,7 @@ rebaseWhen: "behind-base-branch"
 recreateWhen: always
 platformAutomerge: true
 autodiscover: false
-prHourlyLimit: 12
+prHourlyLimit: 5
 prConcurrentLimit: 25
 branchConcurrentLimit: 25
 enabled: true
