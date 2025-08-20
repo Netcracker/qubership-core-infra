@@ -1,0 +1,37 @@
+version: 2
+
+builds:
+  - skip: true
+
+changelog:
+  use: github
+  format: "{{ .SHA }}: {{ .Message }}{{ with .AuthorUsername }} (@{{ . }}){{ end }}"
+  sort: asc
+  groups:
+    - title: "New Features"
+      regexp: '^.*?feat(\(.+\))??!?:.+$'
+      order: 100
+    - title: "Security updates"
+      regexp: '^.*?sec(\(.+\))??!?:.+$'
+      order: 150
+    - title: "Bug fixes"
+      regexp: '^.*?fix(\(.+\))??!?:.+$'
+      order: 200
+    - title: "Documentation updates"
+      regexp: '^.*?docs?(\(.+\))??!?:.+$'
+      order: 400
+    - title: "Refactoring"
+      regexp: '^.*?refactor(\(.+\))??!?:.+$'
+      order: 500
+    - title: Other work
+      order: 9999
+  filters:
+    exclude:
+      - "(?i)^merge "
+
+release:
+  footer: >-
+    
+    ---
+    
+    **Full Changelog**: [{{ if .PreviousTag }}{{ .PreviousTag }}...{{ .Tag }}{{ else }}{{ .Tag }}...HEAD{{ end }}]({{ .GitURL }}/compare/{{ if .PreviousTag }}{{ .PreviousTag }}...{{ .Tag }}{{ else }}{{ .Tag }}...HEAD{{ end }})

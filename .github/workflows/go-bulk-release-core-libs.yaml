@@ -1,0 +1,199 @@
+# $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-workflow.json
+
+name: "Go bulk release of core libs"
+run-name: Go bulk release of core-libs [${{ inputs.repositoryToRelease }}] by @${{ github.actor }}'
+
+on:
+  workflow_dispatch:
+    inputs:
+      repositoryToRelease:
+        type: choice
+        description: "Repository to bulk release from. Select 'all' to release all repositories"
+        options:
+          - all
+          - qubership-core-lib-go
+          - qubership-core-lib-go-actuator-common
+          - qubership-core-lib-go-bg-kafka
+          - qubership-core-lib-go-bg-state-monitor
+          - qubership-core-lib-go-dbaas-arangodb-client
+          - qubership-core-lib-go-dbaas-base-client
+          - qubership-core-lib-go-dbaas-cassandra-client
+          - qubership-core-lib-go-dbaas-clickhouse-client
+          - qubership-core-lib-go-dbaas-mongo-client
+          - qubership-core-lib-go-dbaas-opensearch-client
+          - qubership-core-lib-go-dbaas-postgres-client
+          - qubership-core-lib-go-error-handling
+          - qubership-core-lib-go-fiber-server-utils
+          - qubership-core-lib-go-maas-bg-segmentio
+          - qubership-core-lib-go-maas-client
+          - qubership-core-lib-go-maas-core
+          - qubership-core-lib-go-maas-segmentio
+          - qubership-core-lib-go-paas-mediation-client
+          - qubership-core-lib-go-rest-utils
+          - qubership-core-lib-go-stomp-websocket
+      versionIncrementType:
+        description: "Version part to increment"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+      skipTest:
+        description: "skip tests"
+        type: boolean
+        default: false
+      dryRun:
+        description: "dry run"
+        type: boolean
+        default: false
+
+concurrency:
+  group: "core-libs-go"
+  cancel-in-progress: false
+
+permissions:
+  actions: write
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      MAVEN_USER: "x-access-token"
+      MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+      MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
+    outputs:
+      result: ${{ steps.run-maven-bulk-release-cli.outputs.result }}
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+        with:
+          ref: "main"
+
+      - name: "Read repositories"
+        id: read-repositories
+        shell: bash
+        # language="shell script"
+        run: |
+          repositories="https://github.com/netcracker/qubership-core-lib-go
+          https://github.com/netcracker/qubership-core-lib-go-actuator-common
+          https://github.com/netcracker/qubership-core-lib-go-bg-kafka
+          https://github.com/netcracker/qubership-core-lib-go-bg-state-monitor
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-arangodb-client
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-base-client
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-cassandra-client
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-clickhouse-client
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-mongo-client
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-opensearch-client
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-postgres-client
+          https://github.com/netcracker/qubership-core-lib-go-error-handling
+          https://github.com/netcracker/qubership-core-lib-go-fiber-server-utils
+          https://github.com/netcracker/qubership-core-lib-go-maas-bg-segmentio
+          https://github.com/netcracker/qubership-core-lib-go-maas-client
+          https://github.com/netcracker/qubership-core-lib-go-maas-core
+          https://github.com/netcracker/qubership-core-lib-go-maas-segmentio
+          https://github.com/netcracker/qubership-core-lib-go-paas-mediation-client
+          https://github.com/netcracker/qubership-core-lib-go-rest-utils
+          https://github.com/netcracker/qubership-core-lib-go-stomp-websocket"
+          echo "repositories=\n${repositories}"
+          repositories=$(echo "${repositories}" | tr '\n' ',')
+          echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
+
+      - name: "Set up java"
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          architecture: 'x64'
+          distribution: 'temurin'
+          server-id: github
+          server-username: MAVEN_USER
+          server-password: MAVEN_TOKEN
+          gpg-private-key: ${{ inputs.maven-gpg-private-key }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: "Download go-pack tool"
+        run: |
+          VER="v1.0.0" 
+          BASE="https://github.com/TaurMorchant/go-pack/releases/download/${VER}"
+          curl -fL "$BASE/gopack" -o gopack
+          curl -fL "$BASE/SHA256SUMS" -o SHA256SUMS
+          
+          sha256sum -c --ignore-missing SHA256SUMS
+          
+          chmod +x gopack
+          echo "$(pwd)" >> $GITHUB_PATH
+
+      - name: "Install GoReleaser"
+        env:
+          GORELEASER_VERSION: "2.11.2"
+        run: |
+          curl -fsSL -o goreleaser.deb \
+            "https://github.com/goreleaser/goreleaser/releases/download/v${GORELEASER_VERSION}/goreleaser_${GORELEASER_VERSION}_amd64.deb"
+          sudo dpkg -i goreleaser.deb
+          goreleaser -v
+
+      - name: "Run go-bulk-release-cli"
+        id: run-go-bulk-release-cli
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+          REPOSITORIES: ${{ steps.read-repositories.outputs.repositories }}
+          REPOSITORY_TO_RELEASE: ${{ inputs.repositoryToRelease }}
+          VERSION_INCREMENT_TYPE: ${{ inputs.versionIncrementType }}
+          SKIP_TEST: ${{ inputs.skipTest }}
+          DRY_RUN: ${{ inputs.dryRun }}
+        # language="shell script"
+        run: |
+          mkdir /tmp/GOPROXY
+          cp ./.github/goreleaser.yaml /tmp/
+          
+          snapshotVersion="1.3.0-20250820.081811-39"
+          
+          url="https://maven.pkg.github.com/netcracker/qubership-core-bulk-release/org/qubership/cloud/go-bulk-release-cli/1.3.0-SNAPSHOT/go-bulk-release-cli-${snapshotVersion}-jar-with-dependencies.jar"
+          curl --fail -L -o "go-bulk-release-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
+          
+          options=""
+          if [ "${SKIP_TEST}" = "true" ]; then
+            options="${options} --skipTests"
+          fi
+          if [ "${DRY_RUN}" = "true" ]; then
+            options="${options} --dryRun"
+          fi
+          repositoryToRelease=""
+          if [ "${REPOSITORY_TO_RELEASE}" = "all" ]; then
+            repositoryToRelease=""
+          else 
+            repositoryToRelease="https://github.com/netcracker/${REPOSITORY_TO_RELEASE}"
+          fi
+          args="--baseDir=/tmp"
+          args="${args} --goProxyDir=/tmp/GOPROXY"
+          args="${args} --gitURL=https://github.com"
+          args="${args} --gitUsername=actions"
+          args="${args} --gitEmail=actions@github.com"
+          args="${args} --gitPassword=${MAVEN_TOKEN}"
+          args="${args} --repositories=${REPOSITORIES}"
+          args="${args} --repositoriesToReleaseFrom=${repositoryToRelease}"
+          args="${args} --versionIncrementType=${VERSION_INCREMENT_TYPE}"
+          args="${args} --resultOutputFile=${GITHUB_OUTPUT}"
+          args="${args} --summaryFile=${GITHUB_STEP_SUMMARY}"
+          args="${args} --gavsResultFile=/tmp/gavs.txt"
+          args="${args} --dependencyGraphFile=/tmp/graph.dot"
+          args="${args} ${options}"
+          cmd="java -jar go-bulk-release-cli.jar ${args}"
+          echo "running cmd: ${cmd}"
+          eval "${cmd}"
+
+      - name: "Upload gavs artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: gavs.txt
+          path: /tmp/gavs.txt
+
+      - name: "Upload graph artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: graph.dot
+          path: /tmp/graph.dot
