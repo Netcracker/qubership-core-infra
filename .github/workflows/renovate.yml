@@ -28,18 +28,18 @@ on:
       type:
         type: choice
         description: "type"
-        default: repositories
+        required: true
         options:
           - configuration
           - repositories
       dry-run:
         type: boolean
         description: "dry run"
-        default: false
+        required: true
       log-level:
         type: choice
         description: "LOG_LEVEL for renovate"
-        default: info
+        required: true
         options:
           - info
           - debug
