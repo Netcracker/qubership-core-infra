@@ -1,4 +1,4 @@
-name: renovate schedule for configuration
+name: Renovate schedule for configuration
 
 on:
   schedule:
