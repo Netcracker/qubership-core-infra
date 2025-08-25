@@ -34,6 +34,7 @@ on:
           - qubership-maas-declarative-client-commons
           - qubership-maas-declarative-client-quarkus
           - qubership-maas-declarative-client-spring
+          - qubership-core-junit-k8s-extension
       runIdsWithGAVs:
         type: number
         description: "Comma seperated list of runId(s) of another release workflow(s) to use their dependencies GAVs"
@@ -156,7 +157,8 @@ jobs:
           https://github.com/Netcracker/qubership-core-quarkus-extensions[branch=main]
           https://github.com/Netcracker/qubership-core-blue-green-state-monitor-quarkus[branch=main]
           https://github.com/Netcracker/qubership-maas-client-quarkus[branch=main]
-          https://github.com/Netcracker/qubership-maas-declarative-client-quarkus[branch=main]"
+          https://github.com/Netcracker/qubership-maas-declarative-client-quarkus[branch=main]
+          https://github.com/Netcracker/qubership-core-junit-k8s-extension[branch=main]"
           echo "repositories=\n${repositories}"
           repositories=$(echo "${repositories}" | tr '\n' ',')
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
