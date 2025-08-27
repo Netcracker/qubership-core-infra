@@ -72,7 +72,25 @@ jobs:
         # todo vlla: вынести в конфигурацияонный файл и просто читать его? + оптимизировать под кейс добавления нового репозитория
         run: |
           repositories="https://github.com/netcracker/qubership-core-lib-go
-          https://github.com/netcracker/qubership-core-lib-go-actuator-common"
+          https://github.com/netcracker/qubership-core-lib-go-actuator-common
+          https://github.com/netcracker/qubership-core-lib-go-bg-kafka
+          https://github.com/netcracker/qubership-core-lib-go-bg-state-monitor
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-arangodb-client
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-base-client
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-cassandra-client
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-clickhouse-client
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-mongo-client
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-opensearch-client
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-postgres-client
+          https://github.com/netcracker/qubership-core-lib-go-error-handling
+          https://github.com/netcracker/qubership-core-lib-go-fiber-server-utils
+          https://github.com/netcracker/qubership-core-lib-go-maas-bg-segmentio
+          https://github.com/netcracker/qubership-core-lib-go-maas-client
+          https://github.com/netcracker/qubership-core-lib-go-maas-core
+          https://github.com/netcracker/qubership-core-lib-go-maas-segmentio
+          https://github.com/netcracker/qubership-core-lib-go-paas-mediation-client
+          https://github.com/netcracker/qubership-core-lib-go-rest-utils
+          https://github.com/netcracker/qubership-core-lib-go-stomp-websocket"
           echo "repositories=\n${repositories}"
           repositories=$(echo "${repositories}" | tr '\n' ',')
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
