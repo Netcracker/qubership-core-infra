@@ -61,7 +61,7 @@ jobs:
 
   cleanup-on-failure:
     needs: [create-tag, mvn-build, docker-build]
-    if: ${{ always() && needs.create-tag.result == 'success' && (needs.mvn-build.result == 'failure' || needs.docker-build.result == 'failure') }}
+    if: ${{ failure() && needs.create-tag.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Delete Tag on Failure
