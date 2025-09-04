@@ -22,7 +22,7 @@ hostRules:
 packageRules:
   - matchPackageNames:
       - "/.*/"
-    allowedVersions: "!/.*(redhat|composite|groovyless|jboss|atlassian|preview|-SNAPSHOT).*/"
+    allowedVersions: "!/.*(redhat|composite|groovyless|jboss|atlassian|preview|does-not-exist|-SNAPSHOT).*/"
   - matchDatasources:
       - "maven"
     registryUrls:
