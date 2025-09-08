@@ -11,8 +11,8 @@
 
     <properties>
         <!-- compatibility matrix - https://github.com/spring-cloud/spring-cloud-release/wiki/Supported-Versions#supported-releases-->
-        <spring.boot.version>3.4.9</spring.boot.version>
-        <spring-cloud.version>2024.0.2</spring-cloud.version>
+        <spring.boot.version>3.5.5</spring.boot.version>
+        <spring-cloud.version>2025.0.0</spring-cloud.version>
     </properties>
 
     <dependencyManagement>
@@ -20,13 +20,6 @@
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring.boot.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-parent</artifactId>
                 <version>${spring.boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
@@ -59,11 +52,6 @@
             <url>https://repo.maven.apache.org/maven2</url>
             <snapshots />
         </repository>
-<!--        <repository>-->
-<!--            <id>github</id>-->
-<!--            <url>https://maven.pkg.github.com/netcracker/*</url>-->
-<!--            <snapshots />-->
-<!--        </repository>-->
     </repositories>
 
 </project>
