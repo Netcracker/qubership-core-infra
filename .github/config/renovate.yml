@@ -35,7 +35,7 @@ postUpdateOptions:
   - "gomodTidy"
 prConcurrentLimit: 25
 prCreation: "immediate"
-prHourlyLimit: 5
+prHourlyLimit: 6
 printConfig: false
 pruneStaleBranches: true
 rebaseWhen: "behind-base-branch"
