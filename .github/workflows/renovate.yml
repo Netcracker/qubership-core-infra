@@ -32,6 +32,7 @@ on:
         options:
           - configuration
           - repositories
+          - test
       dry-run:
         type: boolean
         description: "dry run"
@@ -144,16 +145,16 @@ jobs:
           branchPrefixOld="renovate/"
           
           defLabels="'renovate:core','branch:${GITHUB_REF_NAME}'"
-          patchAutoMerge="false"
           if [ "${TYPE}" = "configuration" ]; then
             defLabels="${defLabels},'target:configuration'"
-            patchAutoMerge="true"
           fi
           
           args=()
           args+=("--fromFile=.github/config/renovate.yml")
           if [ "${TYPE}" = "configuration" ]; then
             args+=("--repository=${PROJECT_URL}[branch=${GITHUB_REF_NAME}]")
+          elif [ "${TYPE}" = "test" ]; then
+            args+=("--repositoriesFile=.github/config/renovate-test.txt")
           else
             args+=("--repositoriesFile=.github/config/renovate-repositories.txt")
           fi
