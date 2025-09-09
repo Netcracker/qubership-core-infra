@@ -18,7 +18,7 @@ hostRules:
   - hostType: "maven"
     matchHost: "https://maven.pkg.github.com/Netcracker/**"
     username: "$process.env.RENOVATE_MAVEN_USER"
-    password: "$process.env.GH_ACCESS_TOKEN"
+    password: "$process.env.RENOVATE_MAVEN_TOKEN"
 packageRules:
   - matchPackageNames:
       - "/.*/"
