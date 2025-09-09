@@ -20,6 +20,15 @@ hostRules:
     username: "$process.env.RENOVATE_MAVEN_USER"
     password: "$process.env.RENOVATE_MAVEN_TOKEN"
 packageRules:
+  - matchManagers: [ "maven" ]
+    matchPackageNames: [ "/.*/" ]
+    addLabels: [ "manager:maven" ]
+  - matchManagers: [ "dockerfile" ]
+    matchPackageNames: [ "/.*/" ]
+    addLabels: [ "manager:docker" ]
+  - matchManagers: [ "gomod" ]
+    matchPackageNames: [ "/.*/" ]
+    addLabels: [ "manager:go" ]
   - matchPackageNames:
       - "/.*/"
     allowedVersions: "!/.*(redhat|composite|groovyless|jboss|atlassian|preview|does-not-exist|-SNAPSHOT).*/"
