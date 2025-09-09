@@ -1,0 +1,80 @@
+---
+name: Java Service Maven, Docker & Github Release
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        default: '1.0.0'
+        type: string
+        description: 'Release version (e.g., 1.0.0)'
+      dry-run:
+        required: false
+        type: boolean
+        default: false
+        description: 'Dry run'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  create-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Tag
+        uses: netcracker/qubership-workflow-hub/actions/tag-action@v1.0.3
+        with:
+          ref: ${{ github.ref }}
+          tag-name: v${{ inputs.version }}
+          check-tag: true
+
+  mvn-build:
+    needs: create-tag
+    uses: ./.github/workflows/maven-build-with-sonar.yaml
+    with:
+      event-name: ${{ github.event_name }}
+      actor: ${{ github.actor }}
+      upload-artifact: true
+      ref: "refs/tags/v${{ inputs.version }}"
+      dry-run: ${{ inputs.dry-run }}
+
+  docker-build:
+    needs: mvn-build
+    uses: ./.github/workflows/docker-build.yaml
+    with:
+      ref: "refs/tags/v${{ inputs.version }}"
+      dry-run: ${{ inputs.dry-run }}
+      
+  cleanup-on-dry-run:
+    needs: docker-build
+    if: ${{ inputs.dry-run }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Tag
+        uses: netcracker/qubership-workflow-hub/actions/tag-action@v1.0.3
+        with:
+          ref: ${{ github.ref }}
+          tag-name: v${{ inputs.version }}
+          delete-tag: true
+
+  cleanup-on-failure:
+    needs: [create-tag, mvn-build, docker-build]
+    if: ${{ failure() && needs.create-tag.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Tag on Failure
+        uses: netcracker/qubership-workflow-hub/actions/tag-action@v1.0.3
+        with:
+          ref: ${{ github.ref }}
+          tag-name: v${{ inputs.version }}
+          delete-tag: true
+
+  github-release:
+    needs: [ docker-build ]
+    if: ${{ !inputs.dry-run }}
+    uses: netcracker/qubership-workflow-hub/.github/workflows/release-drafter.yml@v1.0.3
+    with:
+      version: ${{ inputs.version }}
+      publish: true
