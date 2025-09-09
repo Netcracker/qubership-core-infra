@@ -34,7 +34,7 @@ postUpdateOptions:
   - "gomodUpdateImportPaths"
   - "gomodTidy"
 prConcurrentLimit: 25
-prCreation: "not-pending"
+prCreation: "immediate"
 prHourlyLimit: 5
 printConfig: false
 pruneStaleBranches: true
