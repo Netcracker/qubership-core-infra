@@ -1,2 +1,1 @@
-https://github.com/Netcracker/qubership-core-blue-green-state-monitor-quarkus[branch=main]
-https://github.com/Netcracker/qubership-core-blue-green-state-monitor[branch=main]
+https://github.com/Netcracker/qubership-core-rest-libraries[branch=main]
