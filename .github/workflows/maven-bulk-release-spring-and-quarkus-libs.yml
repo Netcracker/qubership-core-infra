@@ -175,22 +175,22 @@ jobs:
           if [ "${DRY_RUN}" = "true" ]; then
             options="${options} --dryRun"
           fi
-          repositoriesToReleaseFrom="https://github.com/Netcracker/qubership-core-blue-green-state-monitor[main]
-          https://github.com/Netcracker/qubership-core-blue-green-state-monitor-quarkus[main]
-          https://github.com/Netcracker/qubership-core-context-propagation[main]
-          https://github.com/Netcracker/qubership-core-context-propagation-quarkus[main]
-          https://github.com/Netcracker/qubership-core-microservice-framework[main]
-          https://github.com/Netcracker/qubership-core-microservice-framework-extensions[main]
-          https://github.com/Netcracker/qubership-core-mongo-evolution[main]
-          https://github.com/Netcracker/qubership-core-quarkus-extensions[main]
-          https://github.com/Netcracker/qubership-core-rest-libraries[main]
-          https://github.com/Netcracker/qubership-core-restclient[main]
-          https://github.com/Netcracker/qubership-core-springboot-starter[main]
-          https://github.com/Netcracker/qubership-dbaas-client[main]
-          https://github.com/Netcracker/qubership-maas-client-quarkus[main]
-          https://github.com/Netcracker/qubership-maas-client-spring[main]
-          https://github.com/Netcracker/qubership-maas-declarative-client-quarkus[main]
-          https://github.com/Netcracker/qubership-maas-declarative-client-spring[main]"
+          repositoriesToReleaseFrom="https://github.com/Netcracker/qubership-core-blue-green-state-monitor[branch=main]
+          https://github.com/Netcracker/qubership-core-blue-green-state-monitor-quarkus[branch=main]
+          https://github.com/Netcracker/qubership-core-context-propagation[branch=main]
+          https://github.com/Netcracker/qubership-core-context-propagation-quarkus[branch=main]
+          https://github.com/Netcracker/qubership-core-microservice-framework[branch=main]
+          https://github.com/Netcracker/qubership-core-microservice-framework-extensions[branch=main]
+          https://github.com/Netcracker/qubership-core-mongo-evolution[branch=main]
+          https://github.com/Netcracker/qubership-core-quarkus-extensions[branch=main]
+          https://github.com/Netcracker/qubership-core-rest-libraries[branch=main]
+          https://github.com/Netcracker/qubership-core-restclient[branch=main]
+          https://github.com/Netcracker/qubership-core-springboot-starter[branch=main]
+          https://github.com/Netcracker/qubership-dbaas-client[branch=main]
+          https://github.com/Netcracker/qubership-maas-client-quarkus[branch=main]
+          https://github.com/Netcracker/qubership-maas-client-spring[branch=main]
+          https://github.com/Netcracker/qubership-maas-declarative-client-quarkus[branch=main]
+          https://github.com/Netcracker/qubership-maas-declarative-client-spring[branch=main]"
           
           echo "repositoriesToReleaseFrom:
           ${repositoriesToReleaseFrom}"
