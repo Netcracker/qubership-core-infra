@@ -11,7 +11,7 @@
 
     <properties>
         <quarkus.version>3.20.2.2</quarkus.version>
-        <jandex.version>3.2.7</jandex.version>
+        <jandex.version>3.3.2</jandex.version>
     </properties>
 
     <dependencyManagement>
@@ -60,11 +60,6 @@
                 <groupId>io.quarkus</groupId>
                 <artifactId>quarkus-extension-maven-plugin</artifactId>
                 <version>${quarkus.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.smallrye</groupId>
-                <artifactId>jandex</artifactId>
-                <version>${jandex.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.smallrye</groupId>
