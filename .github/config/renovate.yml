@@ -9,6 +9,7 @@ enabledManagers:
   - "maven"
   - "dockerfile"
   - "gomod"
+  - "github-actions"
 globalExtends:
   - ":ignoreModulesAndTests"
   - ":dependencyDashboard"
