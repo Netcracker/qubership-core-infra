@@ -30,6 +30,9 @@ packageRules:
   - matchManagers: [ "gomod" ]
     matchPackageNames: [ "/.*/" ]
     addLabels: [ "manager:go" ]
+  - matchManagers: [ "github-actions" ]
+    matchPackageNames: [ "/.*/" ]
+    addLabels: [ "manager:github-actions" ]
   - matchPackageNames:
       - "/.*/"
     allowedVersions: "!/.*(redhat|composite|groovyless|jboss|atlassian|preview|does-not-exist|-SNAPSHOT).*/"
