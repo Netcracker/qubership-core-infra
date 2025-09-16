@@ -167,7 +167,7 @@ jobs:
           #args+=("--fromJson={'packageRules':[{'matchPackageNames':['/.*.netcracker.*/'],'groupName':'netcracker','addLabels':['group:netcracker']}]}")
           #args+=("--fromJson={'packageRules':[{'matchPackageNames':['/^org.spring.*/'],'groupName':'spring','addLabels':['group:spring']}]}")
           #args+=("--fromJson={'packageRules':[{'matchPackageNames':['/(io.quarkus.*|^io.smallrye.jandex.*)/'],'groupName':'quarkus','addLabels':['group:quarkus']}]}")
-          args+=("--fromJson={'packageRules':[{'matchManagers':['maven'],'groupName':'maven','groupSlug':'netcracker','addLabels':['group:netcracker']}]}")
+          args+=("--fromJson={'packageRules':[{'matchManagers':['maven'],'groupName':'maven','groupSlug':'maven','addLabels':['group:maven']}]}")
           args+=("--fromJson={'packageRules':[{'matchManagers':['github-actions'],'groupName':'github-actions'}]}")
           #args+=("--groupNameMapping={'netcracker':'com.netcracker.*'}")
           #args+=("--groupNameMapping={'spring':'org.spring.*'}")
