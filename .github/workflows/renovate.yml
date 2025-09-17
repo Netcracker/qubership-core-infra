@@ -45,6 +45,10 @@ on:
           - info
           - debug
 
+concurrency:
+  group: "renovate-${{ inputs.type }}"
+  cancel-in-progress: false
+
 jobs:
   renovate:
     runs-on: ubuntu-latest
