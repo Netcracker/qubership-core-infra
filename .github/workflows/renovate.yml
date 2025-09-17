@@ -30,8 +30,8 @@ on:
         description: "type"
         required: true
         options:
-          - configuration
           - repositories
+          - configuration
           - test
       dry-run:
         type: boolean
