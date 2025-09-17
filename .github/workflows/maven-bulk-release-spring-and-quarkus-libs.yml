@@ -203,6 +203,7 @@ jobs:
           args="${args} --gitEmail=actions@github.com"
           args="${args} --gitPassword=${MAVEN_TOKEN}"
           args="${args} --runParallelism=2"
+          args="${args} --checkoutParallelism=4"
           args="${args} --repositories=${REPOSITORIES}"
           args="${args} \"--repositoriesToReleaseFrom=${repositoriesToReleaseFrom}\""
           args="${args} --gavs=${GAVS}"
