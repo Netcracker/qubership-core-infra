@@ -157,9 +157,9 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
+          go-version: '1.25.1'
           cache: true
           cache-dependency-path: "**/*.sum"
-          go-version-file: "${{ env.GO_MOD_FILE }}"
 
       - name: Test with coverage
         working-directory: ${{ env.GO_MOD_DIR }}
