@@ -44,11 +44,6 @@ on:
         description: 'GitHub actor (user or bot) that triggered the workflow'
         required: true
         type: string
-      config-filename:
-        description: 'Set name only or short path inside .github folder if required'
-        required: false
-        type: string
-        default: 'docker-dev-config.json'
     secrets:
       sonar-token:
         required: true
@@ -102,33 +97,8 @@ jobs:
     secrets:
       sonar-token: ${{ secrets.sonar-token }}
 
-  check-docker-config:
-    runs-on: ubuntu-latest
-    outputs:
-      hasDockerConfig: ${{ steps.check_config.outputs.hasDockerConfig }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.ref }}
-          fetch-depth: 0
-
-      - name: Check config presence
-        id: check_config
-        run: |
-          config_file="$GITHUB_WORKSPACE/.github/${{ inputs.config-filename }}"
-          if [ -f "config_file" ]; then
-            echo "hasDockerConfig=true" >> "$GITHUB_OUTPUT"
-            echo "Found config_file"
-          else
-            echo "hasDockerConfig=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Docker config is not found. Docker build will be skipped."
-          fi
-
   docker-build:
-    needs: [ build-with-sonar, check-docker-config ]
-    if: ${{ needs.check-docker-config.outputs.hasDockerConfig == 'true' }}
+    needs: [ build-with-sonar ]
     uses: netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@v1.0.5
     with:
       dry-run: false
-      config-filename: ${{ inputs.config-filename }}
