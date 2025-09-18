@@ -1,8 +1,8 @@
-# Build Go Service Workflow
+# Build Go Lib Workflow
 #
 # Purpose:
-#   A reusable workflow for building Go services with SonarCloud code analysis
-#   and Docker image publishing. Can be invoked from other workflows (workflow_call).
+#   A reusable workflow for building Go lib with SonarCloud code analysis
+#  Can be invoked from other workflows (workflow_call).
 #
 # Inputs:
 #   sonar-project-key – SonarCloud project key
@@ -23,11 +23,8 @@
 #        • on pull_request events, or
 #        • on push events if no open PR exists.
 #      Uses the shared workflow go-build-with-sonar from core-infra.
-#   4. docker-build:
-#      After a successful build, runs Docker image build
-#      using the shared docker-build workflow from core-infra.
 
-name: Build Go Service
+name: Build Go Lib
 
 on:
   workflow_call:
@@ -96,9 +93,3 @@ jobs:
       go-module-dir: ${{ inputs.go-module-dir }}
     secrets:
       sonar-token: ${{ secrets.sonar-token }}
-
-  docker-build:
-    needs: [ build-with-sonar ]
-    uses: netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@v1.0.9
-    with:
-      dry-run: false
