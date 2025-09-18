@@ -94,7 +94,7 @@ jobs:
   build-with-sonar:
     needs: [ pr-check ]
     if: ${{ github.event_name == 'pull_request' || needs.pr-check.outputs.hasOpenPr == 'false' }}
-    uses: netcracker/qubership-core-infra/.github/workflows/go-build-with-sonar.yaml@v1.0.9
+    uses: netcracker/qubership-core-infra/.github/workflows/go-build-with-sonar.yaml@v1.0.5
     with:
       actor: ${{ inputs.actor }}
       sonar-project-key: ${{ inputs.sonar-project-key }}
@@ -128,7 +128,7 @@ jobs:
   docker-build:
     needs: [ build-with-sonar, check-docker-config ]
     if: ${{ needs.check-docker-config.outputs.hasDockerConfig == 'true' }}
-    uses: netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@v1.0.9
+    uses: netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@v1.0.5
     with:
       dry-run: false
       config-filename: ${{ inputs.config-filename }}
