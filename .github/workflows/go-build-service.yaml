@@ -117,7 +117,7 @@ jobs:
         id: check_config
         run: |
           config_file="$GITHUB_WORKSPACE/.github/${{ inputs.config-filename }}"
-          if [ -f "$config_file" ]; then
+          if [ -f "config_file" ]; then
             echo "hasDockerConfig=true" >> "$GITHUB_OUTPUT"
             echo "Found config_file"
           else
