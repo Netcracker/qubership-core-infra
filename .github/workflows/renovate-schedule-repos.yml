@@ -1,15 +1,15 @@
 name: Renovate schedule for repositories
 
-#on:
-#  schedule:
-#    - cron: '15 5-16 * * *'
+on:
+  schedule:
+    - cron: '15 5-16 * * *'
 
 jobs:
   call:
     uses: ./.github/workflows/renovate.yml
     with:
       type: "repositories"
-      dry-run: false
+      dry-run: true # turn off during the stabilization phase
       log-level: 'info'
     secrets:
       MAVEN_USER: "${{ secrets.MAVEN_USER }}"
