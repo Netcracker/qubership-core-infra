@@ -13,7 +13,7 @@ jobs:
     uses: ./.github/workflows/renovate.yml
     with:
       type: "repositories"
-      dry-run: "${{env.DRY_RUN}}"
+      dry-run: ${{ fromJSON(env.DRY_RUN) }}
       log-level: 'info'
     secrets:
       MAVEN_USER: "${{ secrets.MAVEN_USER }}"
