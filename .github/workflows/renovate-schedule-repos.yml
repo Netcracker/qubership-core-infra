@@ -1,8 +1,8 @@
 name: Renovate schedule for repositories
 
-on:
-  schedule:
-    - cron: '15 5-16 * * *'
+#on:
+#  schedule:
+#    - cron: '15 5-16 * * *'
 
 jobs:
   call:
