@@ -58,37 +58,26 @@ permissions:
   packages: write
 
 jobs:
-  pr-check:
+  check-open-pr:
     runs-on: ubuntu-latest
     outputs:
-      hasOpenPr: ${{ steps.find.outputs.hasOpenPr }}
+      hasOpenPr: ${{ steps.pr.outputs.hasOpenPr }}
     steps:
-      - id: find
-        uses: actions/github-script@v7
+      - id: pr
+        uses: netcracker/qubership-core-infra/.github/actions/check-open-pr@feat/do-not-duplicate-build-runs
         with:
-          script: |
-            const branch = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME;
-            const owner  = context.repo.owner;
-            const { data: prs } = await github.rest.pulls.list({
-              owner,
-              repo: context.repo.repo,
-              state: 'open',
-              head: `${owner}:${branch}`,
-              per_page: 1
-            });
-            core.notice(`Open PR on branch "${branch}": ${prs.length > 0}`);
-            core.setOutput('hasOpenPr', prs.length > 0 ? 'true' : 'false');
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   fast-exit-on-push-when-pr-exists:
-    needs: pr-check
+    needs: [ check-open-pr ]
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && needs.pr-check.outputs.hasOpenPr == 'true' }}
+    if: ${{ github.event_name == 'push' && needs.check-open-pr.outputs.hasOpenPr == 'true' }}
     steps:
       - run: echo "PR exists for this branch -> work is delegated to pull_request workflow. Exiting."
 
   build-with-sonar:
-    needs: [ pr-check ]
-    if: ${{ github.event_name == 'pull_request' || needs.pr-check.outputs.hasOpenPr == 'false' }}
+    needs: [ check-open-pr ]
+    if: ${{ github.event_name == 'pull_request' || needs.check-open-pr.outputs.hasOpenPr == 'false' }}
     uses: netcracker/qubership-core-infra/.github/workflows/go-build-with-sonar.yaml@v1.0.9
     with:
       actor: ${{ inputs.actor }}
