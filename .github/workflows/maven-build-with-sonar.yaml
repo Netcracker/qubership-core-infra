@@ -165,7 +165,7 @@ jobs:
     name: Build with Sonar analysis
     needs: prepare-variables
     if: needs.prepare-variables.outputs.run-sonar == 'true'
-    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@v1.0.1
+    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@v1.0.6
     with:
       maven-command: >
         --batch-mode ${{ needs.prepare-variables.outputs.maven-goal }}
@@ -188,7 +188,7 @@ jobs:
     name: Build without Sonar analysis
     needs: prepare-variables
     if: needs.prepare-variables.outputs.run-sonar == 'false'
-    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@v1.0.1
+    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@v1.0.6
     with:
       maven-command: >
         --batch-mode ${{ needs.prepare-variables.outputs.maven-goal }}
