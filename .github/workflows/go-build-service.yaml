@@ -65,8 +65,6 @@ jobs:
     steps:
       - id: pr
         uses: netcracker/qubership-core-infra/.github/actions/check-open-pr@feat/do-not-duplicate-build-runs
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
   fast-exit-on-push-when-pr-exists:
     needs: [ check-open-pr ]
