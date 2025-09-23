@@ -140,7 +140,7 @@ jobs:
           args="${args} --summaryFile=${GITHUB_STEP_SUMMARY}"
           args="${args} --gavsResultFile=/tmp/gavs.txt"
           args="${args} --dependencyGraphFile=/tmp/graph.dot"
-          args="${args} --skipGoProxy=true"
+          args="${args} --skipGoProxy"
           args="${args} ${options}"
           cmd="java -jar go-bulk-release-cli.jar ${args}"
           echo "running cmd: ${cmd}"
