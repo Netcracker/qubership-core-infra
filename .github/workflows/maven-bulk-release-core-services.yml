@@ -1,7 +1,7 @@
 # $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-workflow.json
 
 name: "Maven bulk release of core services"
-run-name: Maven bulk release of core-libs [${{ inputs.repositoryToRelease }}] [dry-run:${{ inputs.dryRun }}] by @${{ github.actor }}'
+run-name: Maven bulk release of core-services [${{ inputs.repositoryToRelease }}] [dry-run:${{ inputs.dryRun }}] by @${{ github.actor }}'
 
 on:
   workflow_dispatch:
@@ -152,8 +152,8 @@ jobs:
           DRY_RUN: ${{ inputs.dryRun }}
         # language="shell script"
         run: |
-          cliVersion="1.2.10-SNAPSHOT"   
-          cliVersionSpecific="1.2.10-20250815.114340-6"
+          cliVersion="1.2.11-SNAPSHOT"   
+          cliVersionSpecific="1.2.11-20250910.094359-22"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-infra/org.qubership.cloud/maven-bulk-release-cli/${cliVersion}/maven-bulk-release-cli-${cliVersionSpecific}-jar-with-dependencies.jar"
           curl -L -o "maven-bulk-release-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
                     
