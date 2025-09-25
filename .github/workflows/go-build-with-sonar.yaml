@@ -39,7 +39,7 @@ on:
 
       # Sonar configuration
       sonar-project-key:
-        description: 'Sonar project key for analysis. It must be specified explicitly, as the qubership-core-infra repository may have its own sonar-project-key. '
+        description: 'Sonar project key for analysis. It must be specified explicitly, as the qubership-core-infra repository may have its own sonar-project-key.'
         required: false
         type: string
 
@@ -49,13 +49,11 @@ on:
         required: false
 
 jobs:
-  prepare-variables:
-    name: Prepare build variables
+  build:
+    name: Build and test with coverage
     runs-on: ubuntu-latest
-    outputs:
-      run-sonar: ${{ steps.prepare.outputs.run-sonar }}
     steps:
-      - name: Checkout workflow repository
+      - name: Checkout workflow repository (config)
         uses: actions/checkout@v4
         with:
           repository: netcracker/qubership-core-infra
@@ -64,6 +62,7 @@ jobs:
 
       - name: Prepare variables
         id: prepare
+        shell: bash
         run: |
           # Store input variables
           ACTOR="${{ inputs.actor }}"
@@ -87,72 +86,68 @@ jobs:
           # Set sonar run flag
           if [ -z "${{ inputs.sonar-project-key }}" ] || [ -z "${{ secrets.sonar-token }}" ]; then
             echo "::info:: Sonar configuration is missing, skipping Sonar analysis"
-            echo "run-sonar=false" >> $GITHUB_OUTPUT
+            echo "run-sonar=false" >> "$GITHUB_OUTPUT"
           elif [ "$IS_RESTRICTED_ACTOR" = true ]; then
-            echo "run-sonar=false" >> $GITHUB_OUTPUT
+            echo "run-sonar=false" >> "$GITHUB_OUTPUT"
           else
-            echo "run-sonar=true" >> $GITHUB_OUTPUT
+            echo "run-sonar=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Output build configuration
         run: |
           echo "::info:: Run Sonar: ${{ steps.prepare.outputs.run-sonar }}"
 
-  build:
-    needs: prepare-variables
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
+      - name: Checkout repository (code)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Find go.mod files
         id: find
+        shell: bash
         run: |
           echo "::info:: Processing go.mod file location..."
-          
+
           if [ -n "${{ inputs.go-module-dir }}" ]; then
             # If go-module-dir is specified, only look in that directory
             GO_MOD_DIR="${{ inputs.go-module-dir }}"
             GO_MOD_FILE="${GO_MOD_DIR}/go.mod"
-            
+
             if [ ! -d "$GO_MOD_DIR" ]; then
               echo "::error:: Directory not found: ${GO_MOD_DIR}"
               exit 1
             fi
-            
+
             if [ ! -f "$GO_MOD_FILE" ]; then
               echo "::error:: go.mod file not found in directory: ${GO_MOD_DIR}"
               exit 1
             fi
-            
+
             echo "::info:: Using specified Go module directory: ${GO_MOD_DIR}"
           else
             # Search for go.mod files in the repository
             echo "::info:: Searching for go.mod files..."
             GO_MOD_FILES=$(find . -name go.mod)
-            
+
             if [ -z "$GO_MOD_FILES" ]; then
               echo "::error:: No go.mod files found in the repository"
               exit 1
             fi
-            
+
             echo "::info:: Counting go.mod files..."
             GO_MOD_COUNT=$(echo "$GO_MOD_FILES" | wc -l)
             if [ "$GO_MOD_COUNT" -gt 1 ]; then
               echo "::error:: Multiple go.mod files found. Please specify go-module-dir input parameter."
               exit 1
             fi
-            
+
             GO_MOD_FILE=$(echo "$GO_MOD_FILES" | head -n 1)
             GO_MOD_DIR=$(dirname "${GO_MOD_FILE}")
             echo "::info:: Using Go module at ${GO_MOD_DIR}"
           fi
-          
-          echo "GO_MOD_FILE=${GO_MOD_FILE}" >> $GITHUB_ENV
-          echo "GO_MOD_DIR=${GO_MOD_DIR}" >> $GITHUB_ENV
-        shell: bash
+
+          echo "GO_MOD_FILE=${GO_MOD_FILE}" >> "$GITHUB_ENV"
+          echo "GO_MOD_DIR=${GO_MOD_DIR}" >> "$GITHUB_ENV"
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -168,18 +163,20 @@ jobs:
           go test -v ./... -coverprofile coverage.out
 
       - name: Upload coverage report to SonarCloud
-        if: needs.prepare-variables.outputs.run-sonar == 'true'
+        if: steps.prepare.outputs.run-sonar == 'true'
         working-directory: ${{ env.GO_MOD_DIR }}
+        env:
+          SONAR_TOKEN: ${{ secrets.sonar-token }}
         run: |
           echo "::info:: Installing sonar-scanner..."
           npm install -g sonar-scanner@3.1.0
-          
+
           echo "::info:: Validating sonar-project.properties exists"
           if [ ! -f "sonar-project.properties" ]; then
             echo "::error:: sonar-project.properties not found in ${GO_MOD_DIR}"
             exit 1
           fi
-          
+
           echo "::info:: Running sonar-scanner..."
           sonar-scanner \
             -Dproject.settings=sonar-project.properties \
@@ -187,5 +184,3 @@ jobs:
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }} \
             -Dsonar.host.url=${{ vars.SONAR_HOST_URL }} \
             -Dsonar.go.coverage.reportPaths=coverage.out
-        env:
-          SONAR_TOKEN: ${{ secrets.sonar-token }}
