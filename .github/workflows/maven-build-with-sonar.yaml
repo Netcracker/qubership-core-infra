@@ -162,13 +162,14 @@ jobs:
     uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@v1.0.1
     with:
       maven-command: >
-        --batch-mode ${{ needs.prepare-variables.outputs.maven-goal }}
+        -f ${{ inputs.pom-file-path && inputs.pom-file-path || 'pom.xml' }}
+        ${{ needs.prepare-variables.outputs.maven-goal }}
+        --batch-mode
         -Dgpg.skip=true
         ${{ needs.prepare-variables.outputs.run-sonar == 'true'
             && format('org.sonarsource.scanner.maven:sonar-maven-plugin:{0}:sonar -Dsonar.projectKey={1} -Dsonar.organization={2} -Dsonar.host.url={3}',
                       vars.SONAR_PLUGIN_VERSION, inputs.sonar-project-key, vars.SONAR_ORGANIZATION, vars.SONAR_HOST_URL)
             || '' }}
-        ${{ inputs.pom-file-path && format('-f {0}', inputs.pom-file-path) || '' }}
       server-id: github
       java-version: ${{ inputs.java-version }}
       ref: ${{ inputs.ref }}
