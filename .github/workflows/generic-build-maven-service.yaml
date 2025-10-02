@@ -92,7 +92,7 @@ jobs:
 
   docker-build:
     name: Build Docker image
-    needs: [ go-build ]
+    needs: [ mvn-build ]
     if: ${{ !(github.event_name == 'push' && needs.check-pr.outputs.hasOpenPr == 'true') }}
     uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@v1.1.0
     with:
