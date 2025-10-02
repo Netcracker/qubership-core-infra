@@ -77,7 +77,7 @@ jobs:
             echo "Work is delegated to the PR workflow. Skip next steps."
           } >> "$GITHUB_STEP_SUMMARY"
 
-  go-build:
+  mvn-build:
     name: Build and test Java module
     needs: [ check-pr ]
     if: ${{ !(github.event_name == 'push' && needs.check-pr.outputs.hasOpenPr == 'true') }}
