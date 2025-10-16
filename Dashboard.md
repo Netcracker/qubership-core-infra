@@ -172,3 +172,167 @@
 [![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-maas-declarative-client-quarkus)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-maas-declarative-client-quarkus)
 [![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-maas-declarative-client-quarkus)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-maas-declarative-client-quarkus)
 [![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-maas-declarative-client-quarkus)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-maas-declarative-client-quarkus)
+
+---
+
+# Go libs status
+## 1.1 qubership-core-lib-go-error-handling
+[![Go build](https://github.com/Netcracker/qubership-core-lib-go-error-handling/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-lib-go-error-handling/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-lib-go-error-handling)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-error-handling)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-lib-go-error-handling)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-error-handling)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-lib-go-error-handling)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-error-handling)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go-error-handling)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-error-handling)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go-error-handling)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-error-handling)
+
+## 1.2 qubership-core-lib-go
+[![Go build](https://github.com/Netcracker/qubership-core-lib-go/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-lib-go/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-lib-go)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-lib-go)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-lib-go)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go)
+
+## 2.1 qubership-core-lib-go-actuator-common
+[![Go build](https://github.com/Netcracker/qubership-core-lib-go-actuator-common/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-lib-go-actuator-common/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-lib-go-actuator-common)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-actuator-common)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-lib-go-actuator-common)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-actuator-common)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-lib-go-actuator-common)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-actuator-common)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go-actuator-common)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-actuator-common)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go-actuator-common)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-actuator-common)
+
+## 2.2 qubership-core-lib-go-dbaas-base-client
+[![Go build](https://github.com/Netcracker/qubership-core-lib-go-dbaas-base-client/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-lib-go-dbaas-base-client/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-lib-go-dbaas-base-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-base-client)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-lib-go-dbaas-base-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-base-client)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-lib-go-dbaas-base-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-base-client)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go-dbaas-base-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-base-client)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go-dbaas-base-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-base-client)
+
+## 2.3 qubership-core-lib-go-rest-utils
+[![Go build](https://github.com/Netcracker/qubership-core-lib-go-rest-utils/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-lib-go-rest-utils/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-lib-go-rest-utils)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-rest-utils)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-lib-go-rest-utils)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-rest-utils)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-lib-go-rest-utils)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-rest-utils)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go-rest-utils)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-rest-utils)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go-rest-utils)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-rest-utils)
+
+## 2.4 qubership-core-lib-go-bg-state-monitor
+[![Go build](https://github.com/Netcracker/qubership-core-lib-go-bg-state-monitor/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-lib-go-bg-state-monitor/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-lib-go-bg-state-monitor)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-bg-state-monitor)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-lib-go-bg-state-monitor)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-bg-state-monitor)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-lib-go-bg-state-monitor)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-bg-state-monitor)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go-bg-state-monitor)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-bg-state-monitor)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go-bg-state-monitor)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-bg-state-monitor)
+
+## 2.5 qubership-core-lib-go-stomp-websocket
+[![Go build](https://github.com/Netcracker/qubership-core-lib-go-stomp-websocket/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-lib-go-stomp-websocket/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-lib-go-stomp-websocket)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-stomp-websocket)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-lib-go-stomp-websocket)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-stomp-websocket)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-lib-go-stomp-websocket)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-stomp-websocket)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go-stomp-websocket)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-stomp-websocket)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go-stomp-websocket)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-stomp-websocket)
+
+## 3.1 qubership-core-lib-go-bg-kafka
+[![Go build](https://github.com/Netcracker/qubership-core-lib-go-bg-kafka/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-lib-go-bg-kafka/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-lib-go-bg-kafka)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-bg-kafka)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-lib-go-bg-kafka)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-bg-kafka)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-lib-go-bg-kafka)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-bg-kafka)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go-bg-kafka)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-bg-kafka)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go-bg-kafka)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-bg-kafka)
+
+## 3.2 qubership-core-lib-go-dbaas-clickhouse-client
+[![Go build](https://github.com/Netcracker/qubership-core-lib-go-dbaas-clickhouse-client/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-lib-go-dbaas-clickhouse-client/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-lib-go-dbaas-clickhouse-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-clickhouse-client)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-lib-go-dbaas-clickhouse-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-clickhouse-client)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-lib-go-dbaas-clickhouse-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-clickhouse-client)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go-dbaas-clickhouse-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-clickhouse-client)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go-dbaas-clickhouse-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-clickhouse-client)
+
+## 3.3 qubership-core-lib-go-dbaas-postgres-client
+[![Go build](https://github.com/Netcracker/qubership-core-lib-go-dbaas-postgres-client/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-lib-go-dbaas-postgres-client/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-lib-go-dbaas-postgres-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-postgres-client)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-lib-go-dbaas-postgres-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-postgres-client)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-lib-go-dbaas-postgres-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-postgres-client)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go-dbaas-postgres-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-postgres-client)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go-dbaas-postgres-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-postgres-client)
+
+## 3.4 qubership-core-lib-go-dbaas-mongo-client
+[![Go build](https://github.com/Netcracker/qubership-core-lib-go-dbaas-mongo-client/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-lib-go-dbaas-mongo-client/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-lib-go-dbaas-mongo-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-mongo-client)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-lib-go-dbaas-mongo-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-mongo-client)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-lib-go-dbaas-mongo-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-mongo-client)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go-dbaas-mongo-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-mongo-client)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go-dbaas-mongo-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-mongo-client)
+
+## 3.5 qubership-core-lib-go-dbaas-cassandra-client
+[![Go build](https://github.com/Netcracker/qubership-core-lib-go-dbaas-cassandra-client/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-lib-go-dbaas-cassandra-client/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-lib-go-dbaas-cassandra-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-cassandra-client)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-lib-go-dbaas-cassandra-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-cassandra-client)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-lib-go-dbaas-cassandra-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-cassandra-client)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go-dbaas-cassandra-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-cassandra-client)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go-dbaas-cassandra-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-cassandra-client)
+
+## 3.6 qubership-core-lib-go-maas-client
+[![Go build](https://github.com/Netcracker/qubership-core-lib-go-maas-client/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-lib-go-maas-client/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-lib-go-maas-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-client)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-lib-go-maas-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-client)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-lib-go-maas-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-client)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go-maas-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-client)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go-maas-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-client)
+
+## 3.7 qubership-core-lib-go-dbaas-arangodb-client
+[![Go build](https://github.com/Netcracker/qubership-core-lib-go-dbaas-arangodb-client/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-lib-go-dbaas-arangodb-client/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-lib-go-dbaas-arangodb-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-arangodb-client)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-lib-go-dbaas-arangodb-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-arangodb-client)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-lib-go-dbaas-arangodb-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-arangodb-client)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go-dbaas-arangodb-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-arangodb-client)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go-dbaas-arangodb-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-arangodb-client)
+
+## 3.8 qubership-core-lib-go-fiber-server-utils
+[![Go build](https://github.com/Netcracker/qubership-core-lib-go-fiber-server-utils/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-lib-go-fiber-server-utils/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-lib-go-fiber-server-utils)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-fiber-server-utils)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-lib-go-fiber-server-utils)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-fiber-server-utils)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-lib-go-fiber-server-utils)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-fiber-server-utils)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go-fiber-server-utils)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-fiber-server-utils)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go-fiber-server-utils)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-fiber-server-utils)
+
+## 3.9 qubership-core-lib-go-paas-mediation-client
+[![Go build](https://github.com/Netcracker/qubership-core-lib-go-paas-mediation-client/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-lib-go-paas-mediation-client/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-lib-go-paas-mediation-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-paas-mediation-client)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-lib-go-paas-mediation-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-paas-mediation-client)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-lib-go-paas-mediation-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-paas-mediation-client)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go-paas-mediation-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-paas-mediation-client)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go-paas-mediation-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-paas-mediation-client)
+
+## 3.10 qubership-core-lib-go-dbaas-opensearch-client
+[![Go build](https://github.com/Netcracker/qubership-core-lib-go-dbaas-opensearch-client/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-lib-go-dbaas-opensearch-client/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-lib-go-dbaas-opensearch-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-opensearch-client)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-lib-go-dbaas-opensearch-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-opensearch-client)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-lib-go-dbaas-opensearch-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-opensearch-client)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go-dbaas-opensearch-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-opensearch-client)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go-dbaas-opensearch-client)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-dbaas-opensearch-client)
+
+## 4.1 qubership-core-lib-go-maas-core
+[![Go build](https://github.com/Netcracker/qubership-core-lib-go-maas-core/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-lib-go-maas-core/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-lib-go-maas-core)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-core)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-lib-go-maas-core)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-core)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-lib-go-maas-core)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-core)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go-maas-core)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-core)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go-maas-core)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-core)
+
+## 4.2 qubership-core-lib-go-maas-segmentio
+[![Go build](https://github.com/Netcracker/qubership-core-lib-go-maas-segmentio/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-lib-go-maas-segmentio/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-lib-go-maas-segmentio)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-segmentio)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-lib-go-maas-segmentio)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-segmentio)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-lib-go-maas-segmentio)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-segmentio)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go-maas-segmentio)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-segmentio)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go-maas-segmentio)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-segmentio)
+
+## 5.1 qubership-core-lib-go-maas-bg-segmentio
+[![Go build](https://github.com/Netcracker/qubership-core-lib-go-maas-bg-segmentio/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-lib-go-maas-bg-segmentio/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-lib-go-maas-bg-segmentio)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-bg-segmentio)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-lib-go-maas-bg-segmentio)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-bg-segmentio)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-lib-go-maas-bg-segmentio)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-bg-segmentio)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go-maas-bg-segmentio)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-bg-segmentio)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go-maas-bg-segmentio)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-bg-segmentio)
+
