@@ -4,7 +4,11 @@
 # - Actor type (bot or user)
 #
 # Build modes:
-# 1. Pull Request & Push:
+# 1. Pull Requests:
+#    - Uses 'verify' goal for restricted actors and PR from forks
+#    - Uses 'deploy' goal for non-restricted actors and internal PRs
+#    - Sonar analysis is skipped for restricted actors
+# 2. Push:
 #    - Uses 'verify' goal for restricted actors
 #    - Uses 'deploy' goal for non-restricted actors
 #    - Sonar analysis is skipped for restricted actors
@@ -88,6 +92,7 @@ jobs:
     outputs:
       maven-goal: ${{ steps.prepare.outputs.maven-goal }}
       run-sonar: ${{ steps.prepare.outputs.run-sonar }}
+      is-fork: ${{ steps.prepare.outputs.is-fork }}
     steps:
       - name: Checkout workflow repository
         uses: actions/checkout@v4
@@ -98,7 +103,9 @@ jobs:
 
       - name: Prepare variables
         id: prepare
+        shell: bash
         run: |
+          set -euo pipefail
           echo "::info:: Storing input variables..."
           ACTOR="${{ inputs.actor }}"
           EVENT_NAME="${{ inputs.event-name }}"
@@ -126,35 +133,55 @@ jobs:
             echo "::info:: Actor $ACTOR is not restricted"
           fi
 
-          echo "::info:: Setting maven goal based on event type and actor..."
-          if [ "$EVENT_NAME" = "pull_request" ] || [ "$EVENT_NAME" = "push" ]; then
-            if [ "$IS_RESTRICTED_ACTOR" = true ]; then
-              echo "maven-goal=verify" >> $GITHUB_OUTPUT
+          # Detect fork PR
+          IS_FORK=false
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            if command -v jq >/dev/null 2>&1 && jq -e '.pull_request.head.repo.fork == true' "$GITHUB_EVENT_PATH" >/dev/null 2>&1; then
+              IS_FORK=true
+            fi
+          fi
+          echo "is-fork=$IS_FORK" >> "$GITHUB_OUTPUT"
+
+          echo "::info:: Setting maven goal..."
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            if [ "$IS_FORK" = true ]; then
+              echo "maven-goal=verify" >> "$GITHUB_OUTPUT"
             else
-              echo "maven-goal=deploy" >> $GITHUB_OUTPUT
+              if [ "$IS_RESTRICTED_ACTOR" = true ]; then
+                echo "maven-goal=verify" >> "$GITHUB_OUTPUT"
+              else
+                echo "maven-goal=deploy" >> "$GITHUB_OUTPUT"
+              fi
+            fi
+          elif [ "$EVENT_NAME" = "push" ]; then
+            if [ "$IS_RESTRICTED_ACTOR" = true ]; then
+              echo "maven-goal=verify" >> "$GITHUB_OUTPUT"
+            else
+              echo "maven-goal=deploy" >> "$GITHUB_OUTPUT"
             fi
           elif [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             if [ "$DRY_RUN" = "true" ]; then
-              echo "maven-goal=verify" >> $GITHUB_OUTPUT
+              echo "maven-goal=verify" >> "$GITHUB_OUTPUT"
             else
-              echo "maven-goal=deploy" >> $GITHUB_OUTPUT
+              echo "maven-goal=deploy" >> "$GITHUB_OUTPUT"
             fi
           fi
 
           echo "::info:: Setting sonar run flag..."
           if [ -z "${{ inputs.sonar-project-key }}" ] || [ -z "${{ secrets.sonar-token }}" ]; then
             echo "::info:: Sonar configuration is missing, skipping Sonar analysis"
-            echo "run-sonar=false" >> $GITHUB_OUTPUT
+            echo "run-sonar=false" >> "$GITHUB_OUTPUT"
           elif [ "$IS_RESTRICTED_ACTOR" = true ]; then
-            echo "run-sonar=false" >> $GITHUB_OUTPUT
+            echo "run-sonar=false" >> "$GITHUB_OUTPUT"
           else
-            echo "run-sonar=true" >> $GITHUB_OUTPUT
+            echo "run-sonar=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Output build configuration
         run: |
           echo "::info:: Maven goal: ${{ steps.prepare.outputs.maven-goal }}"
           echo "::info:: Run Sonar: ${{ steps.prepare.outputs.run-sonar }}"
+          echo "::info:: Is fork PR: ${{ steps.prepare.outputs.is-fork }}"
 
   mvn:
     name: ${{ needs.prepare-variables.outputs.run-sonar == 'true' && 'Build with Sonar' || 'Build (no Sonar)' }}
