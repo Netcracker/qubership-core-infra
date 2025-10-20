@@ -67,7 +67,7 @@ jobs:
     steps:
       - name: Check for open PR
         id: pr
-        uses: Netcracker/qubership-core-infra/.github/actions/check-open-pr@v1.1.0
+        uses: Netcracker/qubership-core-infra/.github/actions/check-open-pr@v1.1.1
 
       - name: Explain routing decision
         if: ${{ github.event_name == 'push' && steps.pr.outputs.hasOpenPr == 'true' }}
@@ -86,7 +86,7 @@ jobs:
     name: Build and test Go module
     needs: [ check-pr ]
     if: ${{ !(github.event_name == 'push' && needs.check-pr.outputs.hasOpenPr == 'true') }}
-    uses: Netcracker/qubership-core-infra/.github/workflows/go-build-with-sonar.yaml@v1.1.0
+    uses: Netcracker/qubership-core-infra/.github/workflows/go-build-with-sonar.yaml@v1.1.1
     with:
       actor: ${{ inputs.actor }}
       go-module-dir: ${{ inputs.go-module-dir }}
@@ -98,6 +98,6 @@ jobs:
     name: Build Docker image
     needs: [ go-build ]
     if: ${{ !(github.event_name == 'push' && needs.check-pr.outputs.hasOpenPr == 'true') }}
-    uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@v1.1.0
+    uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@v1.1.1
     with:
       dry-run: false
