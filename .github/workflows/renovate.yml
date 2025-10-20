@@ -141,7 +141,7 @@ jobs:
           # run renovate-config-cli
           cli_name="renovate-config-cli"
           cliVersion="1.3.2-SNAPSHOT"
-          cliVersionSpecific="1.3.2-20251014.074610-18"
+          cliVersionSpecific="1.3.2-20251020.085536-19"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${cli_name}/${cliVersion}/${cli_name}-${cliVersionSpecific}-jar-with-dependencies.jar"
           curl -L -v -o "${cli_name}.jar" -H "Authorization: Bearer ${GH_ACCESS_TOKEN}" "${url}"
           
