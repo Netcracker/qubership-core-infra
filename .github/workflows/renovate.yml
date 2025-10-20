@@ -157,7 +157,7 @@ jobs:
           args+=("--fromFile=.github/config/renovate.yml")
           if [ "${TYPE}" = "configuration" ]; then
             args+=("--repository=${PROJECT_URL}[branch=${GITHUB_REF_NAME}]")
-            args+=("--fromJson={'includePaths':'dependencies/'}")          
+            args+=("--fromJson={'includePaths':['dependencies/']}")          
           elif [ "${TYPE}" = "test" ]; then
             args+=("--repositoriesFile=.github/config/renovate-test.txt")
           else
