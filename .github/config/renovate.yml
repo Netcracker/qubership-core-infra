@@ -54,3 +54,6 @@ pruneStaleBranches: true
 rebaseWhen: "behind-base-branch"
 recreateWhen: "always"
 reviewersFromCodeOwners: true
+vulnerabilityAlerts:
+  labels: ["security"],
+  vulnerabilityFixStrategy: "lowest"
