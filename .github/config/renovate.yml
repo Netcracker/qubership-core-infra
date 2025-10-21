@@ -55,5 +55,5 @@ rebaseWhen: "behind-base-branch"
 recreateWhen: "always"
 reviewersFromCodeOwners: true
 vulnerabilityAlerts:
-  labels: ["security"],
+  addLabels: ["security"],
   vulnerabilityFixStrategy: "lowest"
