@@ -138,9 +138,9 @@ jobs:
         run: |
           mkdir /tmp/GOPROXY
           
-          snapshotVersion="1.3.1-20250916.130233-17"
+          snapshotVersion="1.4.0-20251024.130748-7"
           
-          url="https://maven.pkg.github.com/netcracker/qubership-core-bulk-release/org/qubership/cloud/go-bulk-release-cli/1.3.1-SNAPSHOT/go-bulk-release-cli-${snapshotVersion}-jar-with-dependencies.jar"
+          url="https://maven.pkg.github.com/netcracker/qubership-core-bulk-release/org/qubership/cloud/go-bulk-release-cli/1.4.0-SNAPSHOT/go-bulk-release-cli-${snapshotVersion}-jar-with-dependencies.jar"
           curl --fail -L -o "go-bulk-release-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
           
           options=""
