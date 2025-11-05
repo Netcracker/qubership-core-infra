@@ -200,7 +200,7 @@ jobs:
           cli_version="1.5.0-SNAPSHOT"
           
           mvn org.apache.maven.plugins:maven-dependency-plugin:3.9.0:copy \
-          -DremoteRepositories="github::default::https://maven.pkg.github.com/netcracker/**" \
+          -DremoteRepositories="github::default::https://maven.pkg.github.com/netcracker" \
           -Dartifact="org.qubership.cloud:${cli_name}:${cli_version}:jar:jar-with-dependencies" \
           -DoutputDirectory="/tmp"
           
