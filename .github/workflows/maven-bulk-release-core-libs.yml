@@ -202,7 +202,7 @@ jobs:
           mvn org.apache.maven.plugins:maven-dependency-plugin:3.9.0:copy \
           -DremoteRepositories="github::default::https://maven.pkg.github.com/netcracker" \
           -Dartifact="org.qubership.cloud:${cli_name}:${cli_version}:jar:jar-with-dependencies" \
-          -DoutputDirectory="/tmp" -U
+          -DoutputDirectory="/tmp" -U -X
           
           cli_jar=$(ls -1 "/tmp" | grep "${cli_name}" | tr -d '\n')
                     
