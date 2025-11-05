@@ -200,6 +200,7 @@ jobs:
           cli_version="1.5.0-SNAPSHOT"
           
           mvn org.apache.maven.plugins:maven-dependency-plugin:3.9.0:copy \
+          -DremoteRepositories="github::default::https://maven.pkg.github.com/netcracker/**" \
           -Dartifact="org.qubership.cloud:${cli_name}:${cli_version}:jar:jar-with-dependencies" \
           -DoutputDirectory="/tmp"
           
@@ -221,6 +222,7 @@ jobs:
           args="${args} --gitUsername=actions"
           args="${args} --gitEmail=actions@github.com"
           args="${args} --gitPassword=${MAVEN_TOKEN}"
+          args="${args} --mavenDeployArtifacts=false"
           args="${args} --runParallelism=2"
           args="${args} --repositories=${REPOSITORIES}"
           args="${args} \"--repositoriesToReleaseFrom=${repositoriesToReleaseFrom}\""
