@@ -200,7 +200,6 @@ jobs:
           cli_version="1.5.0-SNAPSHOT"
           
           mvn org.apache.maven.plugins:maven-dependency-plugin:3.9.0:copy \
-          -DremoteRepositories=repo::default::https://artifactorycn.netcracker.com/pd.saas.mvn.group \
           -Dartifact="org.qubership.cloud:${cli_name}:${cli_version}:jar:jar-with-dependencies" \
           -DoutputDirectory="/tmp"
           
