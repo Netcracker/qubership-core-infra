@@ -152,10 +152,21 @@ jobs:
           DRY_RUN: ${{ inputs.dryRun }}
         # language="shell script"
         run: |
-          cliVersion="1.2.11-SNAPSHOT"   
-          cliVersionSpecific="1.2.11-20250910.094359-22"
+          #          cli_name="maven-bulk-release-cli"
+          #          cli_version="1.5.0-SNAPSHOT"
+          #          
+          #          mvn org.apache.maven.plugins:maven-dependency-plugin:3.9.0:copy \
+          #          -DremoteRepositories="github::default::https://maven.pkg.github.com/netcracker" \
+          #          -Dartifact="org.qubership.cloud:${cli_name}:${cli_version}:jar:jar-with-dependencies" \
+          #          -DoutputDirectory="/tmp" -U -X
+          #          
+          #          cli_jar=$(ls -1 "/tmp" | grep "${cli_name}" | tr -d '\n')
+          #                    
+          cliVersion="1.5.0-SNAPSHOT"   
+          cliVersionSpecific="1.5.0-20251105.133058-37"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-infra/org.qubership.cloud/maven-bulk-release-cli/${cliVersion}/maven-bulk-release-cli-${cliVersionSpecific}-jar-with-dependencies.jar"
           curl -L -o "maven-bulk-release-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
+          cli_jar="maven-bulk-release-cli.jar"
                     
           options=""
           if [ "${SKIP_TEST}" = "true" ]; then
@@ -173,6 +184,7 @@ jobs:
           args="${args} --gitUsername=actions"
           args="${args} --gitEmail=actions@github.com"
           args="${args} --gitPassword=${MAVEN_TOKEN}"
+          args="${args} --mavenDeployArtifacts=false"
           args="${args} --runParallelism=2"
           args="${args} --repositories=${REPOSITORIES}"
           args="${args} \"--repositoriesToReleaseFrom=${repositoriesToReleaseFrom}\""
@@ -184,7 +196,7 @@ jobs:
           args="${args} --gavsResultFile=/tmp/gavs.txt"
           args="${args} --dependencyGraphFile=/tmp/graph.dot"
           args="${args} ${options}"
-          cmd="java -jar maven-bulk-release-cli.jar ${args}"
+          cmd="java -jar ${cli_jar} ${args}"
           echo "running cmd: ${cmd}"
           eval "${cmd}"
 
