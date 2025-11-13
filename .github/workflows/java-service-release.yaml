@@ -32,7 +32,8 @@ jobs:
 
   mvn-build:
     needs: create-tag
-    uses: ./.github/workflows/maven-build-with-sonar.yaml
+    uses: netcracker/qubership-core-infra/.github/workflows/maven-build-with-sonar.yaml@fix-reusable-flows-refs
+
     with:
       event-name: ${{ github.event_name }}
       actor: ${{ github.actor }}
@@ -42,7 +43,7 @@ jobs:
 
   docker-build:
     needs: mvn-build
-    uses: ./.github/workflows/docker-build.yaml
+    uses: netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@fix-reusable-flows-refs
     with:
       ref: "refs/tags/v${{ inputs.version }}"
       dry-run: ${{ inputs.dry-run }}
