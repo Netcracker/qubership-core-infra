@@ -35,7 +35,7 @@ jobs:
       platforms: ${{ steps.load_component.outputs.platforms }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ inputs.ref }}
 
@@ -103,7 +103,7 @@ jobs:
       tags: "${{ steps.prepare_tags.outputs.tags }}"
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ inputs.ref }}
 

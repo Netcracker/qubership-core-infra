@@ -95,7 +95,7 @@ jobs:
       is-fork: ${{ steps.prepare.outputs.is-fork }}
     steps:
       - name: Checkout workflow repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: netcracker/qubership-core-infra
           ref: main
