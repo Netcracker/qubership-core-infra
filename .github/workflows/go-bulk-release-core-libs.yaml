@@ -31,6 +31,7 @@ on:
           - qubership-core-lib-go-paas-mediation-client
           - qubership-core-lib-go-rest-utils
           - qubership-core-lib-go-stomp-websocket
+          - qubership-core-bootstrap
       skipTest:
         description: "skip tests"
         type: boolean
@@ -89,7 +90,8 @@ jobs:
           https://github.com/netcracker/qubership-core-lib-go-maas-segmentio
           https://github.com/netcracker/qubership-core-lib-go-paas-mediation-client
           https://github.com/netcracker/qubership-core-lib-go-rest-utils
-          https://github.com/netcracker/qubership-core-lib-go-stomp-websocket"
+          https://github.com/netcracker/qubership-core-lib-go-stomp-websocket
+          https://github.com/Netcracker/qubership-core-bootstrap"
           echo "repositories=\n${repositories}"
           repositories=$(echo "${repositories}" | tr '\n' ',')
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
