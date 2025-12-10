@@ -201,7 +201,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.sonar-token }}
         run: |
           echo "::info:: Installing sonar-scanner..."
-          npm install -g sonar-scanner@3.1.0
+          npm install -g sonar-scanner@3.1.0 --ignore-scripts
 
           echo "::info:: Validating sonar-project.properties exists"
           if [ ! -f "sonar-project.properties" ]; then
