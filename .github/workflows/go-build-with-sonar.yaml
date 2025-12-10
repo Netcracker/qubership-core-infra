@@ -43,6 +43,27 @@ on:
         required: false
         type: string
 
+      # Install envtest
+      install-envtest:
+        description: 'Install envtest dependencies'
+        required: false
+        type: boolean
+        default: false
+
+      # Kubernetes API version for envtest
+      kube-version:
+        description: 'Kubernetes API version for envtest setup (e.g., "1.24.0")'
+        required: false
+        type: string
+        default: '1.32.0'
+
+      # Cover packages
+      cover-packages:
+        description: 'Packages to include in coverage report (default: all packages)'
+        required: false
+        type: string
+        default: './...'
+
     secrets:
       sonar-token:
         description: 'Token for Sonar authentication'
@@ -156,11 +177,22 @@ jobs:
           cache-dependency-path: "**/*.sum"
           go-version-file: "${{ env.GO_MOD_FILE }}"
 
+      - name: Install envtest
+        if: inputs.install-envtest == 'true'
+        shell: bash
+        run: |
+          echo "::info:: Installing envtest package..."
+          go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+          SETUP_OUTPUT=$(setup-envtest use ${{ inputs.kube-version }} -p env)
+          echo "$SETUP_OUTPUT"
+          ASSETS=$(echo "$SETUP_OUTPUT" | grep 'export KUBEBUILDER_ASSETS' | cut -d= -f2| tr -d "'\"")
+          echo "KUBEBUILDER_ASSETS=$ASSETS" >> $GITHUB_ENV
+
       - name: Test with coverage
         working-directory: ${{ env.GO_MOD_DIR }}
         run: |
           echo "::info:: Running tests with coverage..."
-          go test -v ./... -coverprofile coverage.out
+          go test -v ./... -coverpkg=${{ inputs.cover-packages }} -coverprofile coverage.out
 
       - name: Upload coverage report to SonarCloud
         if: steps.prepare.outputs.run-sonar == 'true'
