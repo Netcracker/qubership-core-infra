@@ -178,7 +178,7 @@ jobs:
           go-version-file: "${{ env.GO_MOD_FILE }}"
 
       - name: Install envtest
-        if: inputs.install-envtest == 'true'
+        if: inputs.install-envtest == true
         shell: bash
         run: |
           echo "::info:: Installing envtest package..."
