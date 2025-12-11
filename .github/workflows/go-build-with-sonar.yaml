@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout workflow repository (config)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: netcracker/qubership-core-infra
           ref: main
@@ -98,7 +98,7 @@ jobs:
           echo "::info:: Run Sonar: ${{ steps.prepare.outputs.run-sonar }}"
 
       - name: Checkout repository (code)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
