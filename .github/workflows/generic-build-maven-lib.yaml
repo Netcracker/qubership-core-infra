@@ -61,7 +61,7 @@ jobs:
     steps:
       - name: Check for open PR
         id: pr
-        uses: Netcracker/qubership-core-infra/.github/actions/check-open-pr@v1.1.2
+        uses: Netcracker/qubership-core-infra/.github/actions/check-open-pr@v1.2.0
 
       - name: Explain routing decision
         if: ${{ github.event_name == 'push' && steps.pr.outputs.hasOpenPr == 'true' }}
@@ -80,7 +80,7 @@ jobs:
     name: Build and test Java module
     needs: [ check-pr ]
     if: ${{ !(github.event_name == 'push' && needs.check-pr.outputs.hasOpenPr == 'true') }}
-    uses: Netcracker/qubership-core-infra/.github/workflows/maven-build-with-sonar.yaml@v1.1.2
+    uses: Netcracker/qubership-core-infra/.github/workflows/maven-build-with-sonar.yaml@v1.2.0
     with:
       event-name: ${{ github.event_name }}
       actor: ${{ inputs.actor }}
