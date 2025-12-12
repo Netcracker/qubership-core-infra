@@ -186,7 +186,7 @@ jobs:
   mvn:
     name: ${{ needs.prepare-variables.outputs.run-sonar == 'true' && 'Build with Sonar' || 'Build (no Sonar)' }}
     needs: [ prepare-variables ]
-    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@v2.0.5
+    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@v1.0.7
     with:
       maven-command: >
         -f ${{ inputs.pom-file-path && inputs.pom-file-path || 'pom.xml' }}
