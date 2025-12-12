@@ -402,3 +402,14 @@
 [![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-site-management)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-site-management)
 [![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-site-management)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-site-management)
 [![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-site-management)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-site-management)
+
+---
+
+# Other
+
+## qubership-core-bootstrap
+[![[CR Synchronizer] Go build](https://github.com/Netcracker/qubership-core-bootstrap/actions/workflows/cr-synchronizer---go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-bootstrap/actions/workflows/cr-synchronizer---go-build.yml)
+[![[Core Bootstrap] Go build](https://github.com/Netcracker/qubership-core-bootstrap/actions/workflows/core-bootstrap---go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-bootstrap/actions/workflows/core-bootstrap---go-build.yml)
+
+## qubership-core-base-images
+[![Build and Push On Commit](https://github.com/Netcracker/qubership-core-base-images/actions/workflows/docker-build-on-commit.yaml/badge.svg)](https://github.com/Netcracker/qubership-core-base-images/actions/workflows/docker-build-on-commit.yaml)
