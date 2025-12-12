@@ -112,7 +112,7 @@ jobs:
           curl https://raw.githubusercontent.com/Netcracker/qubership-core-infra/main/.github/metadata-action-go-config.yml -o .github/metadata-action-go-config.yml
 
       - name: Create name
-        uses: netcracker/qubership-workflow-hub/actions/metadata-action@v2.0.4
+        uses: netcracker/qubership-workflow-hub/actions/metadata-action@v2.0.5
         id: metadata
         with:
           configuration-path: .github/metadata-action-go-config.yml
@@ -146,7 +146,7 @@ jobs:
         component: ${{ fromJson(needs.load_config.outputs.components) }}
     steps:
       - name: Docker
-        uses: netcracker/qubership-workflow-hub/actions/docker-action@v2.0.4
+        uses: netcracker/qubership-workflow-hub/actions/docker-action@v2.0.5
         with:
           ref: ${{ inputs.ref }}
           dry-run: ${{ inputs.dry-run }}
