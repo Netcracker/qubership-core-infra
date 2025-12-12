@@ -336,3 +336,69 @@
 [![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-lib-go-maas-bg-segmentio)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-bg-segmentio)
 [![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-lib-go-maas-bg-segmentio)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-lib-go-maas-bg-segmentio)
 
+---
+
+# Java services status
+
+## 1 qubership-core-config-server
+[![Maven build](https://github.com/Netcracker/qubership-core-config-server/actions/workflows/maven-build.yaml/badge.svg)](https://github.com/Netcracker/qubership-core-config-server/actions/workflows/maven-build.yaml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-config-server)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-config-server)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-config-server)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-config-server)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-config-server)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-config-server)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-config-server)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-config-server)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-config-server)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-config-server)
+
+## 2 qubership-core-core-operator
+[![Maven build](https://github.com/Netcracker/qubership-core-core-operator/actions/workflows/maven-build.yaml/badge.svg)](https://github.com/Netcracker/qubership-core-core-operator/actions/workflows/maven-build.yaml)
+
+---
+
+# Go services status
+
+## 1 qubership-core-control-plane
+[![Go build](https://github.com/Netcracker/qubership-core-control-plane/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-control-plane/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-control-plane)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-control-plane)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-control-plane)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-control-plane)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-control-plane)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-control-plane)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-control-plane)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-control-plane)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-control-plane)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-control-plane)
+
+## 2 qubership-core-dbaas-agent
+[![Go build](https://github.com/Netcracker/qubership-core-dbaas-agent/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-dbaas-agent/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-dbaas-agent)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-dbaas-agent)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-dbaas-agent)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-dbaas-agent)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-dbaas-agent)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-dbaas-agent)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-dbaas-agent)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-dbaas-agent)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-dbaas-agent)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-dbaas-agent)
+
+## 3 qubership-core-facade-operator
+[![Go build](https://github.com/Netcracker/qubership-core-facade-operator/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-facade-operator/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-facade-operator)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-facade-operator)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-facade-operator)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-facade-operator)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-facade-operator)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-facade-operator)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-facade-operator)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-facade-operator)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-facade-operator)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-facade-operator)
+
+## 4 qubership-core-maas-agent
+[![Go build](https://github.com/Netcracker/qubership-core-maas-agent/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-maas-agent/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-maas-agent)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-maas-agent)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-maas-agent)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-maas-agent)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-maas-agent)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-maas-agent)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-maas-agent)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-maas-agent)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-maas-agent)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-maas-agent)
+
+## 5 qubership-core-paas-mediation
+[![Go build](https://github.com/Netcracker/qubership-core-paas-mediation/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-paas-mediation/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-paas-mediation)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-paas-mediation)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-paas-mediation)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-paas-mediation)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-paas-mediation)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-paas-mediation)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-paas-mediation)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-paas-mediation)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-paas-mediation)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-paas-mediation)
+
+## 6 qubership-core-site-management
+[![Go build](https://github.com/Netcracker/qubership-core-site-management/actions/workflows/go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-site-management/actions/workflows/go-build.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?metric=coverage&project=Netcracker_qubership-core-site-management)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-site-management)
+[![duplicated_lines_density](https://sonarcloud.io/api/project_badges/measure?metric=duplicated_lines_density&project=Netcracker_qubership-core-site-management)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-site-management)
+[![vulnerabilities](https://sonarcloud.io/api/project_badges/measure?metric=vulnerabilities&project=Netcracker_qubership-core-site-management)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-site-management)
+[![bugs](https://sonarcloud.io/api/project_badges/measure?metric=bugs&project=Netcracker_qubership-core-site-management)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-site-management)
+[![code_smells](https://sonarcloud.io/api/project_badges/measure?metric=code_smells&project=Netcracker_qubership-core-site-management)](https://sonarcloud.io/summary/overall?id=Netcracker_qubership-core-site-management)
