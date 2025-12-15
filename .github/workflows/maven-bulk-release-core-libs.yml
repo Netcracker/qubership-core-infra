@@ -228,7 +228,7 @@ jobs:
           args="${args} --gitUsername=actions"
           args="${args} --gitEmail=actions@github.com"
           args="${args} --gitPassword=${MAVEN_TOKEN}"
-          args="${args} --mavenDeployArtifacts=false"
+          args="${args} --mavenDeployArtifacts=true"
           args="${args} --runParallelism=2"
           args="${args} --repositories=${REPOSITORIES}"
           args="${args} \"--repositoriesToReleaseFrom=${repositoriesToReleaseFrom}\""
