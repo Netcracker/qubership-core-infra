@@ -13,9 +13,6 @@ on:
           - all
           - qubership-core-config-server
           - qubership-core-core-operator
-      runIdsWithGAVs:
-        type: number
-        description: "Comma seperated list of runId(s) of another release workflow(s) to use their dependencies GAVs"
       gavs:
         type: string
         description: "Comma seperated list of GAV(s)"
@@ -34,6 +31,10 @@ on:
         default: false
       dryRun:
         description: "dry run"
+        type: boolean
+        default: false
+      logsToConsole:
+        description: "log to console"
         type: boolean
         default: false
 
@@ -150,6 +151,7 @@ jobs:
           VERSION_INCREMENT_TYPE: ${{ inputs.versionIncrementType }}
           SKIP_TEST: ${{ inputs.skipTest }}
           DRY_RUN: ${{ inputs.dryRun }}
+          LOG_TO_CONSOLE: ${{ inputs.logsToConsole }}
         # language="shell script"
         run: |
           #          cli_name="maven-bulk-release-cli"
@@ -175,6 +177,10 @@ jobs:
           if [ "${DRY_RUN}" = "true" ]; then
             options="${options} --dryRun"
           fi
+          if [ "${LOG_TO_CONSOLE}" = "true" ]; then
+            options="${options} --logsToConsole"
+          fi
+          
           repositoriesToReleaseFrom=""
           if [ "${REPOSITORY_TO_RELEASE_FROM}" != "all" ]; then
             repositoriesToReleaseFrom=$(echo "${REPOSITORIES}" | tr ',' '\n' | grep "${REPOSITORY_TO_RELEASE_FROM}")
