@@ -219,6 +219,7 @@ jobs:
           path: /tmp/graph.dot
 
       - name: "Upload logs artifact"
+        if: ${{ always() }}
         uses: actions/upload-artifact@v5
         with:
           name: logs
