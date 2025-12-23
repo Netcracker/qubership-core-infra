@@ -155,5 +155,6 @@ jobs:
           component: ${{ toJson(matrix.component) }}
           platforms: ${{ needs.load_config.outputs.platforms }}
           tags: ${{ needs.perform-version.outputs.tags }}
+          debug: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
