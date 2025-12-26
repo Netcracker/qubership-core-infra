@@ -10,6 +10,7 @@ enabledManagers:
   - "dockerfile"
   - "gomod"
   - "github-actions"
+  - "regex"
 globalExtends:
   - ":ignoreModulesAndTests"
   - ":dependencyDashboard"
