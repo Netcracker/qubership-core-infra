@@ -12,7 +12,7 @@ jobs:
     with:
       type: "repositories"
       dry-run: false
-      log-level: 'info'
+      log-level: 'debug'
     secrets:
       MAVEN_USER: "${{ secrets.MAVEN_USER }}"
       MAVEN_TOKEN: ${{ secrets.MAVEN_PASSWORD }}
