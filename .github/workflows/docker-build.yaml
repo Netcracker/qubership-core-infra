@@ -23,7 +23,7 @@ on:
         type: string
         description: 'Git reference to use for the build'
       build-args:
-        description: "Build arguments for the Docker image, in JSON format."
+        description: "Build arguments for the Docker image, in key=value format, one per line."
         required: false
         type: string
         default: ""
@@ -160,6 +160,7 @@ jobs:
           component: ${{ toJson(matrix.component) }}
           platforms: ${{ needs.load_config.outputs.platforms }}
           tags: ${{ needs.perform-version.outputs.tags }}
-          build-args: ${{ fromJSON(inputs.build-args) }}
+          build-args: |
+              ${{ inputs.build-args }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
