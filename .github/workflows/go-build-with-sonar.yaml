@@ -43,6 +43,34 @@ on:
         required: false
         type: string
 
+      # Install envtest
+      install-envtest:
+        description: 'Install envtest dependencies'
+        required: false
+        type: boolean
+        default: false
+
+      # Setup-envtest script version
+      envtest-version:
+        description: 'Setup-envtest script version'
+        required: false
+        type: string
+        default: ''
+
+      # Kubernetes API version for envtest
+      kube-version:
+        description: 'Kubernetes API version for envtest setup (e.g., "1.24.0")'
+        required: false
+        type: string
+        default: '1.32.0'
+
+      # Cover packages
+      cover-packages:
+        description: 'Packages to include in coverage report (default: all packages)'
+        required: false
+        type: string
+        default: './...'
+
     secrets:
       sonar-token:
         description: 'Token for Sonar authentication'
@@ -156,11 +184,53 @@ jobs:
           cache-dependency-path: "**/*.sum"
           go-version-file: "${{ env.GO_MOD_FILE }}"
 
+      - name: Install envtest
+        if: inputs.install-envtest == true
+        working-directory: ${{ env.GO_MOD_DIR }}
+        env:
+          ENVTEST_VERSION: ${{ inputs.envtest-version }}
+          KUBE_VERSION: ${{ inputs.kube-version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "$ENVTEST_VERSION" ]; then
+            echo "::info:: Trying to install setup-envtest@$ENVTEST_VERSION..."
+            go install "sigs.k8s.io/controller-runtime/tools/setup-envtest@$ENVTEST_VERSION"
+          else
+            echo "::info:: No envtest-version specified, determining version from controller-runtime..."
+            CR_VERSION=$(go list -m -f "{{ .Version }}" sigs.k8s.io/controller-runtime 2>/dev/null || echo "")
+            if [ -z "$CR_VERSION" ]; then
+              echo "::error:: Unable to determine controller-runtime version. Please specify envtest-version explicitly."
+              exit 1
+            else
+              echo "::info:: Controller-runtime version: ${CR_VERSION}"
+              if [[ "$CR_VERSION" =~ v([0-9]+)\.([0-9]+) ]]; then
+                ENVTEST_VERSION="release-${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+                echo "::info:: Using envtest version: $ENVTEST_VERSION"
+                go install "sigs.k8s.io/controller-runtime/tools/setup-envtest@$ENVTEST_VERSION"
+              else
+                echo "::warning:: Cannot parse controller-runtime version: $CR_VERSION. Please specify envtest-version explicitly."
+                exit 1
+              fi
+            fi
+          fi
+          echo "::info:: Setting up envtest for Kubernetes $KUBE_VERSION..."
+          SETUP_OUTPUT=$(setup-envtest use "$KUBE_VERSION" -p env 2>&1)
+          echo "$SETUP_OUTPUT"
+          ASSETS=$(echo "$SETUP_OUTPUT" | grep 'export KUBEBUILDER_ASSETS' | cut -d= -f2| tr -d "'\"")
+          if [ -d "$ASSETS" ]; then
+            echo "KUBEBUILDER_ASSETS=$ASSETS" >> $GITHUB_ENV
+            echo "::info:: Successfully set KUBEBUILDER_ASSETS=$ASSETS"
+          else
+            echo "::error:: envtest assets directory not found."
+            exit 1
+          fi
+
       - name: Test with coverage
         working-directory: ${{ env.GO_MOD_DIR }}
         run: |
           echo "::info:: Running tests with coverage..."
-          go test -v ./... -coverprofile coverage.out
+          go test -v ./... -coverpkg="${{ inputs.cover-packages }}" -coverprofile coverage.out
 
       - name: Upload coverage report to SonarCloud
         if: steps.prepare.outputs.run-sonar == 'true'
@@ -169,7 +239,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.sonar-token }}
         run: |
           echo "::info:: Installing sonar-scanner..."
-          npm install -g sonar-scanner@3.1.0
+          npm install -g sonar-scanner@3.1.0 --ignore-scripts
 
           echo "::info:: Validating sonar-project.properties exists"
           if [ ! -f "sonar-project.properties" ]; then
