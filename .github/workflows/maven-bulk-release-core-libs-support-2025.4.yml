@@ -204,20 +204,20 @@ jobs:
           eval "${cmd}"
 
       - name: "Upload gavs artifact"
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: gavs.txt
           path: /tmp/gavs.txt
 
       - name: "Upload graph artifact"
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: graph.dot
           path: /tmp/graph.dot
 
       - name: "Upload logs artifact"
         if: ${{ always() }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: logs
           path: /tmp/logs/
