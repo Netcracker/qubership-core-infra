@@ -205,7 +205,7 @@ jobs:
           path: renovate-config.js
 
       - name: Renovate
-        uses: renovatebot/github-action@v42.0.6
+        uses: renovatebot/github-action@v44.2.2
         env:
           RENOVATE_MAVEN_USER: "${{ secrets.MAVEN_USER }}"
           RENOVATE_MAVEN_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
