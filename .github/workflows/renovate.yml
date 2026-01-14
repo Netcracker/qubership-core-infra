@@ -140,13 +140,12 @@ jobs:
         run: |
           # run renovate-config-cli
           cli_name="renovate-config-cli"
-          cliVersion="1.3.2-SNAPSHOT"
-          cliVersionSpecific="1.3.2-20251020.085536-19"
+          cliVersion="1.6.5-SNAPSHOT"
+          cliVersionSpecific="1.6.5-20260114.102531-13"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${cli_name}/${cliVersion}/${cli_name}-${cliVersionSpecific}-jar-with-dependencies.jar"
           curl -L -v -o "${cli_name}.jar" -H "Authorization: Bearer ${GH_ACCESS_TOKEN}" "${url}"
           
           branchPrefix="renovate-${GITHUB_REF_NAME}/"
-          branchPrefixOld="renovate/"
           
           defLabels="'renovate:core','branch:${GITHUB_REF_NAME}'"
           if [ "${TYPE}" = "configuration" ]; then
@@ -164,15 +163,7 @@ jobs:
             args+=("--repositoriesFile=.github/config/renovate-repositories.txt")
           fi
           args+=("--fromJson={'branchPrefix':'${branchPrefix}'}")
-          args+=("--fromJson={'branchPrefixOld':'${branchPrefixOld}'}")
           args+=("--fromJson={'labels':[${defLabels}]}")
-          args+=("--fromJson={'packageRules':[{'matchPackageNames':['/.*/'],'matchUpdateTypes':['major'],'enabled':false,'automerge':false,'addLabels':['type:major']}]}")
-          args+=("--fromJson={'packageRules':[{'matchPackageNames':['/.*/'],'matchUpdateTypes':['minor'],'enabled':true,'automerge':false,'addLabels':['type:minor']}]}")
-          args+=("--fromJson={'packageRules':[{'matchPackageNames':['/.*/'],'matchUpdateTypes':['patch'],'enabled':true,'automerge':false,'addLabels':['type:patch']}]}")
-          args+=("--fromJson={'packageRules':[{'matchPackageNames':['/.*/'],'matchUpdateTypes':['digest'],'enabled':true,'automerge':false,'addLabels':['type:digest']}]}")
-          #args+=("--fromJson={'packageRules':[{'matchPackageNames':['/.*.netcracker.*/'],'groupName':'netcracker','addLabels':['group:netcracker']}]}")
-          #args+=("--fromJson={'packageRules':[{'matchPackageNames':['/^org.spring.*/'],'groupName':'spring','addLabels':['group:spring']}]}")
-          #args+=("--fromJson={'packageRules':[{'matchPackageNames':['/(io.quarkus.*|^io.smallrye.jandex.*)/'],'groupName':'quarkus','addLabels':['group:quarkus']}]}")
           args+=("--fromJson={'packageRules':[{'matchManagers':['maven'],'groupName':'maven','groupSlug':'maven','addLabels':['group:maven']}]}")
           args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchUpdateTypes':['major'],'groupName':'go-major','groupSlug':'go-major','addLabels':['group:go']}]}")
           args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchUpdateTypes':['minor'],'groupName':'go-minor','groupSlug':'go-minor','addLabels':['group:go']}]}")
@@ -181,34 +172,21 @@ jobs:
           # bump go version because there is bug in go when it switches from 1.23.x (from go directive) to 1.25.1 (from toolchain directive)
           args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchDepNames':['go'],'matchDepTypes':['golang'],'rangeStrategy':'bump','addLabels':['group:go-version']}]}")
           args+=("--fromJson={'packageRules':[{'matchManagers':['github-actions'],'groupName':'github-actions'}]}") 
-          #args+=("--groupNameMapping={'netcracker':'com.netcracker.*'}")
-          #args+=("--groupNameMapping={'spring':'org.spring.*'}")
-          #args+=("--groupNameMapping={'quarkus':'(io.quarkus.*|^io.smallrye.jandex.*)'}")
-          #args+=("--groupNameMapping={'com.fasterxml.jackson':'com.fasterxml.jackson.*'}")
-          #args+=("--groupNameMapping={'k8s.io':'k8s.io.*'}")
           args+=("--groupNameMapping={'maven':'.*'}")
           if [ "${TYPE}" = "configuration" ]; then
             args+=("--patchGavsFile=implicit-gavs.txt")
           else
             args+=("--strictGavsFile=effective-gavs.txt")
           fi
-          args+=("--renovateConfigOutputFile=renovate-config.js")
+          args+=("--renovateConfigOutputFile=renovate-config.json")
+          args+=("--renovateConfigOutputFormat=JSON")
           if [ "${DRY_RUN}" = "true" ]; then
             args+=("--fromJson={'dryRun':'full'}")
           fi
           java -jar "${cli_name}.jar" "${args[@]}"
 
-      - name: "Upload renovate-config.js artifact"
+      - name: "Upload renovate-config.json artifact"
         uses: actions/upload-artifact@v5
         with:
-          name: renovate-config.js
-          path: renovate-config.js
-
-      - name: Renovate
-        uses: renovatebot/github-action@v42.0.6
-        env:
-          RENOVATE_MAVEN_USER: "${{ secrets.MAVEN_USER }}"
-          RENOVATE_MAVEN_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
-        with:
-          configurationFile: renovate-config.js
-          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          name: renovate-config.json
+          path: renovate-config.json
