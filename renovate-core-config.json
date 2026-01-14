@@ -852,7 +852,7 @@
   "prConcurrentLimit": 25,
   "prCreation": "immediate",
   "prHourlyLimit": 5,
-  "printConfig": false,
+  "printConfig": true,
   "pruneStaleBranches": true,
   "rebaseWhen": "behind-base-branch",
   "recreateWhen": "always",
