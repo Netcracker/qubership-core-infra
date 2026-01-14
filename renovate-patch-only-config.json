@@ -1,0 +1,40 @@
+{
+  "packageRules": [
+    {
+      "matchPackageNames": [
+        "/.*/"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "addLabels": [
+        "type:major"
+      ],
+      "enabled": false
+    },
+    {
+      "matchPackageNames": [
+        "/.*/"
+      ],
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "addLabels": [
+        "type:minor"
+      ],
+      "enabled": false
+    },
+    {
+      "matchPackageNames": [
+        "/.*/"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "addLabels": [
+        "type:patch"
+      ],
+      "enabled": true
+    }
+  ]
+}

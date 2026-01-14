@@ -1,7 +1,10 @@
 {
-  "$schema" : "https://docs.renovatebot.com/renovate-schema.json",
-  "assignAutomerge" : true,
-  "assigneesFromCodeOwners" : true,
-  "reviewersFromCodeOwners" : true,
-  "extends" : [ "github>Netcracker/qubership-core-infra:renovate-core-config" ]
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "assignAutomerge": true,
+  "assigneesFromCodeOwners": true,
+  "reviewersFromCodeOwners": true,
+  "extends": [
+    "github>Netcracker/qubership-core-infra:renovate-core-config",
+    "github>Netcracker/qubership-core-infra:renovate-patch-only-config"
+  ]
 }
