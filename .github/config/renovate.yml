@@ -5,22 +5,9 @@ autodiscover: false
 binarySource: "install"
 branchConcurrentLimit: 25
 enabled: true
-enabledManagers:
-  - "maven"
-  - "dockerfile"
-  - "gomod"
-  - "github-actions"
-  - "regex"
 globalExtends:
   - ":ignoreModulesAndTests"
   - ":dependencyDashboard"
-hostRules:
-  - hostType: "maven"
-    matchHost: "https://repo.maven.apache.org/maven2"
-  - hostType: "maven"
-    matchHost: "https://maven.pkg.github.com/Netcracker/**"
-    username: "$process.env.RENOVATE_MAVEN_USER"
-    password: "$process.env.RENOVATE_MAVEN_TOKEN"
 packageRules:
   - matchManagers: [ "maven" ]
     matchPackageNames: [ "/.*/" ]
@@ -37,11 +24,6 @@ packageRules:
   - matchPackageNames:
       - "/.*/"
     allowedVersions: "!/.*(redhat|composite|groovyless|jboss|atlassian|preview|does-not-exist|-SNAPSHOT).*/"
-  - matchDatasources:
-      - "maven"
-    registryUrls:
-      - "https://repo.maven.apache.org/maven2"
-      - "https://maven.pkg.github.com/Netcracker/**"
 platform: "github"
 platformAutomerge: true
 postUpdateOptions:
