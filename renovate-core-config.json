@@ -1,0 +1,867 @@
+{
+  "assignAutomerge": true,
+  "assigneesFromCodeOwners": true,
+  "autodiscover": false,
+  "binarySource": "install",
+  "branchConcurrentLimit": 25,
+  "branchPrefix": "renovate-main/",
+  "enabled": true,
+  "globalExtends": [
+    ":ignoreModulesAndTests",
+    ":dependencyDashboard"
+  ],
+  "labels": [
+    "renovate:core",
+    "branch:main"
+  ],
+  "packageRules": [
+    {
+      "matchManagers": [
+        "maven"
+      ],
+      "matchPackageNames": [
+        "/.*/"
+      ],
+      "addLabels": [
+        "manager:maven"
+      ]
+    },
+    {
+      "matchManagers": [
+        "dockerfile"
+      ],
+      "matchPackageNames": [
+        "/.*/"
+      ],
+      "addLabels": [
+        "manager:docker"
+      ]
+    },
+    {
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchPackageNames": [
+        "/.*/"
+      ],
+      "addLabels": [
+        "manager:go"
+      ]
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchPackageNames": [
+        "/.*/"
+      ],
+      "addLabels": [
+        "manager:github-actions"
+      ]
+    },
+    {
+      "matchPackageNames": [
+        "/.*/"
+      ],
+      "allowedVersions": "!/.*(redhat|composite|groovyless|jboss|atlassian|preview|does-not-exist|-SNAPSHOT).*/"
+    },
+    {
+      "matchManagers": [
+        "maven"
+      ],
+      "groupName": "maven",
+      "groupSlug": "maven",
+      "addLabels": [
+        "group:maven"
+      ]
+    },
+    {
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "groupName": "go-major",
+      "groupSlug": "go-major",
+      "addLabels": [
+        "group:go"
+      ]
+    },
+    {
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "groupName": "go-minor",
+      "groupSlug": "go-minor",
+      "addLabels": [
+        "group:go"
+      ]
+    },
+    {
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "groupName": "go-patch",
+      "groupSlug": "go-patch",
+      "addLabels": [
+        "group:go"
+      ]
+    },
+    {
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchUpdateTypes": [
+        "digest"
+      ],
+      "groupName": "go-digest",
+      "groupSlug": "go-digest",
+      "addLabels": [
+        "group:go"
+      ]
+    },
+    {
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchDepNames": [
+        "go"
+      ],
+      "matchDepTypes": [
+        "golang"
+      ],
+      "rangeStrategy": "bump",
+      "addLabels": [
+        "group:go-version"
+      ]
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "github-actions"
+    },
+    {
+      "matchPackageNames": [
+        "org.assertj:assertj-core"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.27.6$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.apache.commons:commons-dbcp2"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.13.0$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.apache.commons:commons-lang3"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.18.0$/"
+    },
+    {
+      "matchPackageNames": [
+        "com.squareup.okhttp3:mockwebserver",
+        "com.squareup.okhttp3:okhttp"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^4.12.0$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.slf4j:slf4j-api",
+        "org.slf4j:slf4j-log4j12",
+        "org.slf4j:slf4j-reload4j",
+        "org.slf4j:slf4j-simple"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.0.17$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.apache.httpcomponents:httpclient"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^4.5.14$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.apache.httpcomponents:httpcore"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^4.4.16$/"
+    },
+    {
+      "matchPackageNames": [
+        "ch.qos.logback:logback-classic",
+        "ch.qos.logback:logback-core"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^1.5.22$/"
+    },
+    {
+      "matchPackageNames": [
+        "com.fasterxml.jackson.module:jackson-module-parameter-names"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.19.4$/"
+    },
+    {
+      "matchPackageNames": [
+        "com.fasterxml.jackson.core:jackson-annotations",
+        "com.fasterxml.jackson.core:jackson-databind"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.19.4$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.postgresql:postgresql"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^42.7.8$/"
+    },
+    {
+      "matchPackageNames": [
+        "commons-io:commons-io"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.20.0$/"
+    },
+    {
+      "matchPackageNames": [
+        "com.fasterxml.jackson.dataformat:jackson-dataformat-xml",
+        "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.19.4$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.apache.httpcomponents.client5:httpclient5"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^5.5.1$/"
+    },
+    {
+      "matchPackageNames": [
+        "info.picocli:picocli"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^4.7.7$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.springframework:spring-aop",
+        "org.springframework:spring-beans",
+        "org.springframework:spring-context",
+        "org.springframework:spring-core",
+        "org.springframework:spring-expression",
+        "org.springframework:spring-jdbc",
+        "org.springframework:spring-test",
+        "org.springframework:spring-tx",
+        "org.springframework:spring-web",
+        "org.springframework:spring-webflux",
+        "org.springframework:spring-webmvc"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^6.2.15$/"
+    },
+    {
+      "matchPackageNames": [
+        "io.smallrye:jandex"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.4.0$/"
+    },
+    {
+      "matchPackageNames": [
+        "io.smallrye:jandex-maven-plugin"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.5.3$/"
+    },
+    {
+      "matchPackageNames": [
+        "com.fasterxml.jackson:jackson-bom"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.19.4$/"
+    },
+    {
+      "matchPackageNames": [
+        "io.quarkus.platform:quarkus-bom",
+        "io.quarkus.platform:quarkus-maven-plugin",
+        "io.quarkus.platform:quarkus-operator-sdk-bom"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.27.1$/"
+    },
+    {
+      "matchPackageNames": [
+        "io.quarkus:quarkus-bom",
+        "io.quarkus:quarkus-core",
+        "io.quarkus:quarkus-core-deployment",
+        "io.quarkus:quarkus-devtools-common",
+        "io.quarkus:quarkus-extension-maven-plugin",
+        "io.quarkus:quarkus-extension-processor",
+        "io.quarkus:quarkus-maven-plugin",
+        "io.quarkus:quarkus-rest-client",
+        "io.quarkus:quarkus-universe-bom"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.27.1$/"
+    },
+    {
+      "matchPackageNames": [
+        "io.opentelemetry.instrumentation:opentelemetry-kafka-clients-2.6",
+        "io.opentelemetry.instrumentation:opentelemetry-kafka-clients-common"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.10.0-alpha$/"
+    },
+    {
+      "matchPackageNames": [
+        "io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.10.0$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.bouncycastle:bcprov-jdk18on"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^1.82$/"
+    },
+    {
+      "matchPackageNames": [
+        "jakarta.transaction:jakarta.transaction-api"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.0.1$/"
+    },
+    {
+      "matchPackageNames": [
+        "com.google.code.findbugs:jsr305"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.0.2$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.springframework.cloud:spring-cloud-config-client",
+        "org.springframework.cloud:spring-cloud-starter",
+        "org.springframework.cloud:spring-cloud-starter-consul-config"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^4.3.1$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.springframework.cloud:spring-cloud-dependencies"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2025.0.1$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.flywaydb:flyway-core",
+        "org.flywaydb:flyway-database-postgresql"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^11.11.2$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.mockito:mockito-core",
+        "org.mockito:mockito-junit-jupiter"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^5.18.0$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.testcontainers:cassandra",
+        "org.testcontainers:clickhouse",
+        "org.testcontainers:consul",
+        "org.testcontainers:junit-jupiter",
+        "org.testcontainers:kafka",
+        "org.testcontainers:mongodb",
+        "org.testcontainers:postgresql",
+        "org.testcontainers:testcontainers",
+        "org.testcontainers:testcontainers-bom"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^1.21.4$/"
+    },
+    {
+      "matchPackageNames": [
+        "jakarta.validation:jakarta.validation-api"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.1.1$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.springframework.security:spring-security-core",
+        "org.springframework.security:spring-security-oauth2-client",
+        "org.springframework.security:spring-security-test"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^6.5.7$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.apache.httpcomponents.core5:httpcore5"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^5.3.6$/"
+    },
+    {
+      "matchPackageNames": [
+        "com.sun.xml.bind:jaxb-core",
+        "com.sun.xml.bind:jaxb-impl"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^4.0.6$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.hibernate.orm:hibernate-processor"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^7.1.4.Final$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.jboss.resteasy:resteasy-core"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^6.2.12.Final$/"
+    },
+    {
+      "matchPackageNames": [
+        "com.nimbusds:nimbus-jose-jwt"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^10.4.2$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.jboss.logmanager:jboss-logmanager"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.1.2.Final$/"
+    },
+    {
+      "matchPackageNames": [
+        "io.reactivex.rxjava2:rxjava"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.2.21$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.awaitility:awaitility"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^4.3.0$/"
+    },
+    {
+      "matchPackageNames": [
+        "io.projectreactor.netty:reactor-netty"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^1.2.13$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.springframework.data:spring-data-cassandra",
+        "org.springframework.data:spring-data-mongodb"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^4.5.7$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.springframework.data:spring-data-commons",
+        "org.springframework.data:spring-data-jpa",
+        "org.springframework.data:spring-data-redis"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.5.7$/"
+    },
+    {
+      "matchPackageNames": [
+        "jakarta.inject:jakarta.inject-api"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.0.1$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.wiremock:wiremock-standalone"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.9.2$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.projectlombok:lombok"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^1.18.42$/"
+    },
+    {
+      "matchPackageNames": [
+        "io.vertx:vertx-core",
+        "io.vertx:vertx-stomp"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^4.5.22$/"
+    },
+    {
+      "matchPackageNames": [
+        "com.google.guava:guava"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^33.4.8-jre$/"
+    },
+    {
+      "matchPackageNames": [
+        "com.rabbitmq:amqp-client"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^5.25.0$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.glassfish.jaxb:jaxb-runtime"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^4.0.6$/"
+    },
+    {
+      "matchPackageNames": [
+        "com.google.code.gson:gson"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.13.2$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.apache.curator:curator-recipes"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^5.8.0$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.apache.logging.log4j:log4j-core",
+        "org.apache.logging.log4j:log4j-slf4j-impl"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.24.3$/"
+    },
+    {
+      "matchPackageNames": [
+        "commons-codec:commons-codec"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^1.19.0$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.apache.maven:maven-artifact",
+        "org.apache.maven:maven-model"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.9.9$/"
+    },
+    {
+      "matchPackageNames": [
+        "com.fasterxml.jackson.datatype:jackson-datatype-jdk8",
+        "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.19.4$/"
+    },
+    {
+      "matchPackageNames": [
+        "com.github.docker-java:docker-java-api"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.4.2$/"
+    },
+    {
+      "matchPackageNames": [
+        "com.ecwid.consul:consul-api"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^1.4.5$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.springframework.amqp:spring-amqp",
+        "org.springframework.amqp:spring-rabbit"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.2.8$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.jetbrains:annotations"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^26.0.2$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.yaml:snakeyaml"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.4$/"
+    },
+    {
+      "matchPackageNames": [
+        "io.projectreactor:reactor-core",
+        "io.projectreactor:reactor-test"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.7.14$/"
+    },
+    {
+      "matchPackageNames": [
+        "junit:junit"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^4.13.2$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.mongodb:mongodb-driver-core",
+        "org.mongodb:mongodb-driver-sync"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^5.5.2$/"
+    },
+    {
+      "matchPackageNames": [
+        "jakarta.xml.bind:jakarta.xml.bind-api"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^4.0.4$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.springframework.kafka:spring-kafka",
+        "org.springframework.kafka:spring-kafka-test"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.3.11$/"
+    },
+    {
+      "matchPackageNames": [
+        "jakarta.el:jakarta.el-api"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^6.0.1$/"
+    },
+    {
+      "matchPackageNames": [
+        "io.micrometer:micrometer-core",
+        "io.micrometer:micrometer-registry-prometheus"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^1.15.7$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.eclipse.jgit:org.eclipse.jgit"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^6.10.1.202505221210-r$/"
+    },
+    {
+      "matchPackageNames": [
+        "jakarta.ws.rs:jakarta.ws.rs-api"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.1.0$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.bitbucket.b_c:jose4j"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^0.9.6$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.springframework.boot:spring-boot",
+        "org.springframework.boot:spring-boot-actuator",
+        "org.springframework.boot:spring-boot-autoconfigure",
+        "org.springframework.boot:spring-boot-dependencies",
+        "org.springframework.boot:spring-boot-starter-actuator",
+        "org.springframework.boot:spring-boot-starter-parent",
+        "org.springframework.boot:spring-boot-starter-test",
+        "org.springframework.boot:spring-boot-starter-web",
+        "org.springframework.boot:spring-boot-starter-webflux",
+        "org.springframework.boot:spring-boot-test"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.5.9$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.junit.jupiter:junit-jupiter",
+        "org.junit.jupiter:junit-jupiter-api",
+        "org.junit.jupiter:junit-jupiter-engine"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^5.13.4$/"
+    },
+    {
+      "matchPackageNames": [
+        "com.zaxxer:HikariCP"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^6.3.3$/"
+    },
+    {
+      "matchPackageNames": [
+        "com.jayway.jsonpath:json-path"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.9.0$/"
+    },
+    {
+      "matchPackageNames": [
+        "jakarta.servlet:jakarta.servlet-api"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^6.0.0$/"
+    },
+    {
+      "matchPackageNames": [
+        "redis.clients:jedis"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^6.0.0$/"
+    },
+    {
+      "matchPackageNames": [
+        "io.grpc:grpc-netty-shaded",
+        "io.grpc:grpc-protobuf",
+        "io.grpc:grpc-stub"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^1.69.1$/"
+    },
+    {
+      "matchPackageNames": [
+        "io.fabric8:kubernetes-client",
+        "io.fabric8:kubernetes-client-bom"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^7.3.1$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.apache.maven.plugins:maven-assembly-plugin"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.7.1$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.apache.maven.plugins:maven-dependency-plugin"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.7.0$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.apache.maven.plugins:maven-deploy-plugin"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.1.2$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.freemarker:freemarker"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.3.34$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.junit:junit-bom"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^5.12.2$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.apache.maven.wagon:wagon-provider-api"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.5.3$/"
+    },
+    {
+      "matchPackageNames": [
+        "io.undertow:undertow-core",
+        "io.undertow:undertow-servlet",
+        "io.undertow:undertow-websockets-jsr"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.3.20.Final$/"
+    },
+    {
+      "matchPackageNames": [
+        "org.springframework.retry:spring-retry"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.0.12$/"
+    },
+    {
+      "matchPackageNames": [
+        "com.h2database:h2"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^2.3.232$/"
+    }
+  ],
+  "platform": "github",
+  "platformAutomerge": true,
+  "postUpdateOptions": [
+    "gomodUpdateImportPaths",
+    "gomodTidy"
+  ],
+  "prConcurrentLimit": 25,
+  "prCreation": "immediate",
+  "prHourlyLimit": 5,
+  "printConfig": false,
+  "pruneStaleBranches": true,
+  "rebaseWhen": "behind-base-branch",
+  "recreateWhen": "always",
+  "repositories": [],
+  "reviewersFromCodeOwners": true,
+  "vulnerabilityAlerts": {
+    "addLabels": [
+      "security"
+    ],
+    "vulnerabilityFixStrategy": "lowest"
+  }
+}
