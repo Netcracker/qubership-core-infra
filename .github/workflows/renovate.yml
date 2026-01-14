@@ -114,19 +114,19 @@ jobs:
           eval "${cmd}"
 
       - name: "Upload implicit-gavs.txt artifact"
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: implicit-gavs.txt
           path: implicit-gavs.txt
 
       - name: "Upload effective-gavs.txt artifact"
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: effective-gavs.txt
           path: effective-gavs.txt
 
       - name: "Upload diff.yaml artifact"
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: diff.yaml
           path: diff.yaml
@@ -186,7 +186,7 @@ jobs:
           java -jar "${cli_name}.jar" "${args[@]}"
 
       - name: "Upload renovate-config.json artifact"
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: renovate-config.json
           path: renovate-config.json
