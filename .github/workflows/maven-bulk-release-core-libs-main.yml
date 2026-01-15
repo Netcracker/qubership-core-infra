@@ -167,11 +167,13 @@ jobs:
           https://github.com/Netcracker/qubership-maas-client-quarkus[branch=main]
           https://github.com/Netcracker/qubership-maas-declarative-client-quarkus[branch=main]
           https://github.com/Netcracker/qubership-core-junit-k8s-extension[branch=main]"
-          echo "repositories=\n${repositories}"
           
           if [ "${REPOSITORY_TO_RELEASE_FROM}" != "all" ] && [ "${RELEASE_SIGNLE_REPOSITORY}" = "true" ]; then
           repositories=$(echo "${repositories}" | grep -E ".*${REPOSITORY_TO_RELEASE_FROM}\[.*" | tr '\n' ',')
           fi
+          
+          echo "repositories=\n${repositories}"
+
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
 
       - name: "Cache Maven dependencies"
