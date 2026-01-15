@@ -220,8 +220,8 @@ jobs:
           #          
           #          cli_jar=$(ls -1 "/tmp" | grep "${cli_name}" | tr -d '\n')
           #                    
-          cliVersion="1.5.0-SNAPSHOT"   
-          cliVersionSpecific="1.5.0-20251105.133058-37"
+          cliVersion="1.6.4"   
+          cliVersionSpecific="1.6.4"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-infra/org.qubership.cloud/maven-bulk-release-cli/${cliVersion}/maven-bulk-release-cli-${cliVersionSpecific}-jar-with-dependencies.jar"
           curl -L -o "maven-bulk-release-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
           cli_jar="maven-bulk-release-cli.jar"
