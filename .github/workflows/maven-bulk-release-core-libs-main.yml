@@ -169,7 +169,6 @@ jobs:
           https://github.com/Netcracker/qubership-core-junit-k8s-extension[branch=main]"
           echo "repositories=\n${repositories}"
           
-          repositories=$(cat "config/${REPOSITORIES_GROUP}.txt")
           if [ "${REPOSITORY_TO_RELEASE_FROM}" != "all" ] && [ "${RELEASE_SIGNLE_REPOSITORY}" = "true" ]; then
           repositories=$(echo "${repositories}" | grep -E ".*${REPOSITORY_TO_RELEASE_FROM}\[.*" | tr '\n' ',')
           fi
