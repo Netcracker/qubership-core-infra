@@ -35,9 +35,13 @@ on:
           - qubership-maas-declarative-client-quarkus
           - qubership-maas-declarative-client-spring
           - qubership-core-junit-k8s-extension
+      releaseSingleRepository:
+        description: "release only selected repository"
+        type: boolean
+        default: false
       gavs:
         type: string
-        description: "Comma seperated list of GAV(s)"
+        description: "Comma separated list of GAV(s)"
         default: ""
       versionIncrementType:
         description: "Version part to increment"
@@ -134,6 +138,9 @@ jobs:
       - name: "Read repositories"
         id: read-repositories
         shell: bash
+        env:
+          REPOSITORY_TO_RELEASE_FROM: ${{ inputs.repositoryToRelease }}
+          RELEASE_SIGNLE_REPOSITORY: ${{ inputs.releaseSingleRepository }}
         # language="shell script"
         run: |
           repositories="https://github.com/Netcracker/qubership-core-bulk-release[branch=main]
@@ -161,7 +168,11 @@ jobs:
           https://github.com/Netcracker/qubership-maas-declarative-client-quarkus[branch=main]
           https://github.com/Netcracker/qubership-core-junit-k8s-extension[branch=main]"
           echo "repositories=\n${repositories}"
-          repositories=$(echo "${repositories}" | tr '\n' ',')
+          
+          repositories=$(cat "config/${REPOSITORIES_GROUP}.txt")
+          if [ "${REPOSITORY_TO_RELEASE_FROM}" != "all" ] && [ "${RELEASE_SIGNLE_REPOSITORY}" = "true" ]; then
+          repositories=$(echo "${repositories}" | grep -E ".*${REPOSITORY_TO_RELEASE_FROM}\[.*" | tr '\n' ',')
+          fi
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
 
       - name: "Cache Maven dependencies"
