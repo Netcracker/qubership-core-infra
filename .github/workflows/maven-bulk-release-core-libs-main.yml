@@ -172,6 +172,7 @@ jobs:
           repositories=$(echo "${repositories}" | grep -E ".*${REPOSITORY_TO_RELEASE_FROM}\[.*" | tr '\n' ',')
           fi
           
+          repositories=$(echo "${repositories}" | tr '\n' ',')
           echo "repositories=\n${repositories}"
 
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
