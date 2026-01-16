@@ -1,4 +1,8 @@
 {
+  "labels": [
+    "renovate:core",
+    "branch:main"
+  ],
   "separateMinorPatch": true,
   "packageRules": [
     {
