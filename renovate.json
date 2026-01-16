@@ -4,7 +4,6 @@
   "assigneesFromCodeOwners": true,
   "reviewersFromCodeOwners": true,
   "extends": [
-    "github>Netcracker/qubership-core-infra:renovate-core-config",
     "github>Netcracker/qubership-core-infra:renovate-patch-only-config"
   ]
 }
