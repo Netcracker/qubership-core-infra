@@ -4,6 +4,7 @@
     "branch:main"
   ],
   "separateMinorPatch": true,
+  "separateMajorMinor": true,
   "packageRules": [
     {
       "matchPackageNames": [
@@ -15,7 +16,7 @@
       "addLabels": [
         "type:major"
       ],
-      "enabled": false
+      "enabled": true
     },
     {
       "matchPackageNames": [
