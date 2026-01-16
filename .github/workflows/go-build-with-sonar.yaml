@@ -69,7 +69,6 @@ on:
         description: 'Packages to include in coverage report (default: all packages)'
         required: false
         type: string
-        default: './...'
 
     secrets:
       sonar-token:
@@ -230,7 +229,11 @@ jobs:
         working-directory: ${{ env.GO_MOD_DIR }}
         run: |
           echo "::info:: Running tests with coverage..."
-          go test -v ./... -coverpkg="${{ inputs.cover-packages }}" -coverprofile coverage.out
+          if [ -n "${{ inputs.cover-packages }}" ]; then
+            go test -v ./... -coverpkg="${{ inputs.cover-packages }}" -coverprofile coverage.out
+          else
+            go test -v ./... -coverprofile coverage.out
+          fi
 
       - name: Upload coverage report to SonarCloud
         if: steps.prepare.outputs.run-sonar == 'true'
