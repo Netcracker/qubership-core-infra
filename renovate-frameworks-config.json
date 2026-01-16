@@ -16,7 +16,7 @@
       "addLabels": [
         "type:major"
       ],
-      "enabled": true
+      "enabled": false
     },
     {
       "matchPackageNames": [
@@ -28,7 +28,7 @@
       "addLabels": [
         "type:minor"
       ],
-      "enabled": true
+      "enabled": false
     },
     {
       "matchPackageNames": [
