@@ -23,7 +23,7 @@
       "addLabels": [
         "type:minor"
       ],
-      "enabled": false
+      "enabled": true
     },
     {
       "matchPackageNames": [
