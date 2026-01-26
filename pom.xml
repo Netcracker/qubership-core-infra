@@ -9,9 +9,9 @@
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-<!--    <modules>-->
-<!--        <module>dependencies/spring-dependencies</module>-->
-<!--        <module>dependencies/quarkus-dependencies</module>-->
-<!--    </modules>-->
+    <modules>
+        <module>dependencies/spring-dependencies</module>
+        <module>dependencies/quarkus-dependencies</module>
+    </modules>
 
 </project>
