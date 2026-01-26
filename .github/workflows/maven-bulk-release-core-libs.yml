@@ -84,6 +84,13 @@ jobs:
       result: ${{ steps.run-maven-bulk-release-cli.outputs.result }}
 
     steps:
+      - name: Fail on invalid branch
+        if: github.ref_name != 'main' && !startsWith(github.ref_name, 'lts/')
+        run: |
+          echo "Error: Invalid branch '${{ github.ref_name }}'"
+          echo "Only 'main' or branches starting with 'lts/' are allowed"
+          exit 1
+
       - name: "Checkout"
         uses: actions/checkout@v6
         with:
@@ -141,32 +148,33 @@ jobs:
         env:
           REPOSITORY_TO_RELEASE_FROM: ${{ inputs.repositoryToRelease }}
           RELEASE_SIGNLE_REPOSITORY: ${{ inputs.releaseSingleRepository }}
+          BRANCH_NAME: ${{ github.ref_name }}
         # language="shell script"
         run: |
-          repositories="https://github.com/Netcracker/qubership-core-bulk-release[branch=main]
-          https://github.com/Netcracker/qubership-core-utils[branch=main]
-          https://github.com/Netcracker/qubership-core-error-handling[branch=main]
-          https://github.com/Netcracker/qubership-core-process-orchestrator[branch=main]
-          https://github.com/Netcracker/qubership-core-context-propagation[branch=main]
-          https://github.com/Netcracker/qubership-core-microservice-framework-extensions[branch=main]
-          https://github.com/Netcracker/qubership-core-mongo-evolution[branch=main]
-          https://github.com/Netcracker/qubership-core-restclient[branch=main]
-          https://github.com/Netcracker/qubership-core-rest-libraries[branch=main]
-          https://github.com/Netcracker/qubership-core-blue-green-state-monitor[branch=main]
-          https://github.com/Netcracker/qubership-maas-client[branch=main]
-          https://github.com/Netcracker/qubership-maas-client-spring[branch=main]
-          https://github.com/Netcracker/qubership-maas-declarative-client-commons[branch=main]
-          https://github.com/Netcracker/qubership-maas-declarative-client-spring[branch=main]
-          https://github.com/Netcracker/qubership-dbaas-client[branch=main]
-          https://github.com/Netcracker/qubership-core-microservice-dependencies[branch=main]
-          https://github.com/Netcracker/qubership-core-microservice-framework[branch=main]
-          https://github.com/Netcracker/qubership-core-springboot-starter[branch=main]
-          https://github.com/Netcracker/qubership-core-context-propagation-quarkus[branch=main]
-          https://github.com/Netcracker/qubership-core-quarkus-extensions[branch=main]
-          https://github.com/Netcracker/qubership-core-blue-green-state-monitor-quarkus[branch=main]
-          https://github.com/Netcracker/qubership-maas-client-quarkus[branch=main]
-          https://github.com/Netcracker/qubership-maas-declarative-client-quarkus[branch=main]
-          https://github.com/Netcracker/qubership-core-junit-k8s-extension[branch=main]"
+          repositories="https://github.com/Netcracker/qubership-core-bulk-release[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-utils[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-error-handling[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-process-orchestrator[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-context-propagation[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-microservice-framework-extensions[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-mongo-evolution[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-restclient[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-rest-libraries[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-blue-green-state-monitor[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-maas-client[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-maas-client-spring[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-maas-declarative-client-commons[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-maas-declarative-client-spring[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-dbaas-client[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-microservice-dependencies[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-microservice-framework[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-springboot-starter[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-context-propagation-quarkus[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-quarkus-extensions[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-blue-green-state-monitor-quarkus[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-maas-client-quarkus[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-maas-declarative-client-quarkus[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-junit-k8s-extension[branch=${BRANCH_NAME}]"
           
           if [ "${REPOSITORY_TO_RELEASE_FROM}" != "all" ] && [ "${RELEASE_SIGNLE_REPOSITORY}" = "true" ]; then
           repositories=$(echo "${repositories}" | grep -E ".*${REPOSITORY_TO_RELEASE_FROM}\[.*" | tr '\n' ',')
