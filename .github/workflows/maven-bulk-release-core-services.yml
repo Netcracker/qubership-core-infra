@@ -61,6 +61,7 @@ jobs:
       - name: Fail on invalid branch
         if: github.ref_name != 'main' && !startsWith(github.ref_name, 'lts/')
         run: |
+          echo "::error title=Invalid Branch::Branch '${{ github.ref_name }}' is not allowed. Only 'main' or branches starting with 'lts/' are permitted."
           echo "Error: Invalid branch '${{ github.ref_name }}'"
           echo "Only 'main' or branches starting with 'lts/' are allowed"
           exit 1
