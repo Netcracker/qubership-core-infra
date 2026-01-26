@@ -1,6 +1,6 @@
 # $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-workflow.json
 
-name: "Maven bulk release of core libs [main]"
+name: "Maven bulk release of core libs"
 run-name: Maven bulk release of core-libs [${{ inputs.repositoryToRelease }}] [dry-run:${{ inputs.dryRun }}] by @${{ github.actor }}'
 
 on:
