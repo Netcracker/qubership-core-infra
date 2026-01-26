@@ -3,11 +3,11 @@ name: Maven build
 on:
   push:
     branches:
-      - 'main'
+      - '**'
     tags-ignore:
       - '**'
-#  pull_request:
-#    types: [ opened, synchronize, reopened ]
+  pull_request:
+    types: [ opened, synchronize, reopened ]
 
 jobs:
   mvn:
