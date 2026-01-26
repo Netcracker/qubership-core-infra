@@ -46,6 +46,14 @@ jobs:
       result: ${{ steps.run-maven-bulk-release-cli.outputs.result }}
 
     steps:
+      - name: Fail on invalid branch
+        if: github.ref_name != 'main' && !startsWith(github.ref_name, 'lts/')
+        run: |
+          echo "::error title=Invalid Branch::Branch '${{ github.ref_name }}' is not allowed. Only 'main' or branches starting with 'lts/' are permitted."
+          echo "Error: Invalid branch '${{ github.ref_name }}'"
+          echo "Only 'main' or branches starting with 'lts/' are allowed"
+          exit 1
+
       - name: "Checkout"
         uses: actions/checkout@v6
         with:
@@ -54,14 +62,16 @@ jobs:
       - name: "Read repositories"
         id: read-repositories
         shell: bash
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
         # language="shell script"
         run: |
-          repositories="https://github.com/Netcracker/qubership-core-control-plane
-          https://github.com/Netcracker/qubership-core-dbaas-agent
-          https://github.com/Netcracker/qubership-core-facade-operator
-          https://github.com/Netcracker/qubership-core-maas-agent
-          https://github.com/Netcracker/qubership-core-paas-mediation
-          https://github.com/Netcracker/qubership-core-site-management"
+          repositories="https://github.com/Netcracker/qubership-core-control-plane[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-dbaas-agent[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-facade-operator[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-maas-agent[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-paas-mediation[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-site-management[branch=${BRANCH_NAME}]"
           echo "repositories=\n${repositories}"
           repositories=$(echo "${repositories}" | tr '\n' ',')
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
