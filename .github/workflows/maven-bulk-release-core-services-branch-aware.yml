@@ -15,7 +15,7 @@ on:
           - qubership-core-core-operator
       gavs:
         type: string
-        description: "Comma seperated list of GAV(s)"
+        description: "Comma separated list of GAV(s)"
         default: ""
       versionIncrementType:
         description: "Version part to increment"
