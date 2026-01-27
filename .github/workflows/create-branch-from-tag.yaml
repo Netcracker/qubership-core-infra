@@ -44,8 +44,8 @@ jobs:
           
           echo "Fetching workflow run information for run ID: $RUN_ID"
           
-          # Get the workflow run details
-          run_info=$(gh api /repos/${{ github.repository }}/actions/runs/$RUN_ID)
+          # Get all jobs for this run
+          jobs=$(gh api /repos/${{ github.repository }}/actions/runs/$RUN_ID/jobs)
           
           if [ $? -ne 0 ]; then
             echo "::error title=Run Not Found::Failed to fetch workflow run $RUN_ID"
@@ -54,33 +54,47 @@ jobs:
           
           echo "Workflow run found"
           
-          # Get all jobs for this run
-          jobs=$(gh api /repos/${{ github.repository }}/actions/runs/$RUN_ID/jobs --jq '.jobs')
+          # Try to find a job with a summary
+          summary_found=false
+          job_count=$(echo "$jobs" | jq '.jobs | length')
           
-          # Find the job with the summary (usually the first/main job)
-          job_id=$(echo "$jobs" | jq -r '.[0].id')
+          echo "Found $job_count jobs, searching for summary..."
           
-          if [ -z "$job_id" ]; then
-            echo "::error title=No Jobs Found::No jobs found for run $RUN_ID"
-            exit 1
-          fi
+          for i in $(seq 0 $((job_count - 1))); do
+            job_id=$(echo "$jobs" | jq -r ".jobs[$i].id")
+            job_name=$(echo "$jobs" | jq -r ".jobs[$i].name")
           
-          echo "Found job ID: $job_id"
+            echo "Checking job: $job_name (ID: $job_id)"
           
-          # Construct the summary URL
-          SUMMARY_URL="https://github.com/${{ github.repository }}/actions/runs/$RUN_ID/jobs/$job_id/summary_raw"
+            # Try to get the summary via the raw endpoint
+            SUMMARY_URL="https://github.com/${{ github.repository }}/actions/runs/$RUN_ID/jobs/$job_id/summary_raw"
           
-          echo "Downloading summary from: $SUMMARY_URL"
+            curl -s -L -H "Authorization: token $GH_TOKEN" "$SUMMARY_URL" -o "summary_${job_id}.md"
           
-          # Download the summary
-          curl -s -L "$SUMMARY_URL" -o summary.md
+            if [ -s "summary_${job_id}.md" ]; then
+              # Check if the summary contains repository information
+              if grep -q "github.com" "summary_${job_id}.md"; then
+                echo "✓ Found summary with content in job: $job_name"
+                mv "summary_${job_id}.md" summary.md
+                summary_found=true
+                break
+              else
+                rm "summary_${job_id}.md"
+              fi
+            else
+              rm -f "summary_${job_id}.md"
+            fi
+          done
           
-          if [ ! -s summary.md ]; then
-            echo "::error title=Download Failed::Failed to download summary from $SUMMARY_URL"
+          if [ "$summary_found" = false ]; then
+            echo "::error title=No Summary Found::Could not find a job summary with repository information for run $RUN_ID"
             exit 1
           fi
           
           echo "Summary downloaded successfully"
+          echo ""
+          echo "Summary preview (first 20 lines):"
+          head -20 summary.md
           
           # Parse the summary to extract repository URLs and find first tag/version
           # Looking for lines like: #### [https://github.com/Netcracker/repo-name [main]](...)
@@ -144,8 +158,10 @@ jobs:
         run: |
           if [ "$DRY_RUN" = "true" ]; then
             echo "🔍 DRY RUN MODE - No branches will be created"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          else
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           fi
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Repository: $REPO"
           echo "Creating branch: $BRANCH from tag: $TAG"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
