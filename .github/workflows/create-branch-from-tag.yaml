@@ -41,60 +41,77 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           RUN_ID="${{ inputs.release_run_id }}"
+          REPO="${{ github.repository }}"
           
           echo "Fetching workflow run information for run ID: $RUN_ID"
           
           # Get all jobs for this run
-          jobs=$(gh api /repos/${{ github.repository }}/actions/runs/$RUN_ID/jobs)
+          jobs_response=$(gh api "/repos/$REPO/actions/runs/$RUN_ID/jobs" 2>&1)
           
           if [ $? -ne 0 ]; then
             echo "::error title=Run Not Found::Failed to fetch workflow run $RUN_ID"
+            echo "Error: $jobs_response"
             exit 1
           fi
           
           echo "Workflow run found"
           
-          # Try to find a job with a summary
-          summary_found=false
-          job_count=$(echo "$jobs" | jq '.jobs | length')
+          # Extract job count
+          job_count=$(echo "$jobs_response" | jq '.jobs | length')
           
           echo "Found $job_count jobs, searching for summary..."
           
+          summary_found=false
+          
+          # Iterate through all jobs to find one with a summary
           for i in $(seq 0 $((job_count - 1))); do
-            job_id=$(echo "$jobs" | jq -r ".jobs[$i].id")
-            job_name=$(echo "$jobs" | jq -r ".jobs[$i].name")
+            job_id=$(echo "$jobs_response" | jq -r ".jobs[$i].id")
+            job_name=$(echo "$jobs_response" | jq -r ".jobs[$i].name")
           
-            echo "Checking job: $job_name (ID: $job_id)"
+            echo "Checking job #$((i+1)): $job_name (ID: $job_id)"
           
-            # Try to get the summary via the raw endpoint
-            SUMMARY_URL="https://github.com/${{ github.repository }}/actions/runs/$RUN_ID/jobs/$job_id/summary_raw"
+            # Try the raw summary endpoint
+            raw_summary_url="https://github.com/$REPO/actions/runs/$RUN_ID/jobs/$job_id/summary_raw"
           
-            curl -s -L -H "Authorization: token $GH_TOKEN" "$SUMMARY_URL" -o "summary_${job_id}.md"
+            echo "Trying: $raw_summary_url"
           
-            if [ -s "summary_${job_id}.md" ]; then
-              # Check if the summary contains repository information
-              if grep -q "github.com" "summary_${job_id}.md"; then
-                echo "✓ Found summary with content in job: $job_name"
-                mv "summary_${job_id}.md" summary.md
+            # Download the raw summary
+            curl -s -L \
+              -H "Accept: text/markdown" \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              "$raw_summary_url" -o "temp_summary.md"
+          
+            # Check if we got actual markdown content
+            if [ -s "temp_summary.md" ]; then
+              # Verify it contains repository URLs
+              if grep -q "github.com" "temp_summary.md"; then
+                echo "✓ Found summary with repository content in job: $job_name"
+                mv "temp_summary.md" summary.md
                 summary_found=true
                 break
-              else
-                rm "summary_${job_id}.md"
               fi
-            else
-              rm -f "summary_${job_id}.md"
             fi
+          
+            rm -f "temp_summary.md"
           done
           
           if [ "$summary_found" = false ]; then
             echo "::error title=No Summary Found::Could not find a job summary with repository information for run $RUN_ID"
+            echo ""
+            echo "Attempted URLs:"
+            for i in $(seq 0 $((job_count - 1))); do
+              job_id=$(echo "$jobs_response" | jq -r ".jobs[$i].id")
+              echo "  - https://github.com/$REPO/actions/runs/$RUN_ID/jobs/$job_id/summary_raw"
+            done
             exit 1
           fi
           
-          echo "Summary downloaded successfully"
           echo ""
-          echo "Summary preview (first 20 lines):"
-          head -20 summary.md
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Summary content preview (first 30 lines):"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          head -30 summary.md
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
           # Parse the summary to extract repository URLs and find first tag/version
           # Looking for lines like: #### [https://github.com/Netcracker/repo-name [main]](...)
