@@ -7,8 +7,8 @@ on:
         description: 'New branch name to create (e.g., lts/1.7.x)'
         required: true
         type: string
-      release_run_id:
-        description: 'Release workflow run ID (e.g., 21356946528)'
+      run_id:
+        description: 'Workflow run ID (e.g., 21356946528)'
         required: true
         type: string
       dry_run:
@@ -40,7 +40,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          RUN_ID="${{ inputs.release_run_id }}"
+          RUN_ID="${{ inputs.run_id }}"
           REPO="${{ github.repository }}"
           
           echo "Fetching workflow run information for run ID: $RUN_ID"
@@ -56,55 +56,45 @@ jobs:
           
           echo "Workflow run found"
           
-          # Extract job count
-          job_count=$(echo "$jobs_response" | jq '.jobs | length')
+          # Get the last job's html_url and extract job ID from it
+          # html_url format: https://github.com/owner/repo/actions/runs/RUN_ID/jobs/JOB_ID
+          last_job_html_url=$(echo "$jobs_response" | jq -r '.jobs[-1].html_url')
           
-          echo "Found $job_count jobs, searching for summary..."
-          
-          summary_found=false
-          
-          # Iterate through all jobs to find one with a summary
-          for i in $(seq 0 $((job_count - 1))); do
-            job_id=$(echo "$jobs_response" | jq -r ".jobs[$i].id")
-            job_name=$(echo "$jobs_response" | jq -r ".jobs[$i].name")
-          
-            echo "Checking job #$((i+1)): $job_name (ID: $job_id)"
-          
-            # Try the raw summary endpoint
-            raw_summary_url="https://github.com/$REPO/actions/runs/$RUN_ID/jobs/$job_id/summary_raw"
-          
-            echo "Trying: $raw_summary_url"
-          
-            # Download the raw summary
-            curl -s -L \
-              -H "Accept: text/markdown" \
-              -H "Authorization: Bearer $GH_TOKEN" \
-              "$raw_summary_url" -o "temp_summary.md"
-          
-            # Check if we got actual markdown content
-            if [ -s "temp_summary.md" ]; then
-              # Verify it contains repository URLs
-              if grep -q "github.com" "temp_summary.md"; then
-                echo "✓ Found summary with repository content in job: $job_name"
-                mv "temp_summary.md" summary.md
-                summary_found=true
-                break
-              fi
-            fi
-          
-            rm -f "temp_summary.md"
-          done
-          
-          if [ "$summary_found" = false ]; then
-            echo "::error title=No Summary Found::Could not find a job summary with repository information for run $RUN_ID"
-            echo ""
-            echo "Attempted URLs:"
-            for i in $(seq 0 $((job_count - 1))); do
-              job_id=$(echo "$jobs_response" | jq -r ".jobs[$i].id")
-              echo "  - https://github.com/$REPO/actions/runs/$RUN_ID/jobs/$job_id/summary_raw"
-            done
+          if [ -z "$last_job_html_url" ] || [ "$last_job_html_url" = "null" ]; then
+            echo "::error title=No Jobs Found::No jobs found for run $RUN_ID"
             exit 1
           fi
+          
+          # Extract job ID from html_url (last segment after /jobs/)
+          job_id=$(echo "$last_job_html_url" | sed 's/.*\/jobs\///')
+          job_name=$(echo "$jobs_response" | jq -r '.jobs[-1].name')
+          
+          echo "Using last job: $job_name (ID: $job_id)"
+          echo "HTML URL: $last_job_html_url"
+          
+          # Construct the raw summary URL
+          raw_summary_url="https://github.com/$REPO/actions/runs/$RUN_ID/jobs/$job_id/summary_raw"
+          
+          echo "Downloading summary from: $raw_summary_url"
+          
+          # Download the raw summary
+          curl -s -L \
+            -H "Accept: text/markdown" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            "$raw_summary_url" -o "summary.md"
+          
+          # Check if we got actual markdown content
+          if [ ! -s "summary.md" ]; then
+            echo "::error title=No Summary Found::Could not download job summary from $raw_summary_url"
+            exit 1
+          fi
+          
+          # Verify it contains repository URLs
+          if ! grep -q "github.com" "summary.md"; then
+            echo "::warning title=No Repository Info::Summary found but doesn't contain repository information"
+          fi
+          
+          echo "✓ Summary downloaded successfully"
           
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -257,7 +247,7 @@ jobs:
           fi
           
           echo "- **Branch Name:** \`${{ inputs.branch_name }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Source Run ID:** [${{ inputs.release_run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ inputs.release_run_id }})" >> $GITHUB_STEP_SUMMARY
+          echo "- **Source Run ID:** [${{ inputs.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ inputs.run_id }})" >> $GITHUB_STEP_SUMMARY
           echo "- **Dry Run:** ${{ inputs.dry_run }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Status:** ${{ needs.create-branches.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
