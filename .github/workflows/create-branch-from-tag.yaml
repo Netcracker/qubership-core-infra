@@ -7,8 +7,8 @@ on:
         description: 'New branch name to create (e.g., lts/1.7.x)'
         required: true
         type: string
-      summary_url:
-        description: 'URL to release summary (e.g., https://github.com/Netcracker/qubership-core-infra/actions/runs/21356946528/jobs/48203352569/summary_raw)'
+      summary_content:
+        description: 'Paste the RAW release job summary content here'
         required: true
         type: string
       dry_run:
@@ -35,38 +35,36 @@ jobs:
           
           echo "✓ Branch name validated: $BRANCH"
 
-      - name: Download and parse summary
+      - name: Parse pasted summary
         id: parse
         run: |
-          SUMMARY_URL="${{ inputs.summary_url }}"
-          
-          echo "Downloading summary from: $SUMMARY_URL"
-          
-          # Download the summary
-          curl -s -L "$SUMMARY_URL" -o summary.md
+          # Write pasted content to file
+          cat <<'EOF' > summary.md
+          ${{ inputs.summary_content }}
+          EOF
           
           if [ ! -s summary.md ]; then
-            echo "::error title=Download Failed::Failed to download summary from $SUMMARY_URL"
+            echo "::error title=Empty Summary::Provided summary content is empty"
             exit 1
           fi
           
-          echo "Summary downloaded successfully"
+          echo "Summary content received"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          nl -ba summary.md | sed -n '1,200p'
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
-          # Parse the summary to extract repository URLs and find first tag/version
-          # Looking for lines like: #### [https://github.com/Netcracker/repo-name [main]](...)
-          # Then finding version numbers in the following lines
+          repo_regex='^####[[:space:]]*\[[^]]+\]\(https://github\.com/([^)/]+)\)'
+          version_regex=':([0-9]+\.[0-9]+\.[0-9]+)'
           
           repos_and_tags="["
           current_repo=""
           first_entry=true
-
-          repo_regex='^####[[:space:]]*\[[^]]+\]\(https://github\.com/([^)/]+)\)'
-          version_regex=':([0-9]+\.[0-9]+\.[0-9]+)'
           
           while IFS= read -r line; do
             if [[ $line =~ $repo_regex ]]; then
               current_repo="${BASH_REMATCH[1]}"
               echo "Found repository: $current_repo"
+          
             elif [[ -n "$current_repo" && $line =~ $version_regex ]]; then
               tag="${BASH_REMATCH[1]}"
               echo "  Found version: $tag"
@@ -84,7 +82,7 @@ jobs:
           
           repos_and_tags+="]"
           
-          echo "repos_and_tags=$repos_and_tags" >> $GITHUB_OUTPUT
+          echo "repos_and_tags=$repos_and_tags" >> "$GITHUB_OUTPUT"
           
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
