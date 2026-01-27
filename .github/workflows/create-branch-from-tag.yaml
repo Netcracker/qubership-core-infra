@@ -59,18 +59,18 @@ jobs:
           repos_and_tags="["
           current_repo=""
           first_entry=true
+
+          repo_regex='^####[[:space:]]*\[https://github\.com/([^[:space:]]+)[[:space:]]'
+          version_regex=':([0-9]+\.[0-9]+\.[0-9]+)'
           
           while IFS= read -r line; do
-            # Check if line contains repository URL
-            if [[ "$line" =~ ####[[:space:]]*\[https://github\.com/([^[:space:]]+)[[:space:]] ]]; then
+            if [[ $line =~ $repo_regex ]]; then
               current_repo="${BASH_REMATCH[1]}"
               echo "Found repository: $current_repo"
-            # Check if line contains version (format: org.name:artifact:version)
-            elif [[ -n "$current_repo" && "$line" =~ :([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+            elif [[ -n "$current_repo" && $line =~ $version_regex ]]; then
               tag="${BASH_REMATCH[1]}"
               echo "  Found version: $tag"
           
-              # Add to JSON array
               if [ "$first_entry" = true ]; then
                 first_entry=false
               else
@@ -78,8 +78,6 @@ jobs:
               fi
           
               repos_and_tags+="{\"repo\":\"$current_repo\",\"tag\":\"$tag\"}"
-          
-              # Clear current_repo so we only get the first version
               current_repo=""
             fi
           done < summary.md
@@ -173,7 +171,7 @@ jobs:
           fi
 
   summary:
-    needs: [parse-summary, create-branches]
+    needs: [ parse-summary, create-branches ]
     if: always()
     runs-on: ubuntu-latest
 
