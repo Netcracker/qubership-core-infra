@@ -84,12 +84,21 @@ jobs:
       result: ${{ steps.run-maven-bulk-release-cli.outputs.result }}
 
     steps:
-      - name: Fail on invalid branch
+      - name: Validate branch name
         if: github.ref_name != 'main' && !startsWith(github.ref_name, 'lts/')
         run: |
           echo "::error title=Invalid Branch::Branch '${{ github.ref_name }}' is not allowed. Only 'main' or branches starting with 'lts/' are permitted."
           echo "Error: Invalid branch '${{ github.ref_name }}'"
           echo "Only 'main' or branches starting with 'lts/' are allowed"
+          exit 1
+
+      - name: Validate LTS branch version increment
+        if: startsWith(github.ref_name, 'lts/') && inputs.versionIncrementType != 'patch'
+        run: |
+          echo "::error title=Invalid Version Increment::LTS branches can only increment PATCH version. Selected: '${{ inputs.versionIncrementType }}'"
+          echo "Current branch: ${{ github.ref_name }}"
+          echo "Selected increment: ${{ inputs.versionIncrementType }}"
+          echo "LTS branches can only increment PATCH version"
           exit 1
 
       - name: "Checkout"
