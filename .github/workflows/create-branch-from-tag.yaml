@@ -37,36 +37,39 @@ jobs:
 
       - name: Parse pasted summary
         id: parse
+        shell: bash
         run: |
-          # Write pasted content to file
+          set -euo pipefail
+          
+          # Write pasted summary content to file
           cat <<'EOF' > summary.md
           ${{ inputs.summary_content }}
           EOF
           
-          if [ ! -s summary.md ]; then
-            echo "::error title=Empty Summary::Provided summary content is empty"
-            exit 1
-          fi
-          
           echo "Summary content received"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          nl -ba summary.md | sed -n '1,200p'
+          nl -ba summary.md
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
-          repo_regex='^####[[:space:]]*\[[^]]+\]\(https://github\.com/([^)/]+)\)'
-          version_regex=':([0-9]+\.[0-9]+\.[0-9]+)'
-          
           repos_and_tags="["
-          current_repo=""
           first_entry=true
           
-          while IFS= read -r line; do
-            if [[ $line =~ $repo_regex ]]; then
-              current_repo="${BASH_REMATCH[1]}"
-              echo "Found repository: $current_repo"
+          # Flatten summary to a single line (handles wrapped output safely)
+          content=$(tr '\n' ' ' < summary.md)
           
-            elif [[ -n "$current_repo" && $line =~ $version_regex ]]; then
+          repo_regex='https://github\.com/([^[:space:]]+)'
+          version_regex=':([0-9]+\.[0-9]+\.[0-9]+)'
+          
+          while [[ $content =~ $repo_regex ]]; do
+            repo="${BASH_REMATCH[1]}"
+          
+            # Trim everything up to and including this repo URL
+            rest="${content#*https://github.com/$repo}"
+          
+            if [[ $rest =~ $version_regex ]]; then
               tag="${BASH_REMATCH[1]}"
+          
+              echo "Found repository: $repo"
               echo "  Found version: $tag"
           
               if [ "$first_entry" = true ]; then
@@ -75,12 +78,21 @@ jobs:
                 repos_and_tags+=","
               fi
           
-              repos_and_tags+="{\"repo\":\"$current_repo\",\"tag\":\"$tag\"}"
-              current_repo=""
+              repos_and_tags+="{\"repo\":\"$repo\",\"tag\":\"$tag\"}"
+            else
+              echo "::warning title=No Version Found::No version found for $repo"
             fi
-          done < summary.md
+          
+            # Move forward to find the next repository
+            content="$rest"
+          done
           
           repos_and_tags+="]"
+          
+          if [ "$repos_and_tags" = "[]" ]; then
+            echo "::error title=Parsing Failed::No repositories or versions were found in the summary"
+            exit 1
+          fi
           
           echo "repos_and_tags=$repos_and_tags" >> "$GITHUB_OUTPUT"
           
