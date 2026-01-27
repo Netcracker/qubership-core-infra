@@ -35,7 +35,7 @@ jobs:
           
           echo "✓ Branch name validated: $BRANCH"
 
-      - name: Parse pasted summary
+      - name: Parse pasted summary (tree URLs only)
         id: parse
         shell: bash
         run: |
@@ -54,20 +54,13 @@ jobs:
           repos_and_tags="["
           first_entry=true
           
-          # Flatten summary to a single line (handles wrapped output safely)
-          content=$(tr '\n' ' ' < summary.md)
+          # Regex: extract repo + version ONLY from /tree/<version> links
+          tree_regex='https://github\.com/([^/]+/[^/]+)/tree/([0-9]+\.[0-9]+\.[0-9]+)'
           
-          repo_regex='https://github\.com/([^[:space:]]+)'
-          version_regex=':([0-9]+\.[0-9]+\.[0-9]+)'
-          
-          while [[ $content =~ $repo_regex ]]; do
-            repo="${BASH_REMATCH[1]}"
-          
-            # Trim everything up to and including this repo URL
-            rest="${content#*https://github.com/$repo}"
-          
-            if [[ $rest =~ $version_regex ]]; then
-              tag="${BASH_REMATCH[1]}"
+          while IFS= read -r line; do
+            while [[ $line =~ $tree_regex ]]; do
+              repo="${BASH_REMATCH[1]}"
+              tag="${BASH_REMATCH[2]}"
           
               echo "Found repository: $repo"
               echo "  Found version: $tag"
@@ -79,18 +72,16 @@ jobs:
               fi
           
               repos_and_tags+="{\"repo\":\"$repo\",\"tag\":\"$tag\"}"
-            else
-              echo "::warning title=No Version Found::No version found for $repo"
-            fi
           
-            # Move forward to find the next repository
-            content="$rest"
-          done
+              # Move past this match to allow multiple matches per line
+              line="${line#*${BASH_REMATCH[0]}}"
+            done
+          done < summary.md
           
           repos_and_tags+="]"
           
           if [ "$repos_and_tags" = "[]" ]; then
-            echo "::error title=Parsing Failed::No repositories or versions were found in the summary"
+            echo "::error title=Parsing Failed::No /tree/<version> repository links were found"
             exit 1
           fi
           
