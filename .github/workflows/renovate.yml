@@ -1,4 +1,4 @@
-name: Renovate core repositories
+name: Generate renovate config
 run-name: Renovate core repositories [${{ inputs.type }}] [dry-run:${{ inputs.dry-run }}] by @${{ github.actor }}'
 
 on:
