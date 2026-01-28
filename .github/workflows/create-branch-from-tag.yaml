@@ -180,10 +180,11 @@ jobs:
             echo "✓ [DRY RUN] Branch would be created successfully"
             echo "  URL: https://github.com/$REPO/tree/$BRANCH"
           else
-            gh api repos/$REPO/git/refs \
-              -X POST \
-              -f ref="refs/heads/$BRANCH" \
-              -f sha="$TAG_SHA"
+            git config --global user.email "github-actions[bot]@qubership.com"
+            git config --global user.name "GitHub Actions [Bot]"
+            git clone https://github.com/$REPO.git $REPO
+            cd $REPO
+            git push origin $TAG_SHA:refs/heads/$BRANCH
           
             if [ $? -eq 0 ]; then
               echo "::notice title=Branch Created::Successfully created branch '$BRANCH' from tag '$TAG' in $REPO"
