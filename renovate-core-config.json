@@ -10,6 +10,13 @@
     ":ignoreModulesAndTests",
     ":dependencyDashboard"
   ],
+  "hostRules": [
+    {
+      "hostType": "maven",
+      "matchHost": "https://maven.pkg.github.com/netcracker",
+      "token": "{{ secrets.renovation_bot_private_packages_read }}"
+    }
+  ],
   "labels": [
     "renovate:core",
     "branch:main"
@@ -207,7 +214,7 @@
         "ch.qos.logback:logback-core"
       ],
       "groupName": "maven",
-      "allowedVersions": "/^1.5.22$/"
+      "allowedVersions": "/^1.5.25$/"
     },
     {
       "matchPackageNames": [
@@ -229,7 +236,7 @@
         "org.postgresql:postgresql"
       ],
       "groupName": "maven",
-      "allowedVersions": "/^42.7.8$/"
+      "allowedVersions": "/^42.7.9$/"
     },
     {
       "matchPackageNames": [
@@ -251,7 +258,7 @@
         "org.apache.httpcomponents.client5:httpclient5"
       ],
       "groupName": "maven",
-      "allowedVersions": "/^5.5.1$/"
+      "allowedVersions": "/^5.5.2$/"
     },
     {
       "matchPackageNames": [
@@ -305,7 +312,7 @@
         "io.quarkus.platform:quarkus-operator-sdk-bom"
       ],
       "groupName": "maven",
-      "allowedVersions": "/^3.27.1$/"
+      "allowedVersions": "/^3.27.2$/"
     },
     {
       "matchPackageNames": [
@@ -320,7 +327,7 @@
         "io.quarkus:quarkus-universe-bom"
       ],
       "groupName": "maven",
-      "allowedVersions": "/^3.27.1$/"
+      "allowedVersions": "/^3.27.2$/"
     },
     {
       "matchPackageNames": [
@@ -441,7 +448,7 @@
         "org.hibernate.orm:hibernate-processor"
       ],
       "groupName": "maven",
-      "allowedVersions": "/^7.1.4.Final$/"
+      "allowedVersions": "/^7.1.14.Final$/"
     },
     {
       "matchPackageNames": [
@@ -483,7 +490,7 @@
         "io.projectreactor.netty:reactor-netty"
       ],
       "groupName": "maven",
-      "allowedVersions": "/^1.2.13$/"
+      "allowedVersions": "/^1.2.14$/"
     },
     {
       "matchPackageNames": [
@@ -491,7 +498,7 @@
         "org.springframework.data:spring-data-mongodb"
       ],
       "groupName": "maven",
-      "allowedVersions": "/^4.5.7$/"
+      "allowedVersions": "/^4.5.8$/"
     },
     {
       "matchPackageNames": [
@@ -500,7 +507,7 @@
         "org.springframework.data:spring-data-redis"
       ],
       "groupName": "maven",
-      "allowedVersions": "/^3.5.7$/"
+      "allowedVersions": "/^3.5.8$/"
     },
     {
       "matchPackageNames": [
@@ -529,7 +536,7 @@
         "io.vertx:vertx-stomp"
       ],
       "groupName": "maven",
-      "allowedVersions": "/^4.5.22$/"
+      "allowedVersions": "/^4.5.23$/"
     },
     {
       "matchPackageNames": [
@@ -587,7 +594,7 @@
         "org.apache.maven:maven-model"
       ],
       "groupName": "maven",
-      "allowedVersions": "/^3.9.9$/"
+      "allowedVersions": "/^3.9.11$/"
     },
     {
       "matchPackageNames": [
@@ -617,7 +624,7 @@
         "org.springframework.amqp:spring-rabbit"
       ],
       "groupName": "maven",
-      "allowedVersions": "/^3.2.8$/"
+      "allowedVersions": "/^3.2.9$/"
     },
     {
       "matchPackageNames": [
@@ -635,11 +642,18 @@
     },
     {
       "matchPackageNames": [
+        "at.yawk.lz4:lz4-java"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^1.10.1$/"
+    },
+    {
+      "matchPackageNames": [
         "io.projectreactor:reactor-core",
         "io.projectreactor:reactor-test"
       ],
       "groupName": "maven",
-      "allowedVersions": "/^3.7.14$/"
+      "allowedVersions": "/^3.7.15$/"
     },
     {
       "matchPackageNames": [
@@ -669,7 +683,7 @@
         "org.springframework.kafka:spring-kafka-test"
       ],
       "groupName": "maven",
-      "allowedVersions": "/^3.3.11$/"
+      "allowedVersions": "/^3.3.12$/"
     },
     {
       "matchPackageNames": [
@@ -684,7 +698,7 @@
         "io.micrometer:micrometer-registry-prometheus"
       ],
       "groupName": "maven",
-      "allowedVersions": "/^1.15.7$/"
+      "allowedVersions": "/^1.15.8$/"
     },
     {
       "matchPackageNames": [
@@ -721,7 +735,7 @@
         "org.springframework.boot:spring-boot-test"
       ],
       "groupName": "maven",
-      "allowedVersions": "/^3.5.9$/"
+      "allowedVersions": "/^3.5.10$/"
     },
     {
       "matchPackageNames": [
@@ -826,7 +840,7 @@
         "io.undertow:undertow-websockets-jsr"
       ],
       "groupName": "maven",
-      "allowedVersions": "/^2.3.20.Final$/"
+      "allowedVersions": "/^2.3.22.Final$/"
     },
     {
       "matchPackageNames": [
@@ -843,13 +857,6 @@
       "allowedVersions": "/^2.3.232$/"
     }
   ],
-  "hostRules": [
-    {
-      "matchHost": "https://maven.pkg.github.com/netcracker",
-      "hostType": "maven",
-      "token": "{{ secrets.renovation_bot_private_packages_read }}"
-    }
-  ],
   "platform": "github",
   "platformAutomerge": true,
   "postUpdateOptions": [
@@ -859,7 +866,7 @@
   "prConcurrentLimit": 25,
   "prCreation": "immediate",
   "prHourlyLimit": 5,
-  "printConfig": true,
+  "printConfig": false,
   "pruneStaleBranches": true,
   "rebaseWhen": "behind-base-branch",
   "recreateWhen": "always",
