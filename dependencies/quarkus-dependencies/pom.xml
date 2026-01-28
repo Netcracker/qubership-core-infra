@@ -10,7 +10,7 @@
     <packaging>pom</packaging>
 
     <properties>
-        <quarkus.version>3.27.1</quarkus.version>
+        <quarkus.version>3.27.2</quarkus.version>
         <jandex.version>3.5.3</jandex.version>
     </properties>
 
