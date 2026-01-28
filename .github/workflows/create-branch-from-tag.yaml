@@ -16,6 +16,14 @@ on:
         required: false
         type: boolean
         default: true
+  workflow_call:
+    inputs:
+      branch_name: { required: true, type: string }
+      summary_content: { required: true, type: string }
+      dry_run: { required: false, type: boolean, default: false }
+
+permissions:
+  contents: write
 
 jobs:
   parse-summary:
@@ -35,35 +43,52 @@ jobs:
           
           echo "✓ Branch name validated: $BRANCH"
 
-      - name: Parse pasted summary (tree URLs only)
+      - name: Parse release summary
         id: parse
         shell: bash
         run: |
           set -euo pipefail
           
-          # Write pasted summary content to file
+          # Write pasted summary content
           cat <<'EOF' > summary.md
           ${{ inputs.summary_content }}
           EOF
           
-          echo "Summary content received"
+          sed -i -E '
+            s/\r$//;
+            s/^[[:space:]]+//;
+            s/```[[:space:]]*/\n```\n/g;
+            s/[[:space:]]*```/\n```\n/g;
+            s/([0-9]+\.[0-9]+\.[0-9]+)/\1\n/g
+          ' summary.md
+          
+          echo "Summary content received (normalized)"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           nl -ba summary.md
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
+          repo_regex='\(https://github\.com/([^/]+/[^/\)]+)\)'
+          version_regex='^[^:]+:[^:]+:([0-9]+\.[0-9]+\.[0-9]+)'
+          
           repos_and_tags="["
           first_entry=true
           
-          # Regex: extract repo + version ONLY from /tree/<version> links
-          tree_regex='https://github\.com/([^/]+/[^/]+)/tree/([0-9]+\.[0-9]+\.[0-9]+)'
+          current_repo=""
+          expecting_version=false
           
           while IFS= read -r line; do
-            while [[ $line =~ $tree_regex ]]; do
-              repo="${BASH_REMATCH[1]}"
-              tag="${BASH_REMATCH[2]}"
+            # Detect repo header
+            if [[ $line =~ $repo_regex ]]; then
+              current_repo="${BASH_REMATCH[1]}"
+              expecting_version=true
+              echo "Found repository: $current_repo"
+              continue
+            fi
           
-              echo "Found repository: $repo"
-              echo "  Found version: $tag"
+            # First artifact line after repo header
+            if [[ "$expecting_version" = true && $line =~ $version_regex ]]; then
+              version="${BASH_REMATCH[1]}"
+              echo "  Found version: $version"
           
               if [ "$first_entry" = true ]; then
                 first_entry=false
@@ -71,17 +96,18 @@ jobs:
                 repos_and_tags+=","
               fi
           
-              repos_and_tags+="{\"repo\":\"$repo\",\"tag\":\"$tag\"}"
+              repos_and_tags+="{\"repo\":\"$current_repo\",\"tag\":\"$version\"}"
           
-              # Move past this match to allow multiple matches per line
-              line="${line#*${BASH_REMATCH[0]}}"
-            done
+              # Reset for next repo
+              expecting_version=false
+              current_repo=""
+            fi
           done < summary.md
           
           repos_and_tags+="]"
           
           if [ "$repos_and_tags" = "[]" ]; then
-            echo "::error title=Parsing Failed::No /tree/<version> repository links were found"
+            echo "::error title=Parsing Failed::No repositories were parsed"
             exit 1
           fi
           
@@ -154,10 +180,11 @@ jobs:
             echo "✓ [DRY RUN] Branch would be created successfully"
             echo "  URL: https://github.com/$REPO/tree/$BRANCH"
           else
-            gh api repos/$REPO/git/refs \
-              -X POST \
-              -f ref="refs/heads/$BRANCH" \
-              -f sha="$TAG_SHA"
+            git config --global user.email "github-actions[bot]@qubership.com"
+            git config --global user.name "GitHub Actions [Bot]"
+            git clone https://github.com/$REPO.git $REPO
+            cd $REPO
+            git push origin $TAG_SHA:refs/heads/$BRANCH
           
             if [ $? -eq 0 ]; then
               echo "::notice title=Branch Created::Successfully created branch '$BRANCH' from tag '$TAG' in $REPO"
