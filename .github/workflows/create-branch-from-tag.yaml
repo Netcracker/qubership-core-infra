@@ -1,0 +1,209 @@
+name: Create Branches from Release Summary
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch_name:
+        description: 'New branch name to create (e.g., lts/1.7.x)'
+        required: true
+        type: string
+      summary_content:
+        description: 'Paste the RAW release job summary content here'
+        required: true
+        type: string
+      dry_run:
+        description: 'Dry run (preview only, do not create branches)'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  parse-summary:
+    runs-on: ubuntu-latest
+    outputs:
+      repos_and_tags: ${{ steps.parse.outputs.repos_and_tags }}
+
+    steps:
+      - name: Validate branch name
+        run: |
+          BRANCH="${{ inputs.branch_name }}"
+          
+          if [[ ! "$BRANCH" =~ ^[a-zA-Z0-9/_.-]+$ ]]; then
+            echo "::error title=Invalid Branch Name::Branch name '$BRANCH' contains invalid characters"
+            exit 1
+          fi
+          
+          echo "✓ Branch name validated: $BRANCH"
+
+      - name: Parse pasted summary (tree URLs only)
+        id: parse
+        shell: bash
+        run: |
+          set -euo pipefail
+          
+          # Write pasted summary content to file
+          cat <<'EOF' > summary.md
+          ${{ inputs.summary_content }}
+          EOF
+          
+          echo "Summary content received"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          nl -ba summary.md
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          repos_and_tags="["
+          first_entry=true
+          
+          # Regex: extract repo + version ONLY from /tree/<version> links
+          tree_regex='https://github\.com/([^/]+/[^/]+)/tree/([0-9]+\.[0-9]+\.[0-9]+)'
+          
+          while IFS= read -r line; do
+            while [[ $line =~ $tree_regex ]]; do
+              repo="${BASH_REMATCH[1]}"
+              tag="${BASH_REMATCH[2]}"
+          
+              echo "Found repository: $repo"
+              echo "  Found version: $tag"
+          
+              if [ "$first_entry" = true ]; then
+                first_entry=false
+              else
+                repos_and_tags+=","
+              fi
+          
+              repos_and_tags+="{\"repo\":\"$repo\",\"tag\":\"$tag\"}"
+          
+              # Move past this match to allow multiple matches per line
+              line="${line#*${BASH_REMATCH[0]}}"
+            done
+          done < summary.md
+          
+          repos_and_tags+="]"
+          
+          if [ "$repos_and_tags" = "[]" ]; then
+            echo "::error title=Parsing Failed::No /tree/<version> repository links were found"
+            exit 1
+          fi
+          
+          echo "repos_and_tags=$repos_and_tags" >> "$GITHUB_OUTPUT"
+          
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Parsed repositories and tags:"
+          echo "$repos_and_tags" | jq '.'
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  create-branches:
+    needs: parse-summary
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        item: ${{ fromJSON(needs.parse-summary.outputs.repos_and_tags) }}
+      fail-fast: false
+      max-parallel: 5
+
+    steps:
+      - name: Create branch from tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ inputs.branch_name }}
+          REPO: ${{ matrix.item.repo }}
+          TAG: ${{ matrix.item.tag }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "🔍 DRY RUN MODE - No branches will be created"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          else
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          fi
+          echo "Repository: $REPO"
+          echo "Creating branch: $BRANCH from tag: $TAG"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Check if tag exists (try both with and without 'v' prefix)
+          TAG_SHA=""
+          
+          # Try with the tag as-is
+          if gh api repos/$REPO/git/refs/tags/$TAG &>/dev/null; then
+            TAG_SHA=$(gh api repos/$REPO/git/refs/tags/$TAG --jq '.object.sha')
+          # Try with 'v' prefix
+          elif gh api repos/$REPO/git/refs/tags/v$TAG &>/dev/null; then
+            TAG_SHA=$(gh api repos/$REPO/git/refs/tags/v$TAG --jq '.object.sha')
+            TAG="v$TAG"
+          else
+            echo "::warning title=Tag Not Found::Tag '$TAG' (or 'v$TAG') does not exist in $REPO"
+            exit 0
+          fi
+          
+          echo "Found tag: $TAG"
+          echo "Tag SHA: $TAG_SHA"
+          
+          # Check if branch already exists
+          if gh api repos/$REPO/git/refs/heads/$BRANCH &>/dev/null; then
+            EXISTING_SHA=$(gh api repos/$REPO/git/refs/heads/$BRANCH --jq '.object.sha')
+            if [ "$EXISTING_SHA" = "$TAG_SHA" ]; then
+              echo "::notice title=Branch Up-to-Date::Branch '$BRANCH' already exists and points to the same commit in $REPO"
+            else
+              echo "::warning title=Branch Exists::Branch '$BRANCH' already exists but points to a different commit in $REPO"
+            fi
+            exit 0
+          fi
+          
+          # Create the branch (or simulate in dry run mode)
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "::notice title=Dry Run::Would create branch '$BRANCH' from tag '$TAG' in $REPO"
+            echo "✓ [DRY RUN] Branch would be created successfully"
+            echo "  URL: https://github.com/$REPO/tree/$BRANCH"
+          else
+            gh api repos/$REPO/git/refs \
+              -X POST \
+              -f ref="refs/heads/$BRANCH" \
+              -f sha="$TAG_SHA"
+          
+            if [ $? -eq 0 ]; then
+              echo "::notice title=Branch Created::Successfully created branch '$BRANCH' from tag '$TAG' in $REPO"
+              echo "✓ Branch created successfully"
+              echo "  URL: https://github.com/$REPO/tree/$BRANCH"
+            else
+              echo "::error title=Branch Creation Failed::Failed to create branch '$BRANCH' in $REPO"
+              exit 1
+            fi
+          fi
+
+  summary:
+    needs: [ parse-summary, create-branches ]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate summary
+        env:
+          REPOS_AND_TAGS: ${{ needs.parse-summary.outputs.repos_and_tags }}
+        run: |
+          DRY_RUN_LABEL=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            DRY_RUN_LABEL=" [DRY RUN]"
+          fi
+          
+          echo "## Branch Creation Summary${DRY_RUN_LABEL}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "> **🔍 DRY RUN MODE** - No branches were actually created. This is a preview only." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "- **Branch Name:** \`${{ inputs.branch_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Source Run ID:** [${{ inputs.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ inputs.run_id }})" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dry Run:** ${{ inputs.dry_run }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ needs.create-branches.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Repositories and Tags" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Create a table
+          echo "| Repository | Tag | Branch URL |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|-----|------------|" >> $GITHUB_STEP_SUMMARY
+          
+          echo "$REPOS_AND_TAGS" | jq -r '.[] | "| \(.repo) | \(.tag) | https://github.com/\(.repo)/tree/${{ inputs.branch_name }} |"' >> $GITHUB_STEP_SUMMARY

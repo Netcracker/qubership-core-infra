@@ -843,6 +843,13 @@
       "allowedVersions": "/^2.3.232$/"
     }
   ],
+  "hostRules": [
+    {
+      "matchHost": "https://maven.pkg.github.com/netcracker",
+      "hostType": "maven",
+      "token": "{{ secrets.renovation_bot_private_packages_read }}"
+    }
+  ],
   "platform": "github",
   "platformAutomerge": true,
   "postUpdateOptions": [
