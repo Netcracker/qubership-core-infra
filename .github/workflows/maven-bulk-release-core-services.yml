@@ -114,8 +114,8 @@ jobs:
         shell: bash
         # language="shell script"
         run: |
-          repositories="https://github.com/Netcracker/qubership-core-config-server[branch=main]
-          https://github.com/Netcracker/qubership-core-core-operator[branch=main]"
+          repositories="https://github.com/Netcracker/qubership-core-config-server[branch=lts/25.3]
+          https://github.com/Netcracker/qubership-core-core-operator[branch=lts/25.3]"
           echo "repositories=\n${repositories}"
           repositories=$(echo "${repositories}" | tr '\n' ',')
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
