@@ -40,53 +40,67 @@ jobs:
           
           echo "✓ Branch name validated: $BRANCH"
 
-      - name: Parse summary
+      - name: Parse release summary
         id: parse
         shell: bash
         run: |
           set -euo pipefail
-
+          
           cat <<'EOF' > summary.md
           ${{ inputs.summary_content }}
           EOF
-
+          
           echo "Summary content received"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           nl -ba summary.md
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-          # 1. Extract repo from GitHub URL
-          repo_regex='\(https://github\.com/([^/]+/[^/\)]+)'
-          repo=""
-
-          # 2. Extract version from FIRST artifact line only
-          version=""
-
+          
+          repo_regex='\(https://github\.com/([^/]+/[^/\)]+)\)'
+          version_regex='^[^:]+:[^:]+:([0-9]+\.[0-9]+\.[0-9]+)'
+          
+          repos_and_tags="["
+          first_entry=true
+          
+          current_repo=""
+          expecting_version=false
+          
           while IFS= read -r line; do
-            # Repo (first match wins)
-            if [[ -z "$repo" && $line =~ $repo_regex ]]; then
-              repo="${BASH_REMATCH[1]}"
-              echo "Found repository: $repo"
+            # Detect repo header
+            if [[ $line =~ $repo_regex ]]; then
+              current_repo="${BASH_REMATCH[1]}"
+              expecting_version=true
+              echo "Found repository: $current_repo"
+              continue
             fi
-
-            # Version from first artifact line
-            if [[ -z "$version" && $line =~ ^[^:]+:[^:]+:([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+          
+            # First artifact line after repo header
+            if [[ "$expecting_version" = true && $line =~ $version_regex ]]; then
               version="${BASH_REMATCH[1]}"
-              echo "Found version (from first artifact): $version"
+              echo "  Found version: $version"
+          
+              if [ "$first_entry" = true ]; then
+                first_entry=false
+              else
+                repos_and_tags+=","
+              fi
+          
+              repos_and_tags+="{\"repo\":\"$current_repo\",\"tag\":\"$version\"}"
+          
+              # Reset for next repo
+              expecting_version=false
+              current_repo=""
             fi
           done < summary.md
-
-          if [[ -z "$repo" || -z "$version" ]]; then
-            echo "::error title=Parsing Failed::Could not extract repo or version"
+          
+          repos_and_tags+="]"
+          
+          if [ "$repos_and_tags" = "[]" ]; then
+            echo "::error title=Parsing Failed::No repositories were parsed"
             exit 1
           fi
-
-          repos_and_tags="["
-          repos_and_tags+="{\"repo\":\"$repo\",\"tag\":\"$version\"}"
-          repos_and_tags+="]"
-
+          
           echo "repos_and_tags=$repos_and_tags" >> "$GITHUB_OUTPUT"
-
+          
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Parsed repositories and tags:"
