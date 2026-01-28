@@ -113,10 +113,8 @@ jobs:
         run: |
           if [ "$DRY_RUN" = "true" ]; then
             echo "🔍 DRY RUN MODE - No branches will be created"
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          else
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           fi
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Repository: $REPO"
           echo "Creating branch: $BRANCH from tag: $TAG"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -171,7 +169,7 @@ jobs:
             fi
           fi
 
-  summary:
+  branch-report:
     needs: [ parse-summary, create-branches ]
     if: always()
     runs-on: ubuntu-latest
@@ -195,7 +193,6 @@ jobs:
           fi
           
           echo "- **Branch Name:** \`${{ inputs.branch_name }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Source Run ID:** [${{ inputs.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ inputs.run_id }})" >> $GITHUB_STEP_SUMMARY
           echo "- **Dry Run:** ${{ inputs.dry_run }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Status:** ${{ needs.create-branches.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -203,7 +200,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           
           # Create a table
-          echo "| Repository | Tag | Branch URL |" >> $GITHUB_STEP_SUMMARY
-          echo "|------------|-----|------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Repository | Tag | LTS Branch URL |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|-----|----------------|" >> $GITHUB_STEP_SUMMARY
           
           echo "$REPOS_AND_TAGS" | jq -r '.[] | "| \(.repo) | \(.tag) | https://github.com/\(.repo)/tree/${{ inputs.branch_name }} |"' >> $GITHUB_STEP_SUMMARY
