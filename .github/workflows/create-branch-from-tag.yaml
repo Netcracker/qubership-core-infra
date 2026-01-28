@@ -40,58 +40,53 @@ jobs:
           
           echo "✓ Branch name validated: $BRANCH"
 
-      - name: Parse pasted summary (tree URLs only)
+      - name: Parse summary
         id: parse
         shell: bash
         run: |
           set -euo pipefail
-          
-          # Write pasted summary content to file
+
           cat <<'EOF' > summary.md
           ${{ inputs.summary_content }}
           EOF
-          
+
           echo "Summary content received"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           nl -ba summary.md
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          
-          repos_and_tags="["
-          first_entry=true
-          
-          # Regex: extract repo + version ONLY from /tree/<version> links
-          tree_regex='https://github\.com/([^/]+/[^/]+)/tree/([0-9]+\.[0-9]+\.[0-9]+)'
-          
+
+          # 1. Extract repo from GitHub URL
+          repo_regex='https://github\.com/([^/]+/[^/]+)'
+          repo=""
+
+          # 2. Extract version from FIRST artifact line only
+          version=""
+
           while IFS= read -r line; do
-            while [[ $line =~ $tree_regex ]]; do
+            # Repo (first match wins)
+            if [[ -z "$repo" && $line =~ $repo_regex ]]; then
               repo="${BASH_REMATCH[1]}"
-              tag="${BASH_REMATCH[2]}"
-          
               echo "Found repository: $repo"
-              echo "  Found version: $tag"
-          
-              if [ "$first_entry" = true ]; then
-                first_entry=false
-              else
-                repos_and_tags+=","
-              fi
-          
-              repos_and_tags+="{\"repo\":\"$repo\",\"tag\":\"$tag\"}"
-          
-              # Move past this match to allow multiple matches per line
-              line="${line#*${BASH_REMATCH[0]}}"
-            done
+            fi
+
+            # Version from first artifact line
+            if [[ -z "$version" && $line =~ ^[^:]+:[^:]+:([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+              version="${BASH_REMATCH[1]}"
+              echo "Found version (from first artifact): $version"
+            fi
           done < summary.md
-          
-          repos_and_tags+="]"
-          
-          if [ "$repos_and_tags" = "[]" ]; then
-            echo "::error title=Parsing Failed::No /tree/<version> repository links were found"
+
+          if [[ -z "$repo" || -z "$version" ]]; then
+            echo "::error title=Parsing Failed::Could not extract repo or version"
             exit 1
           fi
-          
+
+          repos_and_tags="["
+          repos_and_tags+="{\"repo\":\"$repo\",\"tag\":\"$version\"}"
+          repos_and_tags+="]"
+
           echo "repos_and_tags=$repos_and_tags" >> "$GITHUB_OUTPUT"
-          
+
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Parsed repositories and tags:"
