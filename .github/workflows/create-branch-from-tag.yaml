@@ -56,7 +56,7 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
           # 1. Extract repo from GitHub URL
-          repo_regex='https://github\.com/([^/]+/[^/]+)'
+          repo_regex='\(https://github\.com/([^/]+/[^/\)]+)'
           repo=""
 
           # 2. Extract version from FIRST artifact line only
