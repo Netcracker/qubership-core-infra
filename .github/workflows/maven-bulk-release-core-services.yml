@@ -230,6 +230,8 @@ jobs:
           cmd="java -jar ${cli_jar} ${args}"
           echo "running cmd: ${cmd}"
           eval "${cmd}"
+          
+          cp "${GITHUB_STEP_SUMMARY}" /tmp/summary.md
 
       - name: "Upload gavs artifact"
         uses: actions/upload-artifact@v6
