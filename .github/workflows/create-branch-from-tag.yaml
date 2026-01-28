@@ -22,6 +22,9 @@ on:
       summary_content: { required: true, type: string }
       dry_run: { required: false, type: boolean, default: false }
 
+permissions:
+  contents: write
+
 jobs:
   parse-summary:
     runs-on: ubuntu-latest
