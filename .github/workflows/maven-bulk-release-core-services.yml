@@ -25,6 +25,11 @@ on:
           - minor
           - major
         default: patch
+      lts_branch_name:
+        description: "LTS branch name to create (e.g., lts/1.7.x) - only when running from main"
+        type: string
+        required: false
+        default: ""
       skipTest:
         description: "skip tests"
         type: boolean
@@ -56,6 +61,7 @@ jobs:
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
     outputs:
       result: ${{ steps.run-maven-bulk-release-cli.outputs.result }}
+      summary_content: ${{ steps.save-summary.outputs.content }}
 
     steps:
       - name: Validate branch name
@@ -243,3 +249,24 @@ jobs:
         with:
           name: logs
           path: /tmp/logs/
+
+      - name: Save summary content
+        id: save-summary
+        run: |
+          # Read the summary content and encode it for output
+          summary_content=$(cat /tmp/summary.md)
+          echo "content<<EOF" >> $GITHUB_OUTPUT
+          echo "$summary_content" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+  create-branches:
+    needs: release
+    if: |
+      github.ref_name == 'main' && 
+      inputs.lts_branch_name != '' && 
+      startsWith(inputs.branch_name, 'lts/')
+    uses: ./.github/workflows/create-branch-from-tag.yml
+    with:
+      branch_name: ${{ inputs.lts_branch_name }}
+      summary_content: ${{ needs.release.outputs.summary_content }}
+      dry_run: ${{ inputs.dryRun }}
