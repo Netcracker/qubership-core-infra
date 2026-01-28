@@ -139,8 +139,8 @@ jobs:
           BRANCH_NAME: ${{ github.ref_name }}
         # language="shell script"
         run: |
-          repositories="https://github.com/Netcracker/qubership-core-config-server[branch=${BRANCH_NAME}]
-          https://github.com/Netcracker/qubership-core-core-operator[branch=${BRANCH_NAME}]"
+          repositories="https://github.com/Netcracker/qubership-core-config-server[branch=main}]
+          https://github.com/Netcracker/qubership-core-core-operator[branch=main]"
           echo "repositories=\n${repositories}"
           repositories=$(echo "${repositories}" | tr '\n' ',')
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
