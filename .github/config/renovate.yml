@@ -8,6 +8,10 @@ enabled: true
 globalExtends:
   - ":ignoreModulesAndTests"
   - ":dependencyDashboard"
+hostRules:
+  - hostType: "maven"
+    matchHost: "https://maven.pkg.github.com/netcracker"
+    token: "{{ secrets.renovation_bot_private_packages_read }}"
 packageRules:
   - matchManagers: [ "maven" ]
     matchPackageNames: [ "/.*/" ]
