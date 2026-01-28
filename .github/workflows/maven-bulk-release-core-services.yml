@@ -37,7 +37,7 @@ on:
       dryRun:
         description: "dry run"
         type: boolean
-        default: false
+        default: true
       logsToConsole:
         description: "log to console"
         type: boolean
