@@ -130,7 +130,8 @@ jobs:
 
     steps:
       - name: Create branch
-        uses: netcracker/qubership-workflow-hub/actions/create-branch@v2.0.10
+
+        uses: netcracker/qubership-workflow-hub/actions/branch-action@v2.0.10
         with:
           source-ref: ${{ matrix.item.tag }}
           branch-name: ${{ inputs.branch_name }}
