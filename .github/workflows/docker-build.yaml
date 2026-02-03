@@ -122,7 +122,7 @@ jobs:
         with:
           configuration-path: .github/metadata-action-go-config.yml
           short-sha: 7
-          default-template: "{{ref-name}}-{{timestamp}}-{{github.context.runNumber}}, {{ref-name}}-{{short-sha}}, {{ref-name}}-snapshot"
+          default-template: "{{ref-name}}-{{timestamp}}-{{runNumber}}, {{ref-name}}-{{short-sha}}, {{ref-name}}-snapshot"
           ref: ${{ inputs.ref }}
 
       - name: Echo metadata
