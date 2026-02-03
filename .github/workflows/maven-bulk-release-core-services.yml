@@ -264,8 +264,6 @@ jobs:
   create-branches:
     needs: release
     if: |
-      github.ref_name == 'main' && 
-      inputs.lts_branch_name != '' && 
       startsWith(inputs.lts_branch_name, 'lts/')
     uses: ./.github/workflows/create-branch-from-tag.yaml
     with:
