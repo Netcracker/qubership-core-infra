@@ -25,6 +25,11 @@ on:
         description: "dry run"
         type: boolean
         default: false
+      ltsBranchName:
+        description: "LTS branch name to create (e.g., lts/1.7.x) - only when running from main"
+        type: string
+        required: false
+        default: ""
 
 concurrency:
   group: "core-services-go"
@@ -44,6 +49,7 @@ jobs:
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
     outputs:
       result: ${{ steps.run-maven-bulk-release-cli.outputs.result }}
+      summary_content: ${{ steps.save-summary.outputs.content }}
 
     steps:
       - name: Validate branch name
@@ -155,6 +161,8 @@ jobs:
           cmd="java -jar go-bulk-release-cli.jar ${args}"
           echo "running cmd: ${cmd}"
           eval "${cmd}"
+          
+          cp "${GITHUB_STEP_SUMMARY}" /tmp/summary.md
 
       - name: "Upload gavs artifact"
         uses: actions/upload-artifact@v6
@@ -167,3 +175,24 @@ jobs:
         with:
           name: graph.dot
           path: /tmp/graph.dot
+
+      - name: Save summary content
+        id: save-summary
+        run: |
+          # Read the summary content and encode it for output
+          summary_content=$(cat /tmp/summary.md)
+          echo "content<<EOF" >> $GITHUB_OUTPUT
+          echo "$summary_content" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+  create-branches:
+    needs: release
+    if: |
+      github.ref_name == 'main' && 
+      inputs.ltsBranchName != '' && 
+      startsWith(inputs.ltsBranchName, 'lts/')
+    uses: ./.github/workflows/create-branch-from-tag.yaml
+    with:
+      branch_name: ${{ inputs.ltsBranchName }}
+      summary_content: ${{ needs.release.outputs.summary_content }}
+      dry_run: ${{ inputs.dryRun }}
