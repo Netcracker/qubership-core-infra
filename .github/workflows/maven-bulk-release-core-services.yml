@@ -1,6 +1,6 @@
 # $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-workflow.json
 
-name: "Maven bulk release of core services[branch aware]"
+name: "Maven bulk release of core services"
 run-name: Maven bulk release of core-services [${{ inputs.repositoryToRelease }}] [dry-run:${{ inputs.dryRun }}] by @${{ github.actor }}'
 
 on:
@@ -25,7 +25,7 @@ on:
           - minor
           - major
         default: patch
-      lts_branch_name:
+      ltsBranchName:
         description: "LTS branch name to create (e.g., lts/1.7.x) - only when running from main"
         type: string
         required: false
@@ -37,7 +37,7 @@ on:
       dryRun:
         description: "dry run"
         type: boolean
-        default: true
+        default: false
       logsToConsole:
         description: "log to console"
         type: boolean
@@ -64,13 +64,13 @@ jobs:
       summary_content: ${{ steps.save-summary.outputs.content }}
 
     steps:
-#      - name: Validate branch name
-#        if: github.ref_name != 'main' && !startsWith(github.ref_name, 'lts/')
-#        run: |
-#          echo "::error title=Invalid Branch::Branch '${{ github.ref_name }}' is not allowed. Only 'main' or branches starting with 'lts/' are permitted."
-#          echo "Error: Invalid branch '${{ github.ref_name }}'"
-#          echo "Only 'main' or branches starting with 'lts/' are allowed"
-#          exit 1
+      - name: Validate branch name
+        if: github.ref_name != 'main' && !startsWith(github.ref_name, 'lts/')
+        run: |
+          echo "::error title=Invalid Branch::Branch '${{ github.ref_name }}' is not allowed. Only 'main' or branches starting with 'lts/' are permitted."
+          echo "Error: Invalid branch '${{ github.ref_name }}'"
+          echo "Only 'main' or branches starting with 'lts/' are allowed"
+          exit 1
 
       - name: Validate LTS branch version increment
         if: startsWith(github.ref_name, 'lts/') && inputs.versionIncrementType != 'patch'
@@ -264,9 +264,11 @@ jobs:
   create-branches:
     needs: release
     if: |
-      startsWith(inputs.lts_branch_name, 'lts/')
+      github.ref_name == 'main' && 
+      inputs.ltsBranchName != '' && 
+      startsWith(inputs.ltsBranchName, 'lts/')
     uses: ./.github/workflows/create-branch-from-tag.yaml
     with:
-      branch_name: ${{ inputs.lts_branch_name }}
+      branch_name: ${{ inputs.ltsBranchName }}
       summary_content: ${{ needs.release.outputs.summary_content }}
       dry_run: ${{ inputs.dryRun }}

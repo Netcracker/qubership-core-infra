@@ -32,16 +32,16 @@ jobs:
       repos_and_tags: ${{ steps.parse.outputs.repos_and_tags }}
 
     steps:
-#      - name: Validate branch name
-#        run: |
-#          BRANCH="${{ inputs.branch_name }}"
-#
-#          if [[ ! "$BRANCH" =~ ^[a-zA-Z0-9/_.-]+$ ]]; then
-#            echo "::error title=Invalid Branch Name::Branch name '$BRANCH' contains invalid characters"
-#            exit 1
-#          fi
-#
-#          echo "✓ Branch name validated: $BRANCH"
+      - name: Validate branch name
+        run: |
+          BRANCH="${{ inputs.branch_name }}"
+
+          if [[ ! "$BRANCH" =~ ^[a-zA-Z0-9/_.-]+$ ]]; then
+            echo "::error title=Invalid Branch Name::Branch name '$BRANCH' contains invalid characters"
+            exit 1
+          fi
+
+          echo "✓ Branch name validated: $BRANCH"
 
       - name: Parse release summary
         id: parse
@@ -133,7 +133,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v6
         with:
-          token: '${{ secrets.GH_ACCESS_TOKEN }}'
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
           repository: ${{ matrix.item.repo }}
           ref: ${{ matrix.item.tag }}
 
@@ -142,7 +142,6 @@ jobs:
         with:
           source-ref: ${{ matrix.item.tag }}
           branch-name: ${{ inputs.branch_name }}
-          dry-run: ${{ inputs.dry_run }}
 
   branch-report:
     needs: [ parse-summary, create-branches ]
