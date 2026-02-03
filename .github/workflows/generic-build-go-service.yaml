@@ -98,6 +98,6 @@ jobs:
     name: Build Docker image
     needs: [ go-build ]
     if: ${{ !(github.event_name == 'push' && needs.check-pr.outputs.hasOpenPr == 'true') }}
-    uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@8a740e23
+    uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@8a740e23ff434cc259dd7ed5bd62a90c3a6046d3
     with:
       dry-run: false
