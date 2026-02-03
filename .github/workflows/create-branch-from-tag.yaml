@@ -129,72 +129,12 @@ jobs:
       max-parallel: 5
 
     steps:
-      - name: Create branch from tag
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH: ${{ inputs.branch_name }}
-          REPO: ${{ matrix.item.repo }}
-          TAG: ${{ matrix.item.tag }}
-          DRY_RUN: ${{ inputs.dry_run }}
-        run: |
-          if [ "$DRY_RUN" = "true" ]; then
-            echo "🔍 DRY RUN MODE - No branches will be created"
-          fi
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "Repository: $REPO"
-          echo "Creating branch: $BRANCH from tag: $TAG"
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          
-          # Check if tag exists (try both with and without 'v' prefix)
-          TAG_SHA=""
-          
-          # Try with the tag as-is
-          if gh api repos/$REPO/git/refs/tags/$TAG &>/dev/null; then
-            TAG_SHA=$(gh api repos/$REPO/git/refs/tags/$TAG --jq '.object.sha')
-          # Try with 'v' prefix
-          elif gh api repos/$REPO/git/refs/tags/v$TAG &>/dev/null; then
-            TAG_SHA=$(gh api repos/$REPO/git/refs/tags/v$TAG --jq '.object.sha')
-            TAG="v$TAG"
-          else
-            echo "::warning title=Tag Not Found::Tag '$TAG' (or 'v$TAG') does not exist in $REPO"
-            exit 0
-          fi
-          
-          echo "Found tag: $TAG"
-          echo "Tag SHA: $TAG_SHA"
-          
-          # Check if branch already exists
-          if gh api repos/$REPO/git/refs/heads/$BRANCH &>/dev/null; then
-            EXISTING_SHA=$(gh api repos/$REPO/git/refs/heads/$BRANCH --jq '.object.sha')
-            if [ "$EXISTING_SHA" = "$TAG_SHA" ]; then
-              echo "::notice title=Branch Up-to-Date::Branch '$BRANCH' already exists and points to the same commit in $REPO"
-            else
-              echo "::warning title=Branch Exists::Branch '$BRANCH' already exists but points to a different commit in $REPO"
-            fi
-            exit 0
-          fi
-          
-          # Create the branch (or simulate in dry run mode)
-          if [ "$DRY_RUN" = "true" ]; then
-            echo "::notice title=Dry Run::Would create branch '$BRANCH' from tag '$TAG' in $REPO"
-            echo "✓ [DRY RUN] Branch would be created successfully"
-            echo "  URL: https://github.com/$REPO/tree/$BRANCH"
-          else
-            git config --global user.email "github-actions[bot]@qubership.com"
-            git config --global user.name "GitHub Actions [Bot]"
-            git clone https://github.com/$REPO.git $REPO
-            cd $REPO
-            git push origin $TAG_SHA:refs/heads/$BRANCH
-          
-            if [ $? -eq 0 ]; then
-              echo "::notice title=Branch Created::Successfully created branch '$BRANCH' from tag '$TAG' in $REPO"
-              echo "✓ Branch created successfully"
-              echo "  URL: https://github.com/$REPO/tree/$BRANCH"
-            else
-              echo "::error title=Branch Creation Failed::Failed to create branch '$BRANCH' in $REPO"
-              exit 1
-            fi
-          fi
+      - name: Create branch
+        uses: netcracker/qubership-workflow-hub/actions/create-branch@v2.0.10
+        with:
+          source-ref: ${{ matrix.item.tag }}
+          branch-name: ${{ inputs.branch_name }}
+          dry-run: ${{ inputs.dry_run }}
 
   branch-report:
     needs: [ parse-summary, create-branches ]
