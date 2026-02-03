@@ -130,6 +130,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
+        if: ${{ !inputs.dry_run }}
         uses: actions/checkout@v6
         with:
           repository: ${{ matrix.item.repo }}
