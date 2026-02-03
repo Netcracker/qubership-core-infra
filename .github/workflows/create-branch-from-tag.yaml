@@ -120,6 +120,7 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   create-branches:
+    if: ${{ !inputs.dry_run }}
     needs: parse-summary
     runs-on: ubuntu-latest
     strategy:
@@ -130,7 +131,6 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        if: ${{ !inputs.dry_run }}
         uses: actions/checkout@v6
         with:
           repository: ${{ matrix.item.repo }}
