@@ -129,8 +129,13 @@ jobs:
       max-parallel: 5
 
     steps:
-      - name: Create branch
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ matrix.item.repo }}
+          ref: ${{ matrix.item.tag }}
 
+      - name: Create branch
         uses: netcracker/qubership-workflow-hub/actions/branch-action@v2.0.10
         with:
           source-ref: ${{ matrix.item.tag }}
