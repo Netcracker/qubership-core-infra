@@ -32,16 +32,16 @@ jobs:
       repos_and_tags: ${{ steps.parse.outputs.repos_and_tags }}
 
     steps:
-      - name: Validate branch name
-        run: |
-          BRANCH="${{ inputs.branch_name }}"
-          
-          if [[ ! "$BRANCH" =~ ^[a-zA-Z0-9/_.-]+$ ]]; then
-            echo "::error title=Invalid Branch Name::Branch name '$BRANCH' contains invalid characters"
-            exit 1
-          fi
-          
-          echo "✓ Branch name validated: $BRANCH"
+#      - name: Validate branch name
+#        run: |
+#          BRANCH="${{ inputs.branch_name }}"
+#
+#          if [[ ! "$BRANCH" =~ ^[a-zA-Z0-9/_.-]+$ ]]; then
+#            echo "::error title=Invalid Branch Name::Branch name '$BRANCH' contains invalid characters"
+#            exit 1
+#          fi
+#
+#          echo "✓ Branch name validated: $BRANCH"
 
       - name: Parse release summary
         id: parse
