@@ -143,7 +143,7 @@ jobs:
           source-ref: ${{ matrix.item.tag }}
           branch-name: ${{ inputs.branch_name }}
 
-  create-lts-branche:
+  create-infra-branch:
     if: ${{ !inputs.dry_run }}
     needs: parse-summary
     runs-on: ubuntu-latest
