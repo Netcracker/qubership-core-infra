@@ -143,6 +143,20 @@ jobs:
           source-ref: ${{ matrix.item.tag }}
           branch-name: ${{ inputs.branch_name }}
 
+  create-lts-branche:
+    if: ${{ !inputs.dry_run }}
+    needs: parse-summary
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Create branch
+        uses: netcracker/qubership-workflow-hub/actions/branch-action@v2.0.10
+        with:
+          branch-name: ${{ inputs.branch_name }}
+
   branch-report:
     needs: [ parse-summary, create-branches ]
     if: always()
