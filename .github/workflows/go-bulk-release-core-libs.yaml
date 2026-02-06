@@ -39,6 +39,11 @@ on:
         description: "dry run"
         type: boolean
         default: false
+      ltsBranchName:
+        description: "LTS branch name to create (e.g., lts/1.7.x) - only when running from main"
+        type: string
+        required: false
+        default: ""
 
 concurrency:
   group: "core-libs-go"
@@ -58,8 +63,17 @@ jobs:
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
     outputs:
       result: ${{ steps.run-maven-bulk-release-cli.outputs.result }}
+      summary_content: ${{ steps.save-summary.outputs.content }}
 
     steps:
+      - name: Validate branch name
+        if: github.ref_name != 'main' && !startsWith(github.ref_name, 'lts/')
+        run: |
+          echo "::error title=Invalid Branch::Branch '${{ github.ref_name }}' is not allowed. Only 'main' or branches starting with 'lts/' are permitted."
+          echo "Error: Invalid branch '${{ github.ref_name }}'"
+          echo "Only 'main' or branches starting with 'lts/' are allowed"
+          exit 1
+
       - name: "Checkout"
         uses: actions/checkout@v6
         with:
@@ -68,28 +82,30 @@ jobs:
       - name: "Read repositories"
         id: read-repositories
         shell: bash
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
         # language="shell script"
         run: |
-          repositories="https://github.com/netcracker/qubership-core-lib-go
-          https://github.com/netcracker/qubership-core-lib-go-actuator-common
-          https://github.com/netcracker/qubership-core-lib-go-bg-kafka
-          https://github.com/netcracker/qubership-core-lib-go-bg-state-monitor
-          https://github.com/netcracker/qubership-core-lib-go-dbaas-arangodb-client
-          https://github.com/netcracker/qubership-core-lib-go-dbaas-base-client
-          https://github.com/netcracker/qubership-core-lib-go-dbaas-cassandra-client
-          https://github.com/netcracker/qubership-core-lib-go-dbaas-clickhouse-client
-          https://github.com/netcracker/qubership-core-lib-go-dbaas-mongo-client
-          https://github.com/netcracker/qubership-core-lib-go-dbaas-opensearch-client
-          https://github.com/netcracker/qubership-core-lib-go-dbaas-postgres-client
-          https://github.com/netcracker/qubership-core-lib-go-error-handling
-          https://github.com/netcracker/qubership-core-lib-go-fiber-server-utils
-          https://github.com/netcracker/qubership-core-lib-go-maas-bg-segmentio
-          https://github.com/netcracker/qubership-core-lib-go-maas-client
-          https://github.com/netcracker/qubership-core-lib-go-maas-core
-          https://github.com/netcracker/qubership-core-lib-go-maas-segmentio
-          https://github.com/netcracker/qubership-core-lib-go-paas-mediation-client
-          https://github.com/netcracker/qubership-core-lib-go-rest-utils
-          https://github.com/netcracker/qubership-core-lib-go-stomp-websocket"
+          repositories="https://github.com/netcracker/qubership-core-lib-go[branch=${BRANCH_NAME}]
+          https://github.com/netcracker/qubership-core-lib-go-actuator-common[branch=${BRANCH_NAME}]
+          https://github.com/netcracker/qubership-core-lib-go-bg-kafka[branch=${BRANCH_NAME}]
+          https://github.com/netcracker/qubership-core-lib-go-bg-state-monitor[branch=${BRANCH_NAME}]
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-arangodb-client[branch=${BRANCH_NAME}]
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-base-client[branch=${BRANCH_NAME}]
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-cassandra-client[branch=${BRANCH_NAME}]
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-clickhouse-client[branch=${BRANCH_NAME}]
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-mongo-client[branch=${BRANCH_NAME}]
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-opensearch-client[branch=${BRANCH_NAME}]
+          https://github.com/netcracker/qubership-core-lib-go-dbaas-postgres-client[branch=${BRANCH_NAME}]
+          https://github.com/netcracker/qubership-core-lib-go-error-handling[branch=${BRANCH_NAME}]
+          https://github.com/netcracker/qubership-core-lib-go-fiber-server-utils[branch=${BRANCH_NAME}]
+          https://github.com/netcracker/qubership-core-lib-go-maas-bg-segmentio[branch=${BRANCH_NAME}]
+          https://github.com/netcracker/qubership-core-lib-go-maas-client[branch=${BRANCH_NAME}]
+          https://github.com/netcracker/qubership-core-lib-go-maas-core[branch=${BRANCH_NAME}]
+          https://github.com/netcracker/qubership-core-lib-go-maas-segmentio[branch=${BRANCH_NAME}]
+          https://github.com/netcracker/qubership-core-lib-go-paas-mediation-client[branch=${BRANCH_NAME}]
+          https://github.com/netcracker/qubership-core-lib-go-rest-utils[branch=${BRANCH_NAME}]
+          https://github.com/netcracker/qubership-core-lib-go-stomp-websocket[branch=${BRANCH_NAME}]"
           echo "repositories=\n${repositories}"
           repositories=$(echo "${repositories}" | tr '\n' ',')
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
@@ -172,6 +188,8 @@ jobs:
           cmd="java -jar go-bulk-release-cli.jar ${args}"
           echo "running cmd: ${cmd}"
           eval "${cmd}"
+          
+          cp "${GITHUB_STEP_SUMMARY}" /tmp/summary.md
 
       - name: "Upload gavs artifact"
         uses: actions/upload-artifact@v6
@@ -184,3 +202,24 @@ jobs:
         with:
           name: graph.dot
           path: /tmp/graph.dot
+
+      - name: Save summary content
+        id: save-summary
+        run: |
+          # Read the summary content and encode it for output
+          summary_content=$(cat /tmp/summary.md)
+          echo "content<<EOF" >> $GITHUB_OUTPUT
+          echo "$summary_content" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+  create-branches:
+    needs: release
+    if: |
+      github.ref_name == 'main' && 
+      inputs.ltsBranchName != '' && 
+      startsWith(inputs.ltsBranchName, 'lts/')
+    uses: ./.github/workflows/create-branch-from-tag.yaml
+    with:
+      branch_name: ${{ inputs.ltsBranchName }}
+      summary_content: ${{ needs.release.outputs.summary_content }}
+      dry_run: ${{ inputs.dryRun }}
