@@ -28,9 +28,9 @@ packageRules:
   - matchPackageNames:
       - "/.*/"
     allowedVersions: "!/.*(redhat|composite|groovyless|jboss|atlassian|preview|does-not-exist|-SNAPSHOT).*/"
-  - matchDatasources: [ "maven" ],
+  - matchDatasources: [ "maven" ]
     registryUrls:
-      - "https://repo.maven.apache.org/maven2",
+      - "https://repo.maven.apache.org/maven2"
       - "https://maven.pkg.github.com/netcracker"
 
 platform: "github"
