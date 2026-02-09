@@ -28,6 +28,11 @@ packageRules:
   - matchPackageNames:
       - "/.*/"
     allowedVersions: "!/.*(redhat|composite|groovyless|jboss|atlassian|preview|does-not-exist|-SNAPSHOT).*/"
+  - matchDatasources: [ "maven" ],
+    registryUrls:
+      - "https://repo.maven.apache.org/maven2",
+      - "https://maven.pkg.github.com/netcracker"
+
 platform: "github"
 platformAutomerge: true
 postUpdateOptions:
@@ -42,5 +47,5 @@ rebaseWhen: "behind-base-branch"
 recreateWhen: "always"
 reviewersFromCodeOwners: true
 vulnerabilityAlerts:
-  addLabels: ["security"]
+  addLabels: [ "security" ]
   vulnerabilityFixStrategy: "lowest"
