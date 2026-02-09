@@ -73,6 +73,15 @@
       "allowedVersions": "!/.*(redhat|composite|groovyless|jboss|atlassian|preview|does-not-exist|-SNAPSHOT).*/"
     },
     {
+      "matchDatasources": [
+        "maven"
+      ],
+      "registryUrls": [
+        "https://repo.maven.apache.org/maven2",
+        "https://maven.pkg.github.com/netcracker"
+      ]
+    },
+    {
       "matchManagers": [
         "maven"
       ],
@@ -547,6 +556,13 @@
     },
     {
       "matchPackageNames": [
+        "org.apache.maven.plugin-tools:maven-plugin-annotations"
+      ],
+      "groupName": "maven",
+      "allowedVersions": "/^3.15.1$/"
+    },
+    {
+      "matchPackageNames": [
         "com.rabbitmq:amqp-client"
       ],
       "groupName": "maven",
@@ -591,7 +607,8 @@
     {
       "matchPackageNames": [
         "org.apache.maven:maven-artifact",
-        "org.apache.maven:maven-model"
+        "org.apache.maven:maven-model",
+        "org.apache.maven:maven-plugin-api"
       ],
       "groupName": "maven",
       "allowedVersions": "/^3.9.11$/"
@@ -866,7 +883,7 @@
   "prConcurrentLimit": 25,
   "prCreation": "immediate",
   "prHourlyLimit": 5,
-  "printConfig": false,
+  "printConfig": true,
   "pruneStaleBranches": true,
   "rebaseWhen": "behind-base-branch",
   "recreateWhen": "always",
