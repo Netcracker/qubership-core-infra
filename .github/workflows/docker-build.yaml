@@ -117,12 +117,12 @@ jobs:
           curl https://raw.githubusercontent.com/Netcracker/qubership-core-infra/main/.github/metadata-action-go-config.yml -o .github/metadata-action-go-config.yml
 
       - name: Create name
-        uses: netcracker/qubership-workflow-hub/actions/metadata-action@v2.0.7
+        uses: netcracker/qubership-workflow-hub/actions/metadata-action@v2.0.10
         id: metadata
         with:
           configuration-path: .github/metadata-action-go-config.yml
           short-sha: 7
-          default-template: "{{ref-name}}-{{timestamp}}-{{github.context.runNumber}}, {{ref-name}}-{{short-sha}}, {{ref-name}}-snapshot"
+          default-template: "{{ref-name}}-{{timestamp}}-{{runNumber}}, {{ref-name}}-{{short-sha}}, {{ref-name}}-snapshot"
           ref: ${{ inputs.ref }}
 
       - name: Echo metadata
@@ -151,7 +151,7 @@ jobs:
         component: ${{ fromJson(needs.load_config.outputs.components) }}
     steps:
       - name: Docker
-        uses: netcracker/qubership-workflow-hub/actions/docker-action@v2.0.7
+        uses: netcracker/qubership-workflow-hub/actions/docker-action@v2.0.10
         with:
           ref: ${{ inputs.ref }}
           dry-run: ${{ inputs.dry-run }}
