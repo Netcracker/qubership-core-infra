@@ -67,6 +67,14 @@ inputs:
     type: string
     description: "Maven token"
     required: true
+  github-username:
+    type: string
+    description: "Github username"
+    required: false
+  github-token:
+    type: string
+    description: "Github token"
+    required: true
   gpg-private-key:
     type: string
     description: "GPG private key"
@@ -246,8 +254,8 @@ runs:
         MAVEN_USERNAME: ${{ inputs.maven-username }}
         MAVEN_PASSWORD: ${{ inputs.maven-token }}
         MAVEN_GPG_PASSPHRASE: ${{ inputs.gpg-passphrase }}
-        GITHUB_ACTOR: ${{ github.actor }}
-        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_ACTOR: ${{ inputs.github-username }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
         SONAR_TOKEN: ${{ inputs.sonar-token }}
     - name: "Upload artifact to GitHub Actions artifacts"
       if: ${{ inputs.upload-artifact != 'false' && inputs.artifact-id != '' }}
