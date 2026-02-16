@@ -11,8 +11,8 @@
 
     <properties>
         <!-- compatibility matrix - https://github.com/spring-cloud/spring-cloud-release/wiki/Supported-Versions#supported-releases-->
-        <spring.boot.version>3.5.10</spring.boot.version>
-        <spring-cloud.version>2025.0.1</spring-cloud.version>
+        <spring.boot.version>4.0.2</spring.boot.version>
+        <spring-cloud.version>2025.1.1</spring-cloud.version>
     </properties>
 
     <dependencyManagement>
