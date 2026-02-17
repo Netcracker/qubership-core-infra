@@ -1,0 +1,89 @@
+name: Build and Test
+
+run-name: >
+  Build Java Lib —
+  ${{ github.event_name }} (${{ github.head_ref || github.ref_name }}) —
+  [${{ github.event_name == 'push' && format('{0}', github.event.head_commit.message) || '' }}
+  ${{ github.event_name == 'pull_request' && format('{0}', github.event.pull_request.title) || '' }}]
+
+on:
+  workflow_call:
+    inputs:
+      # Build configuration
+      java-version:
+        description: 'Java version to use for the build'
+        required: false
+        type: string
+        default: "21"
+      pom-file:
+        description: 'Optional path to a specific pom.xml file.'
+        required: false
+        type: string
+      maven-command:
+        type: string
+        description: "Maven command to execute"
+        required: false
+        default: "deploy"
+
+      # Artifact configuration
+      upload-artifact:
+        type: string
+        description: "Upload the built artifact to GitHub Actions artifacts"
+        required: false
+        default: 'false'
+      artifact-id:
+        type: string
+        description: "Artifact ID to use when uploading the artifact"
+        required: false
+        default: "maven-snapshot-deploy-artifact"
+
+      # Sonar configuration
+      sonar-project-key:
+        description: 'Sonar project key for analysis'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+  packages: write
+
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  maven:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Code quality/security scan on SonarQube
+        uses: netcracker/qubership-core-infra/actions/maven-snapshot-deploy@feat/monorepo-workflows
+        with:
+          java-version: ${{ inputs.java-version }}
+          target-store: 'github'
+          maven-command: ${{ inputs.maven-command }}
+          additional-mvn-args: 'org.sonarsource.scanner.maven:sonar-maven-plugin:${{ vars.SONAR_PLUGIN_VERSION }}:sonar -Dsonar.projectKey=${{ inputs.sonar-project-key }} -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }} -Dsonar.host.url=${{ vars.SONAR_HOST_URL }}'
+          pom-file: ${{ inputs.pom-file }}
+          upload-artifact: ${{ inputs.upload-artifact }}
+          artifact-id: ${{ inputs.artifact-id }}
+          maven-username: ${{ secrets.MAVEN_USER }}
+          maven-token: ${{ secrets.MAVEN_PASSWORD }}
+          github-username: 'NetcrackerCLPLCI'
+          github-token: ${{ secrets.GH_RWD_PACKAGE_TOKEN }}
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
+
+  docker-build:
+    name: Build Docker image
+    needs: [ maven ]
+    # Skip docker build for PRs coming from forks
+    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
+    uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@feat/monorepo-workflows
+    with:
+      dry-run: false
