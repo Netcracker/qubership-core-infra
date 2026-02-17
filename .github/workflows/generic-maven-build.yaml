@@ -19,6 +19,7 @@ on:
         description: 'Optional path to a specific pom.xml file.'
         required: false
         type: string
+        default: 'pom.xml'
       maven-command:
         type: string
         description: "Maven command to execute"
