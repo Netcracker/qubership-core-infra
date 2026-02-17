@@ -203,8 +203,8 @@ runs:
         restore-keys: |
           maven-${{ runner.os }}
 
-    - name: "Set up JDK for deployment"
-      if: ${{ inputs.maven-command == 'deploy' }}
+    - name: "Set up JDK for deployment to Maven Central"
+      if: ${{ inputs.maven-command == 'deploy' && inputs.target-store != 'github' }}
       uses: actions/setup-java@v4
       with:
         java-version: ${{ inputs.java-version }}
@@ -212,6 +212,17 @@ runs:
         server-id: ${{ inputs.target-store }}
         server-username: MAVEN_USERNAME
         server-password: MAVEN_PASSWORD
+        gpg-private-key: ${{ inputs.gpg-private-key }}
+        gpg-passphrase: MAVEN_GPG_PASSPHRASE
+    - name: "Set up JDK for deployment to GitHub Packages"
+      if: ${{ inputs.maven-command == 'deploy' && inputs.target-store == 'github' }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ inputs.java-version }}
+        distribution: "temurin"
+        server-id: github
+        server-username: GITHUB_ACTOR
+        server-password: GITHUB_TOKEN
         gpg-private-key: ${{ inputs.gpg-private-key }}
         gpg-passphrase: MAVEN_GPG_PASSPHRASE
     - name: "Set up JDK for any other Maven command"
