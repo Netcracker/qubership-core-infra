@@ -1,10 +1,4 @@
-name: Build and Test
-
-run-name: >
-  Build Java Lib —
-  ${{ github.event_name }} (${{ github.head_ref || github.ref_name }}) —
-  [${{ github.event_name == 'push' && format('{0}', github.event.head_commit.message) || '' }}
-  ${{ github.event_name == 'pull_request' && format('{0}', github.event.pull_request.title) || '' }}]
+name: Generic maven build
 
 on:
   workflow_call:
