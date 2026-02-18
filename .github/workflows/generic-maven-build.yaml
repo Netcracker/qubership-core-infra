@@ -70,7 +70,7 @@ jobs:
           fetch-depth: 0
 
       - name: Code quality/security scan on SonarQube
-        uses: netcracker/qubership-core-infra/actions/maven-snapshot-deploy@feat/monorepo-workflows
+        uses: netcracker/qubership-workflow-hub/actions/maven-snapshot-deploy@v2.0.10
         with:
           java-version: ${{ inputs.java-version }}
           target-store: 'github'
@@ -81,8 +81,6 @@ jobs:
           artifact-id: ${{ inputs.artifact-id }}
           maven-username: ${{ secrets.MAVEN_USER }}
           maven-token: ${{ secrets.MAVEN_PASSWORD }}
-          github-username: 'NetcrackerCLPLCI'
-          github-token: ${{ secrets.GH_RWD_PACKAGE_TOKEN }}
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
@@ -92,7 +90,7 @@ jobs:
     needs: [ maven ]
     # Skip docker build for PRs coming from forks
     if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
-    uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@feat/monorepo-workflows
+    uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@feat/new-generic-workflows
     with:
       ref: ${{ inputs.ref }}
       dry-run: false
