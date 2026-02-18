@@ -1,4 +1,5 @@
-name: Check Open PR
+# DEPRECATED
+name: '[Deprecated] Check Open PR'
 description: Detect if there is an open PR for the current branch
 
 outputs:

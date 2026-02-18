@@ -1,0 +1,21 @@
+name: Maven verify on PR
+
+run-name: >
+  Verify —
+  PR (${{ github.head_ref }}) —
+  [${{ github.event.pull_request.title }}]
+
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  maven-verify:
+    name: Maven verify
+    uses: Netcracker/qubership-core-infra/.github/workflows/generic-maven-build.yaml@feat/new-generic-workflows
+    with:
+      maven-command: 'verify'
+      upload-artifact: true
+      sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
+    secrets: inherit
+

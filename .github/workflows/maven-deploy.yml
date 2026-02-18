@@ -1,0 +1,24 @@
+name: Maven deploy on push or manual dispatch
+
+run-name: >
+  Deploy —
+  ${{ github.event_name == 'workflow_dispatch' && 'manual' || 'push' }}
+  ${{ github.event_name == 'push' && format('[{0}]', github.event.head_commit.message) || '' }}
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  maven-deploy:
+    name: Maven build and deploy
+    uses: Netcracker/qubership-core-infra/.github/workflows/generic-maven-build.yaml@feat/new-generic-workflows
+    with:
+      maven-command: 'deploy'
+      upload-artifact: true
+      sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
+      ref: ${{ github.ref }}
+    secrets: inherit
+

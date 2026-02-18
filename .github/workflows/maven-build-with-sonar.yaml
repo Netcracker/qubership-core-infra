@@ -1,3 +1,5 @@
+# DEPRECATED! Use generic-maven-build.yaml instead
+#
 # This workflow handles Maven builds with optional Sonar analysis.
 # It can be called from other workflows and supports different build modes based on:
 # - Event type (pull_request or push or workflow_dispatch)
@@ -27,7 +29,7 @@
 # - Cannot deploy artifacts
 # - Cannot run Sonar analysis
 
-name: Maven build + Sonar
+name: '[DEPRECATED] Maven build + Sonar'
 
 on:
   workflow_call:

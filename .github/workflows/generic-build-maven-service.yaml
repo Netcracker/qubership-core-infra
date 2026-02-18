@@ -1,3 +1,4 @@
+# DEPRECATED! Use generic-maven-build.yaml instead
 # ------------------------------------------------------------------------------
 # Workflow: Generic build
 #
@@ -27,7 +28,7 @@
 # Concurrency: one run per branch/event, older runs canceled
 # ------------------------------------------------------------------------------
 
-name: Generic build
+name: '[DEPRECATED] Generic build'
 
 on:
   workflow_call:
