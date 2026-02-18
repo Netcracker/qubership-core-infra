@@ -52,8 +52,8 @@ jobs:
           config_file="$GITHUB_WORKSPACE/.github/${{ inputs.config-filename }}"
 
           if [ ! -f "$config_file" ]; then
-            echo "⏭️ Config file $config_file not found, skipping docker build"
-            echo "⏭️ Config file $config_file not found, skipping docker build" >> $GITHUB_STEP_SUMMARY
+            echo "ℹ️ Config file $config_file not found, skipping docker build"
+            echo "ℹ️ Config file $config_file not found, skipping docker build" >> $GITHUB_STEP_SUMMARY
             echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "components=[]" >> "$GITHUB_OUTPUT"
             echo "platforms=" >> "$GITHUB_OUTPUT"

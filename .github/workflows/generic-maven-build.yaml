@@ -44,6 +44,12 @@ on:
         required: false
         type: string
 
+      # Git reference configuration
+      ref:
+        description: 'Git reference (branch, tag, or SHA) to checkout and build'
+        required: false
+        type: string
+
 permissions:
   contents: read
   pull-requests: write
@@ -60,6 +66,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.ref }}
           fetch-depth: 0
 
       - name: Code quality/security scan on SonarQube
@@ -87,4 +94,5 @@ jobs:
     if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
     uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@feat/monorepo-workflows
     with:
+      ref: ${{ inputs.ref }}
       dry-run: false
