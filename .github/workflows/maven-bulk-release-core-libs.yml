@@ -1,6 +1,6 @@
 # $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-workflow.json
 
-name: "Maven bulk release of core libs [main]"
+name: "Maven bulk release of core libs"
 run-name: Maven bulk release of core-libs [${{ inputs.repositoryToRelease }}] [dry-run:${{ inputs.dryRun }}] by @${{ github.actor }}'
 
 on:
@@ -63,6 +63,11 @@ on:
         description: "log to console"
         type: boolean
         default: false
+      ltsBranchName:
+        description: "LTS branch name to create (e.g., lts/1.7.x) - only when running from main"
+        type: string
+        required: false
+        default: ""
 
 concurrency:
   group: "core-libs"
@@ -82,8 +87,26 @@ jobs:
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
     outputs:
       result: ${{ steps.run-maven-bulk-release-cli.outputs.result }}
+      summary_content: ${{ steps.save-summary.outputs.content }}
 
     steps:
+      - name: Validate branch name
+        if: github.ref_name != 'main' && !startsWith(github.ref_name, 'lts/')
+        run: |
+          echo "::error title=Invalid Branch::Branch '${{ github.ref_name }}' is not allowed. Only 'main' or branches starting with 'lts/' are permitted."
+          echo "Error: Invalid branch '${{ github.ref_name }}'"
+          echo "Only 'main' or branches starting with 'lts/' are allowed"
+          exit 1
+
+      - name: Validate LTS branch version increment
+        if: startsWith(github.ref_name, 'lts/') && inputs.versionIncrementType != 'patch'
+        run: |
+          echo "::error title=Invalid Version Increment::LTS branches can only increment PATCH version. Selected: '${{ inputs.versionIncrementType }}'"
+          echo "Current branch: ${{ github.ref_name }}"
+          echo "Selected increment: ${{ inputs.versionIncrementType }}"
+          echo "LTS branches can only increment PATCH version"
+          exit 1
+
       - name: "Checkout"
         uses: actions/checkout@v6
         with:
@@ -141,32 +164,33 @@ jobs:
         env:
           REPOSITORY_TO_RELEASE_FROM: ${{ inputs.repositoryToRelease }}
           RELEASE_SIGNLE_REPOSITORY: ${{ inputs.releaseSingleRepository }}
+          BRANCH_NAME: ${{ github.ref_name }}
         # language="shell script"
         run: |
-          repositories="https://github.com/Netcracker/qubership-core-bulk-release[branch=main]
-          https://github.com/Netcracker/qubership-core-utils[branch=main]
-          https://github.com/Netcracker/qubership-core-error-handling[branch=main]
-          https://github.com/Netcracker/qubership-core-process-orchestrator[branch=main]
-          https://github.com/Netcracker/qubership-core-context-propagation[branch=main]
-          https://github.com/Netcracker/qubership-core-microservice-framework-extensions[branch=main]
-          https://github.com/Netcracker/qubership-core-mongo-evolution[branch=main]
-          https://github.com/Netcracker/qubership-core-restclient[branch=main]
-          https://github.com/Netcracker/qubership-core-rest-libraries[branch=main]
-          https://github.com/Netcracker/qubership-core-blue-green-state-monitor[branch=main]
-          https://github.com/Netcracker/qubership-maas-client[branch=main]
-          https://github.com/Netcracker/qubership-maas-client-spring[branch=main]
-          https://github.com/Netcracker/qubership-maas-declarative-client-commons[branch=main]
-          https://github.com/Netcracker/qubership-maas-declarative-client-spring[branch=main]
-          https://github.com/Netcracker/qubership-dbaas-client[branch=main]
-          https://github.com/Netcracker/qubership-core-microservice-dependencies[branch=main]
-          https://github.com/Netcracker/qubership-core-microservice-framework[branch=main]
-          https://github.com/Netcracker/qubership-core-springboot-starter[branch=main]
-          https://github.com/Netcracker/qubership-core-context-propagation-quarkus[branch=main]
-          https://github.com/Netcracker/qubership-core-quarkus-extensions[branch=main]
-          https://github.com/Netcracker/qubership-core-blue-green-state-monitor-quarkus[branch=main]
-          https://github.com/Netcracker/qubership-maas-client-quarkus[branch=main]
-          https://github.com/Netcracker/qubership-maas-declarative-client-quarkus[branch=main]
-          https://github.com/Netcracker/qubership-core-junit-k8s-extension[branch=main]"
+          repositories="https://github.com/Netcracker/qubership-core-bulk-release[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-utils[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-error-handling[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-process-orchestrator[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-context-propagation[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-microservice-framework-extensions[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-mongo-evolution[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-restclient[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-rest-libraries[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-blue-green-state-monitor[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-maas-client[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-maas-client-spring[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-maas-declarative-client-commons[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-maas-declarative-client-spring[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-dbaas-client[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-microservice-dependencies[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-microservice-framework[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-springboot-starter[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-context-propagation-quarkus[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-quarkus-extensions[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-blue-green-state-monitor-quarkus[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-maas-client-quarkus[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-maas-declarative-client-quarkus[branch=${BRANCH_NAME}]
+          https://github.com/Netcracker/qubership-core-junit-k8s-extension[branch=${BRANCH_NAME}]"
           
           if [ "${REPOSITORY_TO_RELEASE_FROM}" != "all" ] && [ "${RELEASE_SIGNLE_REPOSITORY}" = "true" ]; then
           repositories=$(echo "${repositories}" | grep -E ".*${REPOSITORY_TO_RELEASE_FROM}\[.*" | tr '\n' ',')
@@ -262,6 +286,8 @@ jobs:
           cmd="java -jar ${cli_jar} ${args}"
           echo "running cmd: ${cmd}"
           eval "${cmd}"
+          
+          cp "${GITHUB_STEP_SUMMARY}" /tmp/summary.md
 
       - name: "Upload gavs artifact"
         uses: actions/upload-artifact@v6
@@ -281,3 +307,25 @@ jobs:
         with:
           name: logs
           path: /tmp/logs/
+
+      - name: Save summary content
+        id: save-summary
+        run: |
+          # Read the summary content and encode it for output
+          summary_content=$(cat /tmp/summary.md)
+          echo "content<<EOF" >> $GITHUB_OUTPUT
+          echo "$summary_content" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+  create-branches:
+    needs: release
+    if: |
+      github.ref_name == 'main' && 
+      inputs.ltsBranchName != '' && 
+      startsWith(inputs.ltsBranchName, 'lts/')
+    uses: ./.github/workflows/create-branch-from-tag.yaml
+    with:
+      branch_name: ${{ inputs.ltsBranchName }}
+      summary_content: ${{ needs.release.outputs.summary_content }}
+      dry_run: ${{ inputs.dryRun }}
+
