@@ -1,8 +1,8 @@
-name: Maven deploy on push or manual dispatch
+name: Maven deploy
 
 run-name: >
   Deploy —
-  ${{ github.event_name == 'workflow_dispatch' && 'manual' || 'push' }}
+  ${{ github.event_name == 'workflow_dispatch' && format('manual [{0}]', inputs.branch) || 'push' }}
   ${{ github.event_name == 'push' && format('[{0}]', github.event.head_commit.message) || '' }}
 
 on:
