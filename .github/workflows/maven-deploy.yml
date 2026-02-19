@@ -10,6 +10,11 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        type: string
 
 jobs:
   maven-deploy:
@@ -19,6 +24,6 @@ jobs:
       maven-command: 'deploy'
       upload-artifact: true
       sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
-      ref: ${{ github.ref }}
+      ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.ref }}
     secrets: inherit
 
