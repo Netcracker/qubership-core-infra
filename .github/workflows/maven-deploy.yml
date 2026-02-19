@@ -1,3 +1,14 @@
+# Maven Deploy Workflow
+#
+# Builds and deploys Maven artifacts to GitHub Packages on push to main or manual trigger.
+# Uses generic-maven-build.yaml for the actual build process.
+#
+# Triggers:
+#   - Push to main branch (automatic)
+#   - Manual dispatch with explicit branch selection
+#
+# See generic-maven-build.yaml for full documentation on build features and required secrets/vars.
+
 name: Maven deploy
 
 run-name: >

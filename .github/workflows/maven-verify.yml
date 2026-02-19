@@ -1,3 +1,13 @@
+# Maven Verify Workflow
+#
+# Validates pull requests by running Maven verify (compile, test, check).
+# Uses generic-maven-build.yaml for the actual build process.
+#
+# Triggers:
+#   - Pull request opened, synchronized, or reopened
+#
+# See generic-maven-build.yaml for full documentation on build features and required secrets/vars.
+
 name: Maven verify on PR
 
 run-name: >
