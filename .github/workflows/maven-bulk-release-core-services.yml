@@ -207,9 +207,13 @@ jobs:
           fi
           
           repositoriesToReleaseFrom=""
+          repositories=${REPOSITORIES}
           if [ "${REPOSITORY_TO_RELEASE_FROM}" != "all" ]; then
             repositoriesToReleaseFrom=$(echo "${REPOSITORIES}" | tr ',' '\n' | grep "${REPOSITORY_TO_RELEASE_FROM}")
+            repositories=$repositoriesToReleaseFrom
           fi
+
+          
           args="--baseDir=/tmp"
           args="${args} --gitURL=https://github.com"
           args="${args} --gitUsername=actions"
@@ -217,7 +221,7 @@ jobs:
           args="${args} --gitPassword=${MAVEN_TOKEN}"
           args="${args} --mavenDeployArtifacts=true"
           args="${args} --runParallelism=2"
-          args="${args} --repositories=${REPOSITORIES}"
+          args="${args} --repositories=${repositories}"
           args="${args} \"--repositoriesToReleaseFrom=${repositoriesToReleaseFrom}\""
           args="${args} --gavs=${GAVS}"
           args="${args} --versionIncrementType=${VERSION_INCREMENT_TYPE}"
