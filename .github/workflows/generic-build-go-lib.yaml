@@ -1,5 +1,29 @@
 # ------------------------------------------------------------------------------
-# Workflow: Generic build
+# DEPRECATED: This workflow is deprecated and will be removed in a future version.
+#
+# Please migrate to:
+#   - generic-go-build.yaml (reusable workflow)
+#   - go-build.yml (for projects using this from qubership-core-infra)
+#
+# Migration guide:
+#   Replace:
+#     uses: .../generic-build-go-lib.yaml@vX.X.X
+#     with:
+#       actor: ${{ github.actor }}
+#       sonar-project-key: ...
+#
+#   With:
+#     uses: .../generic-go-build.yaml@feat/new-generic-workflows
+#     with:
+#       sonar-project-key: ...
+#       # actor input is no longer needed
+#
+# Changes:
+#   - Removed check-pr action (no longer needed with simplified trigger logic)
+#   - Removed actor input and restricted-actors logic
+#   - Added Docker build support (auto-skip for fork PRs)
+# ------------------------------------------------------------------------------
+# Workflow: Generic build (DEPRECATED)
 #
 # Purpose:
 #   Reusable workflow to build/test Go libs and run SonarCloud analysis

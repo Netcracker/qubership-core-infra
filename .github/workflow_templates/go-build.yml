@@ -1,0 +1,29 @@
+name: Build
+
+run-name: >
+  Build —
+  ${{ github.event_name == 'push' && format('push [{0}]', github.event.head_commit.message) || '' }}
+  ${{ github.event_name == 'pull_request' && format('PR ({0}) [{1}]', github.head_ref, github.event.pull_request.title) || '' }}
+  ${{ github.event_name == 'workflow_dispatch' && format('manual [{0}]', inputs.branch) || '' }}
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build'
+        required: true
+        type: string
+
+jobs:
+  build:
+    name: Build and test
+    uses: Netcracker/qubership-core-infra/.github/workflows/generic-go-build.yaml@feat/new-generic-workflows
+    with:
+      sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
+      ref: ${{ github.event_name == 'workflow_dispatch' && inputs.branch || '' }}
+    secrets: inherit

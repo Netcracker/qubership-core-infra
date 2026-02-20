@@ -1,0 +1,120 @@
+# Generic Maven Build Workflow
+#
+# A reusable workflow for building, testing, and deploying Maven projects.
+# Integrates with SonarQube for code quality analysis and optionally builds Docker images.
+#
+# Usage:
+#   jobs:
+#     build:
+#       uses: Netcracker/qubership-core-infra/.github/workflows/generic-maven-build.yaml@main
+#       with:
+#         maven-command: 'deploy'        # or 'verify' for PR validation
+#         upload-artifact: true          # upload built artifacts to GitHub
+#         sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
+#         ref: ${{ github.ref }}
+#       secrets: inherit
+#
+# Features:
+#   - Configurable Maven command (verify, deploy, etc.)
+#   - SonarQube code quality and security scanning
+#   - Artifact upload to GitHub Packages
+#   - Automatic Docker image build (skipped for fork PRs)
+#   - GPG signing support
+#
+# Required secrets (inherited):
+#   - MAVEN_GPG_PRIVATE_KEY, MAVEN_GPG_PASSPHRASE — for artifact signing
+#   - SONAR_TOKEN — for SonarQube analysis
+#
+# Required vars:
+#   - SONAR_PROJECT_KEY, SONAR_ORGANIZATION, SONAR_HOST_URL, SONAR_PLUGIN_VERSION
+
+name: Generic maven build
+
+on:
+  workflow_call:
+    inputs:
+      # Build configuration
+      java-version:
+        description: 'Java version to use for the build'
+        required: false
+        type: string
+        default: "21"
+      pom-file:
+        description: 'Optional path to a specific pom.xml file.'
+        required: false
+        type: string
+        default: 'pom.xml'
+      maven-command:
+        type: string
+        description: "Maven command to execute"
+        required: false
+        default: "deploy"
+
+      # Artifact configuration
+      upload-artifact:
+        type: string
+        description: "Upload the built artifact to GitHub Actions artifacts"
+        required: false
+        default: 'false'
+      artifact-id:
+        type: string
+        description: "Artifact ID to use when uploading the artifact"
+        required: false
+        default: "maven-snapshot-deploy-artifact"
+
+      # Sonar configuration
+      sonar-project-key:
+        description: 'Sonar project key for analysis'
+        required: false
+        type: string
+
+      # Git reference configuration
+      ref:
+        description: 'Git reference (branch, tag, or SHA) to checkout and build'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+  packages: write
+
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  maven:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+
+      - name: Code quality/security scan on SonarQube
+        uses: netcracker/qubership-workflow-hub/actions/maven-snapshot-deploy@v2.0.10
+        with:
+          java-version: ${{ inputs.java-version }}
+          target-store: 'github'
+          maven-command: ${{ inputs.maven-command }}
+          additional-mvn-args: 'org.sonarsource.scanner.maven:sonar-maven-plugin:${{ vars.SONAR_PLUGIN_VERSION }}:sonar -Dsonar.projectKey=${{ inputs.sonar-project-key }} -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }} -Dsonar.host.url=${{ vars.SONAR_HOST_URL }}'
+          pom-file: ${{ inputs.pom-file }}
+          upload-artifact: ${{ inputs.upload-artifact }}
+          artifact-id: ${{ inputs.artifact-id }}
+          maven-username: ${{ github.actor }}
+          maven-token: ${{ github.token }}
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
+
+  docker-build:
+    name: Build Docker image
+    needs: [ maven ]
+    # Skip docker build for PRs coming from forks
+    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
+    uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@feat/new-generic-workflows
+    with:
+      ref: ${{ inputs.ref }}
+      dry-run: false
