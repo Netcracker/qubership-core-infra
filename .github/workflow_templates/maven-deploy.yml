@@ -1,0 +1,40 @@
+# Maven Deploy Workflow
+#
+# Builds and deploys Maven artifacts to GitHub Packages on push to main or manual trigger.
+# Uses generic-maven-build.yaml for the actual build process.
+#
+# Triggers:
+#   - Push to main branch (automatic)
+#   - Manual dispatch with explicit branch selection
+#
+# See generic-maven-build.yaml for full documentation on build features and required secrets/vars.
+
+name: Maven deploy
+
+run-name: >
+  Deploy —
+  ${{ github.event_name == 'workflow_dispatch' && format('manual [{0}]', inputs.branch) || 'push' }}
+  ${{ github.event_name == 'push' && format('[{0}]', github.event.head_commit.message) || '' }}
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        type: string
+
+jobs:
+  maven-deploy:
+    name: Maven build and deploy
+    uses: Netcracker/qubership-core-infra/.github/workflows/generic-maven-build.yaml@feat/new-generic-workflows
+    with:
+      maven-command: 'deploy'
+      upload-artifact: true
+      sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
+      ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.ref }}
+    secrets: inherit
+
