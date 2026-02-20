@@ -144,7 +144,7 @@ jobs:
             repositoryToRelease=""
           else 
             repositoryToRelease="https://github.com/netcracker/${REPOSITORY_TO_RELEASE}"
-            repositories=$repositoriesToReleaseFrom
+            repositories=$repositoryToRelease
           fi
           args="--baseDir=/tmp"
           args="${args} --goProxyDir=/tmp/GOPROXY"
