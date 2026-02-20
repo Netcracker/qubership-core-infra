@@ -122,6 +122,7 @@ jobs:
           REPOSITORY_TO_RELEASE: ${{ inputs.repositoryToRelease }}
           SKIP_TEST: ${{ inputs.skipTest }}
           DRY_RUN: ${{ inputs.dryRun }}
+          BRANCH_NAME: ${{ github.ref_name }}
         # language="shell script"
         run: |
           mkdir /tmp/GOPROXY
@@ -143,7 +144,7 @@ jobs:
           if [ "${REPOSITORY_TO_RELEASE}" = "all" ]; then
             repositoryToRelease=""
           else 
-            repositoryToRelease="https://github.com/netcracker/${REPOSITORY_TO_RELEASE}[[branch=${BRANCH_NAME}]]"
+            repositoryToRelease="https://github.com/netcracker/${REPOSITORY_TO_RELEASE}[branch=${BRANCH_NAME}]"
             repositories=$repositoryToRelease
           fi
           args="--baseDir=/tmp"
