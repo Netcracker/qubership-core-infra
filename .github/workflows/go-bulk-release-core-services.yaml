@@ -139,10 +139,12 @@ jobs:
             options="${options} --dryRun"
           fi
           repositoryToRelease=""
+          repositories=${REPOSITORIES}
           if [ "${REPOSITORY_TO_RELEASE}" = "all" ]; then
             repositoryToRelease=""
           else 
             repositoryToRelease="https://github.com/netcracker/${REPOSITORY_TO_RELEASE}"
+            repositories=$repositoriesToReleaseFrom
           fi
           args="--baseDir=/tmp"
           args="${args} --goProxyDir=/tmp/GOPROXY"
@@ -150,7 +152,7 @@ jobs:
           args="${args} --gitUsername=actions"
           args="${args} --gitEmail=actions@github.com"
           args="${args} --gitPassword=${MAVEN_TOKEN}"
-          args="${args} --repositories=${REPOSITORIES}"
+          args="${args} --repositories=${repositories}"
           args="${args} --repositoriesToReleaseFrom=${repositoryToRelease}"
           args="${args} --resultOutputFile=${GITHUB_OUTPUT}"
           args="${args} --summaryFile=${GITHUB_STEP_SUMMARY}"
