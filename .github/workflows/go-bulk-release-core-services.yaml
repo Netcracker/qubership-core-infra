@@ -143,7 +143,7 @@ jobs:
           if [ "${REPOSITORY_TO_RELEASE}" = "all" ]; then
             repositoryToRelease=""
           else 
-            repositoryToRelease="https://github.com/netcracker/${REPOSITORY_TO_RELEASE}"
+            repositoryToRelease="https://github.com/netcracker/${REPOSITORY_TO_RELEASE}[[branch=${BRANCH_NAME}]]"
             repositories=$repositoryToRelease
           fi
           args="--baseDir=/tmp"
