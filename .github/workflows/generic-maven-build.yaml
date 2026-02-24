@@ -55,7 +55,7 @@ on:
         type: string
         description: "Upload the built artifact to GitHub Actions artifacts"
         required: false
-        default: 'false'
+        default: 'true'
       artifact-id:
         type: string
         description: "Artifact ID to use when uploading the artifact"

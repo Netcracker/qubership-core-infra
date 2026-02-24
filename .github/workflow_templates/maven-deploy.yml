@@ -29,11 +29,10 @@ on:
 
 jobs:
   maven-deploy:
-    name: Maven build and deploy
+    name: Maven deploy
     uses: Netcracker/qubership-core-infra/.github/workflows/generic-maven-build.yaml@feat/new-generic-workflows
     with:
       maven-command: 'deploy'
-      upload-artifact: true
       sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
       ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.ref }}
     secrets: inherit
