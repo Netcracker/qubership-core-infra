@@ -189,7 +189,7 @@ jobs:
           go test -v ./... -coverpkg="${{ inputs.cover-packages }}" -coverprofile coverage.out
 
       - name: Upload coverage report to SonarCloud
-        if: inputs.sonar-project-key != '' && secrets.SONAR_TOKEN != ''
+        if: inputs.sonar-project-key != ''
         working-directory: ${{ env.GO_MOD_DIR }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
