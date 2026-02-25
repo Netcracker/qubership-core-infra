@@ -8,7 +8,7 @@
 #
 # See generic-maven-build.yaml for full documentation on build features and required secrets/vars.
 
-name: Maven verify on PR
+name: Maven verify
 
 run-name: >
   Verify —
@@ -25,7 +25,6 @@ jobs:
     uses: Netcracker/qubership-core-infra/.github/workflows/generic-maven-build.yaml@feat/new-generic-workflows
     with:
       maven-command: 'verify'
-      upload-artifact: true
       sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
     secrets: inherit
 
