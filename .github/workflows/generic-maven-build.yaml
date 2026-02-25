@@ -6,7 +6,7 @@
 # Usage:
 #   jobs:
 #     build:
-#       uses: Netcracker/qubership-core-infra/.github/workflows/generic-maven-build.yaml@main
+#       uses: Netcracker/qubership-core-infra/.github/workflows/generic-maven-build.yaml@v2.x.x
 #       with:
 #         maven-command: 'deploy'        # or 'verify' for PR validation
 #         upload-artifact: true          # upload built artifacts to GitHub
@@ -114,7 +114,7 @@ jobs:
     needs: [ maven ]
     # Skip docker build for PRs coming from forks
     if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
-    uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@feat/new-generic-workflows
+    uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@v2.0.0
     with:
       ref: ${{ inputs.ref }}
       dry-run: false

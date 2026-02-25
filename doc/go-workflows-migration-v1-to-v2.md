@@ -54,7 +54,7 @@ Before (v1.x):
 ```yaml
 jobs:
   build:
-    uses: Netcracker/qubership-core-infra/.github/workflows/go-build-with-sonar.yaml@v1.3.3
+    uses: Netcracker/qubership-core-infra/.github/workflows/go-build-with-sonar.yaml@v1.x.x
     with:
       actor: ${{ github.actor }}
       sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
@@ -68,7 +68,7 @@ After (v2.x):
 ```yaml
 jobs:
   build:
-    uses: Netcracker/qubership-core-infra/.github/workflows/generic-go-build.yaml@v2.0.0
+    uses: Netcracker/qubership-core-infra/.github/workflows/generic-go-build.yaml@v2.x.x
     with:
       sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
       install-envtest: true
