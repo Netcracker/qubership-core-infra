@@ -32,6 +32,9 @@ packageRules:
     registryUrls:
       - "https://repo.maven.apache.org/maven2"
       - "https://maven.pkg.github.com/netcracker"
+  - matchDatasources: [ "docker" ]
+    matchPackageNames: [ "/.+/netcracker/qubership-java-base.*/" ]
+    versioning: "regex:^(?<compatibility>\\d+)-alpine-(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$"
 
 platform: "github"
 platformAutomerge: true
