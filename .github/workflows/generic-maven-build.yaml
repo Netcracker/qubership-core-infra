@@ -9,7 +9,6 @@
 #       uses: Netcracker/qubership-core-infra/.github/workflows/generic-maven-build.yaml@v2.x.x
 #       with:
 #         maven-command: 'deploy'        # or 'verify' for PR validation
-#         upload-artifact: true          # upload built artifacts to GitHub
 #         sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
 #         ref: ${{ github.ref }}
 #       secrets: inherit
@@ -93,13 +92,13 @@ jobs:
           ref: ${{ inputs.ref }}
           fetch-depth: 0
 
-      - name: Code quality/security scan on SonarQube
+      - name: Maven build
         uses: netcracker/qubership-workflow-hub/actions/maven-snapshot-deploy@v2.0.10
         with:
           java-version: ${{ inputs.java-version }}
           target-store: 'github'
           maven-command: ${{ inputs.maven-command }}
-          additional-mvn-args: 'org.sonarsource.scanner.maven:sonar-maven-plugin:${{ vars.SONAR_PLUGIN_VERSION }}:sonar -Dsonar.projectKey=${{ inputs.sonar-project-key }} -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }} -Dsonar.host.url=${{ vars.SONAR_HOST_URL }}'
+          additional-mvn-args: ${{ inputs.sonar-project-key != '' && format('org.sonarsource.scanner.maven:sonar-maven-plugin:{0}:sonar -Dsonar.projectKey={1} -Dsonar.organization={2} -Dsonar.host.url={3}', vars.SONAR_PLUGIN_VERSION, inputs.sonar-project-key, vars.SONAR_ORGANIZATION, vars.SONAR_HOST_URL) || '' }}
           pom-file: ${{ inputs.pom-file }}
           upload-artifact: ${{ inputs.upload-artifact }}
           artifact-id: ${{ inputs.artifact-id }}
