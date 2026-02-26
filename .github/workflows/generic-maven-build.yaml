@@ -100,7 +100,7 @@ jobs:
           fetch-depth: 0
 
       - name: Maven build
-        uses: netcracker/qubership-workflow-hub/actions/maven-snapshot-deploy@v2.0.10
+        uses: netcracker/qubership-workflow-hub/actions/maven-snapshot-deploy@v2.0.11
         with:
           java-version: ${{ inputs.java-version }}
           target-store: 'github'
