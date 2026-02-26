@@ -120,7 +120,7 @@ jobs:
     needs: [ maven ]
     # Skip docker build for PRs coming from forks
     if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
-    uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@v2.0.0
+    uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@v2.0.1
     with:
       ref: ${{ inputs.ref }}
       dry-run: ${{ inputs.dry-run }}
