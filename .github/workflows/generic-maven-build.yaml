@@ -73,6 +73,13 @@ on:
         required: false
         type: string
 
+      # Docker build configuration
+      dry-run:
+        description: 'Run docker build in dry-run mode (no push)'
+        required: false
+        type: boolean
+        default: false
+
 permissions:
   contents: read
   pull-requests: write
@@ -116,4 +123,4 @@ jobs:
     uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@v2.0.0
     with:
       ref: ${{ inputs.ref }}
-      dry-run: false
+      dry-run: ${{ inputs.dry-run }}
