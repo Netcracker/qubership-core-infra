@@ -133,6 +133,7 @@ jobs:
           java-version: |
             17
             21
+            25
           architecture: 'x64'
           distribution: 'temurin'
           server-id: github
@@ -196,7 +197,7 @@ jobs:
           args="${args} \"--repositoriesToReleaseFrom=${repositoriesToReleaseFrom}\""
           args="${args} --gavs=${GAVS}"
           args="${args} --versionIncrementType=${VERSION_INCREMENT_TYPE}"
-          args="${args} --javaVersionToJavaHomeEnv=17=${JAVA_HOME_17_X64},21=${JAVA_HOME_21_X64}"
+          args="${args} --javaVersionToJavaHomeEnv=17=${JAVA_HOME_17_X64},21=${JAVA_HOME_21_X64},25=${JAVA_HOME_25_X64}"
           args="${args} --resultOutputFile=${GITHUB_OUTPUT}"
           args="${args} --summaryFile=${GITHUB_STEP_SUMMARY}"
           args="${args} --gavsResultFile=/tmp/gavs.txt"
