@@ -10,7 +10,7 @@ globalExtends:
   - ":dependencyDashboard"
 hostRules:
   - hostType: "maven"
-    matchHost: "https://maven.pkg.github.com/netcracker"
+    matchHost: "maven.pkg.github.com"
     token: "{{ secrets.renovation_bot_private_packages_read }}"
 packageRules:
   - matchManagers: [ "maven" ]
@@ -31,7 +31,7 @@ packageRules:
   - matchDatasources: [ "maven" ]
     registryUrls:
       - "https://repo.maven.apache.org/maven2"
-      - "https://maven.pkg.github.com/netcracker"
+      - "https://maven.pkg.github.com/netcracker/*"
   - matchDatasources: [ "docker" ]
     matchPackageNames: [ "/.+/netcracker/qubership-java-base.*/" ]
     versioning: "regex:^(?<compatibility>\\d+)-alpine-(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$"
