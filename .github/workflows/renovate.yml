@@ -173,20 +173,20 @@ jobs:
           else
             args+=("--strictGavsFile=effective-gavs.txt")
           fi
-          args+=("--renovateConfigOutputFile=renovate-core-config.json")
+          args+=("--renovateConfigOutputFile=renovate-core-config-test.json")
           args+=("--renovateConfigOutputFormat=JSON")
           if [ "${DRY_RUN}" = "true" ]; then
             args+=("--fromJson={'dryRun':'full'}")
           fi
           java -jar "${cli_name}.jar" "${args[@]}"
           
-          # commit renovate-core-config.json if updated
-          git add renovate-core-config.json
+          # commit renovate-core-config-test.json if updated
+          git add renovate-core-config-test.json
           git diff --cached --quiet || git commit -m "Update renovate core config"
           git push
 
-      - name: "Upload renovate-core-config.json artifact"
+      - name: "Upload renovate-core-config-test.json artifact"
         uses: actions/upload-artifact@v6
         with:
           name: renovate-core-config
-          path: renovate-core-config.json
+          path: renovate-core-config-test.json
