@@ -182,3 +182,4 @@ jobs:
         with:
           name: renovate-config.json
           path: renovate-config.json
+          compression-level: 0
