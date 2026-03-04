@@ -181,6 +181,8 @@ jobs:
           java -jar "${cli_name}.jar" "${args[@]}"
           
           # commit renovate-core-config-test.json if updated
+          git config user.email "actions@github.com"
+          git config user.name "actions"
           git add renovate-core-config-test.json
           git diff --cached --quiet || git commit -m "Update renovate core config"
           git push
