@@ -180,6 +180,5 @@ jobs:
       - name: "Upload renovate-config.json artifact"
         uses: actions/upload-artifact@v6
         with:
-          name: renovate-config.json
+          name: renovate-config
           path: renovate-config.json
-          compression-level: 0
