@@ -16,10 +16,10 @@ on:
           - qubership-core-release-test-maven-lib-3
       runIdsWithGAVs:
         type: number
-        description: "Comma seperated list of runId(s) of another release workflow(s) to use their dependencies GAVs"
+        description: "Comma separated list of runId(s) of another release workflow(s) to use their dependencies GAVs"
       gavs:
         type: string
-        description: "Comma seperated list of GAV(s)"
+        description: "Comma separated list of GAV(s)"
         default: ""
       versionIncrementType:
         description: "Version part to increment"
