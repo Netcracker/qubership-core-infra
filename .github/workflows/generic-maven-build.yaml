@@ -79,6 +79,11 @@ on:
         required: false
         type: boolean
         default: false
+      skip-docker:
+        description: 'Skip Docker image build step'
+        required: false
+        type: boolean
+        default: false
 
       # Maven credentials configuration
       maven-username:
@@ -138,8 +143,8 @@ jobs:
   docker-build:
     name: Build Docker image
     needs: [ maven ]
-    # Skip docker build for PRs coming from forks
-    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
+    # Skip docker build for PRs coming from forks or if skip-docker is true
+    if: ${{ !inputs.skip-docker && !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
     uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@v2.1.0
     with:
       ref: ${{ inputs.ref }}
