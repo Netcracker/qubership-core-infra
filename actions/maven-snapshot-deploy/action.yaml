@@ -200,14 +200,18 @@ runs:
       run: |
         echo "Cache size:"
         du -sh ~/.m2/repository 2>/dev/null || echo "Cache is empty"
-
+        
         echo ""
         echo "Top-level directories in cache:"
         ls ~/.m2/repository 2>/dev/null | head -15 || echo "Empty"
-
+        
         echo ""
         echo "SNAPSHOT artifacts in cache (should be 0):"
-        find ~/.m2/repository -type d -name "*-SNAPSHOT" 2>/dev/null | wc -l
+        if [[ -d ~/.m2/repository ]]; then
+          find ~/.m2/repository -type d -name "*-SNAPSHOT" | wc -l
+        else
+          echo "0"
+        fi
 
     - name: Upload cache for inspection
       uses: actions/upload-artifact@v4
