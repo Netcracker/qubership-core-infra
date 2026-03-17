@@ -173,7 +173,6 @@ jobs:
           args="${args} --gitPassword=${MAVEN_TOKEN}"
           args="${args} --mavenDeployArtifacts=true"
           args="${args} --runParallelism=2"
-          args="${args} --repositories=${REPOSITORIES}"
           args="${args} --gavs=${GAVS}"
           args="${args} --versionIncrementType=${VERSION_INCREMENT_TYPE}"
           args="${args} --javaVersionToJavaHomeEnv=17=${JAVA_HOME_17_X64},21=${JAVA_HOME_21_X64}"
