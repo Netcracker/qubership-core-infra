@@ -150,7 +150,7 @@ jobs:
           #          cli_jar=$(ls -1 "/tmp" | grep "${cli_name}" | tr -d '\n')
           #                    
           cliVersion="1.8.2-SNAPSHOT"   
-          cliVersionSpecific="1.8.2-20260317.063855-3"
+          cliVersionSpecific="1.8.2-20260317.071945-4"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-infra/org.qubership.cloud/maven-bulk-release-cli/${cliVersion}/maven-bulk-release-cli-${cliVersionSpecific}-jar-with-dependencies.jar"
           curl -L -o "maven-bulk-release-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
           cli_jar="maven-bulk-release-cli.jar"
@@ -172,7 +172,7 @@ jobs:
           args="${args} --gitEmail=actions@github.com"
           args="${args} --gitPassword=${MAVEN_TOKEN}"
           args="${args} --mavenDeployArtifacts=true"
-          args="${args} --runParallelism=1"
+          args="${args} --runParallelism=2"
           args="${args} --gavs=${GAVS}"
           args="${args} --versionIncrementType=${VERSION_INCREMENT_TYPE}"
           args="${args} --javaVersionToJavaHomeEnv=17=${JAVA_HOME_17_X64},21=${JAVA_HOME_21_X64}"
