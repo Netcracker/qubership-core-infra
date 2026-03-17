@@ -67,6 +67,13 @@ on:
         type: string
         default: './...'
 
+      # Docker build configuration
+      skip-docker:
+        description: 'Skip Docker image build step'
+        required: false
+        type: boolean
+        default: false
+
 permissions:
   contents: read
   pull-requests: write
@@ -214,8 +221,8 @@ jobs:
   docker-build:
     name: Build Docker image
     needs: [test]
-    # Skip docker build for PRs coming from forks
-    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
-    uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@v2.1.0
+    # Skip docker build for PRs coming from forks or if skip-docker is true
+    if: ${{ !inputs.skip-docker && !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
+    uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@v2.2.0
     with:
       dry-run: false
