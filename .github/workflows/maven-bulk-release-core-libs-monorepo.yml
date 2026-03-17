@@ -210,8 +210,8 @@ jobs:
           $repositories
           EOF
 
-          args+=("--repositoriesFile=${tmpfile}")
-          
+          args="${args} --repositoriesFile=${tmpfile}"
+
           args="${args} ${options}"
           cmd="java -jar ${cli_jar} ${args}"
           echo "running cmd: ${cmd}"
