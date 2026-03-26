@@ -26,6 +26,11 @@ on:
         description: 'Branch to deploy'
         required: true
         type: string
+      docker-config-file:
+        description: 'Path to docker config file inside .github folder'
+        required: false
+        type: string
+        default: 'docker-dev-config.json'
 
 jobs:
   maven-deploy:
@@ -35,5 +40,6 @@ jobs:
       maven-command: 'deploy'
       sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
       ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.ref }}
+      docker-config-file: ${{ inputs.docker-config-file || 'docker-dev-config.json' }}
     secrets: inherit
 

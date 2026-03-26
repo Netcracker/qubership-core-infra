@@ -73,6 +73,11 @@ on:
         required: false
         type: boolean
         default: false
+      docker-config-file:
+        description: 'Path to docker config file inside .github folder'
+        required: false
+        type: string
+        default: 'docker-dev-config.json'
 
 permissions:
   contents: read
@@ -226,3 +231,4 @@ jobs:
     uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@v2.2.1
     with:
       dry-run: false
+      config-filename: ${{ inputs.docker-config-file }}

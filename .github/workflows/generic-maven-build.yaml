@@ -84,6 +84,11 @@ on:
         required: false
         type: boolean
         default: false
+      docker-config-file:
+        description: 'Path to docker config file inside .github folder'
+        required: false
+        type: string
+        default: 'docker-dev-config.json'
 
       # Maven credentials configuration
       maven-username:
@@ -149,3 +154,4 @@ jobs:
     with:
       ref: ${{ inputs.ref }}
       dry-run: ${{ inputs.dry-run }}
+      config-filename: ${{ inputs.docker-config-file }}
