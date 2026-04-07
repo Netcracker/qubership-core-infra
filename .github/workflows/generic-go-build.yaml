@@ -67,7 +67,18 @@ on:
         type: string
         default: './...'
 
+      # Git reference configuration
+      ref:
+        description: 'Git reference (branch, tag, or SHA) to checkout and build'
+        required: false
+        type: string
+
       # Docker build configuration
+      dry-run:
+        description: 'Run docker build in dry-run mode (no push)'
+        required: false
+        type: boolean
+        default: false
       skip-docker:
         description: 'Skip Docker image build step'
         required: false
@@ -96,6 +107,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.ref }}
           fetch-depth: 0
 
       - name: Find go.mod files
@@ -230,5 +242,6 @@ jobs:
     if: ${{ !inputs.skip-docker && !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
     uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@v2.3.0
     with:
-      dry-run: false
+      ref: ${{ inputs.ref }}
+      dry-run: ${{ inputs.dry-run }}
       config-filename: ${{ inputs.docker-config-file }}
