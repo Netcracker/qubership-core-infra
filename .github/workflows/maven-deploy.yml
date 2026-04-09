@@ -30,7 +30,7 @@ on:
 jobs:
   maven-deploy:
     name: Maven deploy
-    uses: Netcracker/qubership-core-infra/.github/workflows/generic-maven-build.yaml@v2.4.0
+    uses: Netcracker/qubership-core-infra/.github/workflows/generic-maven-build.yaml@v2.4.1
     with:
       maven-command: 'deploy'
       sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
