@@ -164,6 +164,8 @@ jobs:
           args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchUpdateTypes':['minor'],'groupName':'go-minor','groupSlug':'go-minor','addLabels':['group:go']}]}")
           args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchUpdateTypes':['patch'],'groupName':'go-patch','groupSlug':'go-patch','addLabels':['group:go']}]}")
           args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchUpdateTypes':['digest'],'groupName':'go-digest','groupSlug':'go-digest','addLabels':['group:go']}]}")
+          # temporary rule to separate update github.com/valyala/fasthttp v1.69.0 → v1.70.0 (manual steps are required)
+          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchPackageNames':['github.com/valyala/fasthttp'],'matchNewValue':['v1.70.0'],'groupName':'go-fasthttp','groupSlug':'go-fasthttp','addLabels':['group:go']}]}")
           # bump go version because there is bug in go when it switches from 1.23.x (from go directive) to 1.25.1 (from toolchain directive)
           args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchDepNames':['go'],'matchDepTypes':['golang'],'rangeStrategy':'bump','addLabels':['group:go-version']}]}")
           args+=("--fromJson={'packageRules':[{'matchManagers':['github-actions'],'groupName':'github-actions'}]}") 
