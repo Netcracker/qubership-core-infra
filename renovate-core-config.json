@@ -70,6 +70,13 @@
     "addLabels" : [ "group:go" ]
   }, {
     "matchManagers" : [ "gomod" ],
+    "matchPackageNames" : [ "github.com/valyala/fasthttp" ],
+    "matchNewValue" : [ "v1.70.0" ],
+    "groupName" : "go-fasthttp",
+    "groupSlug" : "go-fasthttp",
+    "addLabels" : [ "group:go" ]
+  }, {
+    "matchManagers" : [ "gomod" ],
     "matchDepNames" : [ "go" ],
     "matchDepTypes" : [ "golang" ],
     "rangeStrategy" : "bump",
