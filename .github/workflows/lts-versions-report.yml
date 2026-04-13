@@ -1,0 +1,39 @@
+name: Versions Report
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  generate-report:
+    name: Generate and deploy versions report
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout (full history, all branches)
+        uses: actions/checkout@v4
+        with:
+          repository: Netcracker/qubership-core-java-libs
+          token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+          fetch-depth: 0
+          fetch-tags: false
+
+      - name: Fetch all remote branches
+        run: git fetch --all --prune
+
+      - name: Generate HTML report
+        run: |
+          chmod +x lts-versions-script/generate-versions-report.sh
+          mkdir -p _site
+          lts-versions-script/generate-versions-report.sh _site/index.html
+
+      - name: Deploy to gh-pages (versions/ subpath, keep existing content)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: '_site'
+          destination_dir: 'lts-versions'
+          keep_files: true
