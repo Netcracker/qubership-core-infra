@@ -1,4 +1,4 @@
-name: Versions Report
+name: LTS Versions Report
 
 on:
   schedule:

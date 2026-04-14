@@ -75,11 +75,7 @@ def extract_field(text, tag):
     return None
 
 
-def extract_group_id(text):
-    """Return own <groupId> if present, otherwise fall back to <parent>'s <groupId>."""
-    own = extract_field(text, 'groupId')
-    if own:
-        return own
+def extract_parent_group_id(text):
     in_parent, open_tag, close_tag = False, '<groupId>', '</groupId>'
     for line in text.splitlines():
         if '<parent>'  in line: in_parent = True
@@ -87,6 +83,14 @@ def extract_group_id(text):
         if in_parent and open_tag in line and close_tag in line:
             return line.split(open_tag)[1].split(close_tag)[0].strip()
     return None
+
+
+def extract_group_id(text):
+    """Return groupId, falling back to parent's groupId when own is absent or a variable."""
+    own = extract_field(text, 'groupId')
+    if own and '${' not in own:
+        return own
+    return extract_parent_group_id(text)
 
 
 def released_version(snapshot):
