@@ -75,22 +75,27 @@ def extract_field(text, tag):
     return None
 
 
-def extract_parent_group_id(text):
-    in_parent, open_tag, close_tag = False, '<groupId>', '</groupId>'
-    for line in text.splitlines():
-        if '<parent>'  in line: in_parent = True
-        if '</parent>' in line: in_parent = False; continue
-        if in_parent and open_tag in line and close_tag in line:
-            return line.split(open_tag)[1].split(close_tag)[0].strip()
-    return None
-
-
 def extract_group_id(text):
-    """Return groupId, falling back to parent's groupId when own is absent or a variable."""
-    own = extract_field(text, 'groupId')
-    if own and '${' not in own:
-        return own
-    return extract_parent_group_id(text)
+    """Return the project's own groupId, or the parent's groupId if absent/variable."""
+    in_parent = False
+    parent_group = None
+    open_tag, close_tag = '<groupId>', '</groupId>'
+    stop_tags = ('<dependencies>', '<build>', '<profiles>', '<reporting>')
+    for line in text.splitlines():
+        stripped = line.strip()
+        if '<parent>'  in stripped: in_parent = True
+        if '</parent>' in stripped: in_parent = False; continue
+        if in_parent:
+            if open_tag in stripped and close_tag in stripped:
+                parent_group = stripped.split(open_tag)[1].split(close_tag)[0].strip()
+            continue
+        if any(t in stripped for t in stop_tags):
+            break
+        if open_tag in stripped and close_tag in stripped:
+            val = stripped.split(open_tag)[1].split(close_tag)[0].strip()
+            if '${' not in val:
+                return val
+    return parent_group
 
 
 def released_version(snapshot):

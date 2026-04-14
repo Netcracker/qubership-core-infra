@@ -1,110 +1,66 @@
-# LTS Versions Report — Requirements & Design
+# LTS Versions Report — Design
 
-## Requirements
+## What it does
 
-### Functional
+For each `lts/*` branch: reads every `pom.xml` recursively, extracts `groupId`, `artifactId`, and the module version. Produces an HTML report and per-branch export files.
 
-1. **Input**: the `qubership-core-java-libs` git repository with one or more
-   `lts/*` branches.
-
-2. **Scope**: for each LTS branch, inspect every top-level module directory
-   (every direct child of the repo root that contains a `pom.xml`).
-
-3. **Artifact discovery**: collect **all** `pom.xml` files recursively within
-   each module at every depth.
-
-4. **Version**: determined once per module per branch from the module root
-   `pom.xml` (`<module>/pom.xml`). All versions are `X.Y.N-SNAPSHOT` with
-   `N > 0`, so the released version is always `X.Y.(N-1)`.
-
-5. **Table structure**:
-
-   | Module | Artifact | lts/25.3 | lts/25.4 | lts/26.1 | lts/26.2 |
-   |--------|----------|----------|----------|----------|----------|
-   | maas-client | maas-client-parent | 11.1.5 | 11.2.7 | 11.3.4 | 12.0.3 |
-   | maas-client | maas-client-bom    | 11.1.5 | 11.2.7 | 11.3.4 | 12.0.3 |
-
-   - **Module** column: top-level directory name, one `<td rowspan="N">` per
-     module block (no filtering, so rowspan is stable).
-   - **Artifact** column: `artifactId` from each `pom.xml`, sorted
-     alphabetically within each module block.
-   - **Version columns**: one per branch, same value for all artifacts within
-     a module. `—` when the module did not exist on that branch.
-
-6. **Output**: a self-contained HTML file, no external dependencies, no JS.
-
-7. **Automation**: GitHub Actions workflow runs nightly and on manual trigger,
-   deploys to the `lts-versions/` path on the `gh-pages` branch.
-
----
-
-## Design
-
-### Language
-
-**Python 3** (standard library only): `subprocess`, `tarfile`, `io`.
-
-### Files
+## Files
 
 ```
 lts-versions-script/
-├── generate-versions-report.py   # replaces generate-versions-report.sh
-├── get-lts-versions.sh           # unchanged
-├── DESIGN.md
+├── lts-versions.py   # single entry point
+└── DESIGN.md
 ```
 
-### Git access — 2 processes per branch
+## CLI modes
 
 ```
-git ls-tree -r --name-only <ref>   →  list of all file paths
-git archive <ref> <pom_paths>      →  tar stream read into memory
+# HTML report for all lts/* branches (default output: versions-report.html)
+lts-versions.py [output.html] [--repo <monorepo-path>]
+
+# Single-branch text output
+lts-versions.py --branch lts/26.2 [--format table|properties|csv] [--repo <path>]
 ```
 
-`pom_paths` = paths ending with `pom.xml` that contain at least one `/`
-(excludes the repo-root aggregator `pom.xml`).
+`--repo` overrides the default monorepo root (two directories above the script). Used when the script lives in a service repo and the monorepo is checked out separately.
 
-### pom.xml parsing — plain text, no XML library
+## Git access — 2 processes per branch
 
-All `<artifactId>` and `<version>` tags in this repo appear one per line in
-the form `<tag>value</tag>`. We skip lines between `<parent>` and `</parent>`
-(also one tag per line) to avoid picking up the parent's values.
-
-```python
-def extract_field(text, tag):
-    in_parent = False
-    for line in text.splitlines():
-        if '<parent>'  in line: in_parent = True
-        if '</parent>' in line: in_parent = False; continue
-        if in_parent: continue
-        if f'<{tag}>' in line:
-            return line.split(f'<{tag}>')[1].split(f'</{tag}>')[0].strip()
-    return None
+```
+git ls-tree -r --name-only <ref>   →  list all file paths
+git archive <ref> <pom_paths>      →  tar stream, all pom.xml at once
 ```
 
-### Data structures
+`pom_paths` = paths ending with `pom.xml` that contain at least one `/` (excludes repo-root aggregator).
 
-```python
-branches: list[str]                        # sorted, e.g. ["lts/25.3", …]
-modules:  list[str]                        # sorted top-level dir names
+## pom.xml parsing — plain text, no XML library
 
-# artifacts[module] = sorted list of artifactId strings (union across branches)
-artifacts: dict[str, list[str]]
+Tags appear one per line as `<tag>value</tag>`. Parsing rules:
 
-# versions[branch][module] = released version string, or None
-versions:  dict[str, dict[str, str | None]]
-```
+- **`artifactId`**: first occurrence outside `<parent>` block.
+- **`version`** (module root only): first occurrence outside `<parent>` block.
+- **`groupId`**: scan top of file until `<dependencies>`, `<build>`, `<profiles>`, or `<reporting>` is encountered — take first literal value (no `${}`). If not found, fall back to `<groupId>` inside `<parent>`.
 
-### Version computation
+## Version computation
 
-```python
-def released(snapshot: str) -> str:
-    base = snapshot.removesuffix('-SNAPSHOT')   # "X.Y.N"
-    prefix, patch = base.rsplit('.', 1)
-    return f"{prefix}.{int(patch) - 1}"
-```
+Branch pom.xml always contains `X.Y.N-SNAPSHOT` with `N ≥ 1`. Latest release = `X.Y.(N-1)`.
 
-### HTML generation
+## HTML report structure
 
-Pure string building; no template engine needed given the simple structure.
-Module cell uses `rowspan` equal to the number of artifacts in that module.
-Alternating row background (`#fff` / `#f6f8fa`) resets at each module boundary.
+| Module | Artifact (`groupId:artifactId`) | lts/25.3 | lts/26.2 | … |
+|--------|---------------------------------|----------|----------|---|
+
+- One row per artifact (all pom.xml recursively, sorted alphabetically within module).
+- Module cell uses `rowspan` — same version for all artifacts in a module.
+- Each branch column header has a download link (`↓ export`) pointing to a pre-generated `.txt` file.
+
+## Export files
+
+Written to the same directory as `index.html`. One file per branch, e.g. `lts_26.2.txt`. Format: one `groupId:artifactId:version` per line, only modules present on that branch.
+
+## Automation
+
+GitHub Actions workflow (`.github/workflows/versions-report.yml`):
+- Triggers: nightly (`0 3 * * *`) and `workflow_dispatch` (with optional `monorepo_dir` input, default: `qubership-core-java-libs`).
+- Checks out `Netcracker/qubership-core-java-libs` into `monorepo_dir`.
+- Runs the script, deploys `_site/` to `gh-pages` branch under `lts-versions/` path (`keep_files: true`).

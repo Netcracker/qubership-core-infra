@@ -14,12 +14,12 @@ jobs:
 
     steps:
       - name: Checkout infra (scripts)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: infra
 
       - name: Checkout java-libs (full history, all branches)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: Netcracker/qubership-core-java-libs
           token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
