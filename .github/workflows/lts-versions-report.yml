@@ -32,9 +32,8 @@ jobs:
 
       - name: Generate HTML report
         run: |
-          chmod +x infra/lts-versions-script/generate-versions-report.sh
           mkdir -p _site
-          infra/lts-versions-script/generate-versions-report.sh _site/index.html "$GITHUB_WORKSPACE/java-libs"
+          python3 infra/lts-versions-script/lts-versions.py _site/index.html --repo "$GITHUB_WORKSPACE/java-libs"
 
       - name: Deploy to gh-pages (versions/ subpath, keep existing content)
         uses: peaceiris/actions-gh-pages@v4
