@@ -15,222 +15,1738 @@
     .container { padding: 24px; overflow-x: auto; }
     table { border-collapse: collapse; width: 100%; background: #fff;
             border: 1px solid #d0d7de; border-radius: 6px; overflow: hidden; }
-    th { background: #f6f8fa; border-bottom: 1px solid #d0d7de;
-         padding: 10px 16px; text-align: left; font-weight: 600;
-         white-space: nowrap; position: sticky; top: 0; z-index: 1; }
-    th.branch { text-align: center; }
-    td { padding: 8px 16px; border-bottom: 1px solid #eaeef2; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #f6f8fa; }
-    td.version { text-align: center; font-family: 'SFMono-Regular', Consolas, monospace;
-                 font-size: 13px; }
-    td.version span { background: #ddf4ff; color: #0969da; border-radius: 12px;
-                      padding: 2px 10px; display: inline-block; }
-    td.missing { text-align: center; color: #8c959f; font-size: 12px; }
-    .filter-bar { padding: 12px 24px 0; }
-    .filter-bar input { padding: 6px 12px; border: 1px solid #d0d7de; border-radius: 6px;
-                        font-size: 14px; width: 300px; outline: none; }
-    .filter-bar input:focus { border-color: #0969da; box-shadow: 0 0 0 3px rgba(9,105,218,.15); }
+    th { background: #f6f8fa; border-bottom: 2px solid #d0d7de; padding: 10px 16px;
+         text-align: left; font-weight: 600; white-space: nowrap;
+         position: sticky; top: 0; z-index: 1; }
+    th.ver { text-align: center; }
+    td { padding: 7px 16px; border-bottom: 1px solid #eaeef2; }
+    tr.ms td { border-top: 2px solid #d0d7de; }
+    td.mod { font-weight: 600; border-right: 1px solid #d0d7de;
+              vertical-align: top; white-space: nowrap; }
+    td.art { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 13px; }
+    td.ver { text-align: center; font-family: 'SFMono-Regular', Consolas, monospace;
+              font-size: 13px; }
+    td.ver span { background: #ddf4ff; color: #0969da; border-radius: 12px;
+                   padding: 2px 10px; display: inline-block; }
+    td.miss { text-align: center; color: #8c959f; }
   </style>
 </head>
 <body>
 <header>
   <h1>Qubership Core Java Libs — LTS Versions</h1>
-  <span>Generated: 2026-04-14 04:00 UTC</span>
+  <span>Generated: 2026-04-14 05:57 UTC</span>
 </header>
-<div class="filter-bar">
-  <input type="text" id="filter" placeholder="Filter artifacts..." oninput="filterTable(this.value)">
-</div>
 <div class="container">
-  <table id="report">
+  <table>
     <thead>
       <tr>
+        <th>Module</th>
         <th>Artifact</th>
-        <th class="branch">lts/25.3</th>
-        <th class="branch">lts/25.4</th>
-        <th class="branch">lts/26.1</th>
-        <th class="branch">lts/26.2</th>
+        <th class="ver">lts/25.3</th>
+        <th class="ver">lts/25.4</th>
+        <th class="ver">lts/26.1</th>
+        <th class="ver">lts/26.2</th>
       </tr>
     </thead>
     <tbody>
-      <tr>
-        <td>blue-green-state-monitor-java</td>
-        <td class="version"><span>1.0.2</span></td>
-        <td class="version"><span>1.0.2</span></td>
-        <td class="version"><span>1.4.4</span></td>
-        <td class="version"><span>2.0.5</span></td>
+      <tr class="ms">
+        <td class="mod" rowspan="4">core-blue-green-state-monitor</td>
+        <td class="art">blue-green-state-monitor-java</td>
+        <td class="ver"><span>1.2.2</span></td>
+        <td class="ver"><span>1.3.7</span></td>
+        <td class="ver"><span>1.4.4</span></td>
+        <td class="ver"><span>2.0.5</span></td>
       </tr>
       <tr>
-        <td>blue-green-state-monitor-java-quarkus-parent</td>
-        <td class="version"><span>1.0.0</span></td>
-        <td class="version"><span>1.0.0</span></td>
-        <td class="version"><span>2.2.4</span></td>
-        <td class="version"><span>3.0.3</span></td>
+        <td class="art">blue-green-state-monitor-java-plain</td>
+        <td class="ver"><span>1.2.2</span></td>
+        <td class="ver"><span>1.3.7</span></td>
+        <td class="ver"><span>1.4.4</span></td>
+        <td class="ver"><span>2.0.5</span></td>
       </tr>
       <tr>
-        <td>cloud-core-context-propagation</td>
-        <td class="version"><span>6.0.0</span></td>
-        <td class="version"><span>6.0.0</span></td>
-        <td class="version"><span>7.1.4</span></td>
-        <td class="version"><span>8.0.3</span></td>
+        <td class="art">blue-green-state-monitor-report-aggregate</td>
+        <td class="ver"><span>1.2.2</span></td>
+        <td class="ver"><span>1.3.7</span></td>
+        <td class="ver"><span>1.4.4</span></td>
+        <td class="ver"><span>2.0.5</span></td>
       </tr>
       <tr>
-        <td>cloud-core-java-bom-parent</td>
-        <td class="version"><span>11.0.1</span></td>
-        <td class="version"><span>11.0.1</span></td>
-        <td class="version"><span>11.3.4</span></td>
-        <td class="version"><span>12.0.3</span></td>
+        <td class="art">blue-green-state-monitor-spring</td>
+        <td class="ver"><span>1.2.2</span></td>
+        <td class="ver"><span>1.3.7</span></td>
+        <td class="ver"><span>1.4.4</span></td>
+        <td class="ver"><span>2.0.5</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="4">core-blue-green-state-monitor-quarkus</td>
+        <td class="art">aggregator-for-jacoco</td>
+        <td class="ver"><span>1.2.1</span></td>
+        <td class="ver"><span>2.0.3</span></td>
+        <td class="ver"><span>2.2.4</span></td>
+        <td class="ver"><span>3.0.3</span></td>
       </tr>
       <tr>
-        <td>cloud-core-parent</td>
-        <td class="missing">—</td>
-        <td class="missing">—</td>
-        <td class="version"><span>8.7.4</span></td>
-        <td class="version"><span>8.8.7</span></td>
+        <td class="art">blue-green-state-monitor-java-quarkus-parent</td>
+        <td class="ver"><span>1.2.1</span></td>
+        <td class="ver"><span>2.0.3</span></td>
+        <td class="ver"><span>2.2.4</span></td>
+        <td class="ver"><span>3.0.3</span></td>
       </tr>
       <tr>
-        <td>cloud-core-quarkus</td>
-        <td class="version"><span>7.0.0</span></td>
-        <td class="version"><span>7.0.0</span></td>
-        <td class="version"><span>8.3.4</span></td>
-        <td class="version"><span>9.1.1</span></td>
+        <td class="art">blue-green-state-monitor-quarkus</td>
+        <td class="ver"><span>1.2.1</span></td>
+        <td class="ver"><span>2.0.3</span></td>
+        <td class="ver"><span>2.2.4</span></td>
+        <td class="ver"><span>3.0.3</span></td>
       </tr>
       <tr>
-        <td>context-propagation</td>
-        <td class="version"><span>7.0.2</span></td>
-        <td class="version"><span>7.0.2</span></td>
-        <td class="version"><span>7.3.4</span></td>
-        <td class="version"><span>8.0.5</span></td>
+        <td class="art">blue-green-state-monitor-quarkus-deployment</td>
+        <td class="ver"><span>1.2.1</span></td>
+        <td class="ver"><span>2.0.3</span></td>
+        <td class="ver"><span>2.2.4</span></td>
+        <td class="ver"><span>3.0.3</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="14">core-context-propagation</td>
+        <td class="art">context-propagation</td>
+        <td class="ver"><span>7.1.6</span></td>
+        <td class="ver"><span>7.2.6</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
       </tr>
       <tr>
-        <td>core-error-handling</td>
-        <td class="version"><span>3.0.2</span></td>
-        <td class="version"><span>3.0.2</span></td>
-        <td class="version"><span>3.3.4</span></td>
-        <td class="version"><span>4.0.3</span></td>
+        <td class="art">context-propagation-api-tests</td>
+        <td class="ver"><span>7.1.6</span></td>
+        <td class="ver"><span>7.2.6</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
       </tr>
       <tr>
-        <td>core-utils-aggregator</td>
-        <td class="version"><span>2.0.3</span></td>
-        <td class="version"><span>2.0.3</span></td>
-        <td class="version"><span>2.3.4</span></td>
-        <td class="version"><span>3.0.3</span></td>
+        <td class="art">context-propagation-bom</td>
+        <td class="ver"><span>7.1.6</span></td>
+        <td class="ver"><span>7.2.6</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
       </tr>
       <tr>
-        <td>dbaas-client-root</td>
-        <td class="version"><span>8.0.1</span></td>
-        <td class="version"><span>8.0.1</span></td>
-        <td class="version"><span>8.4.4</span></td>
-        <td class="version"><span>9.0.5</span></td>
+        <td class="art">context-propagation-core</td>
+        <td class="ver"><span>7.1.6</span></td>
+        <td class="ver"><span>7.2.6</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
       </tr>
       <tr>
-        <td>framework-extensions-root</td>
-        <td class="version"><span>6.0.2</span></td>
-        <td class="version"><span>6.0.2</span></td>
-        <td class="version"><span>6.3.4</span></td>
-        <td class="version"><span>7.0.5</span></td>
+        <td class="art">context-propagation-report-aggregate</td>
+        <td class="ver"><span>7.1.6</span></td>
+        <td class="ver"><span>7.2.6</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
       </tr>
       <tr>
-        <td>maas-client-parent</td>
-        <td class="version"><span>11.0.1</span></td>
-        <td class="version"><span>11.0.1</span></td>
-        <td class="version"><span>11.3.4</span></td>
-        <td class="version"><span>12.0.3</span></td>
+        <td class="art">context-propagation-spring-common</td>
+        <td class="ver"><span>7.1.6</span></td>
+        <td class="ver"><span>7.2.6</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
       </tr>
       <tr>
-        <td>maas-client-quarkus-parent</td>
-        <td class="version"><span>8.0.0</span></td>
-        <td class="version"><span>8.0.0</span></td>
-        <td class="version"><span>9.2.4</span></td>
-        <td class="version"><span>10.0.3</span></td>
+        <td class="art">context-propagation-spring-kafka</td>
+        <td class="ver"><span>7.1.6</span></td>
+        <td class="ver"><span>7.2.6</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
       </tr>
       <tr>
-        <td>maas-client-spring-parent</td>
-        <td class="version"><span>8.0.1</span></td>
-        <td class="version"><span>8.0.1</span></td>
-        <td class="version"><span>8.3.4</span></td>
-        <td class="version"><span>9.0.6</span></td>
+        <td class="art">context-propagation-spring-rabbit</td>
+        <td class="ver"><span>7.1.6</span></td>
+        <td class="ver"><span>7.2.6</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
       </tr>
       <tr>
-        <td>maas-declarative-kafka-client-parent</td>
-        <td class="version"><span>5.0.1</span></td>
-        <td class="version"><span>5.0.1</span></td>
-        <td class="version"><span>5.3.4</span></td>
-        <td class="version"><span>6.0.3</span></td>
+        <td class="art">context-propagation-spring-resttemplate</td>
+        <td class="ver"><span>7.1.6</span></td>
+        <td class="ver"><span>7.2.6</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
       </tr>
       <tr>
-        <td>maas-declarative-kafka-client-quarkus-bom</td>
-        <td class="version"><span>6.0.0</span></td>
-        <td class="version"><span>6.0.0</span></td>
-        <td class="version"><span>7.2.4</span></td>
-        <td class="version"><span>8.0.3</span></td>
+        <td class="art">context-propagation-spring-webclient</td>
+        <td class="ver"><span>7.1.6</span></td>
+        <td class="ver"><span>7.2.6</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
       </tr>
       <tr>
-        <td>maas-declarative-kafka-client-spring-bom</td>
-        <td class="version"><span>6.0.1</span></td>
-        <td class="version"><span>6.0.1</span></td>
-        <td class="version"><span>6.3.4</span></td>
-        <td class="version"><span>7.0.6</span></td>
+        <td class="art">context-propagation-test-extensions</td>
+        <td class="ver"><span>7.1.6</span></td>
+        <td class="ver"><span>7.2.6</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
       </tr>
       <tr>
-        <td>microservice-framework-aggregator</td>
-        <td class="version"><span>7.0.1</span></td>
-        <td class="version"><span>7.0.1</span></td>
-        <td class="version"><span>7.3.4</span></td>
-        <td class="version"><span>8.0.5</span></td>
+        <td class="art">framework-contexts</td>
+        <td class="ver"><span>7.1.6</span></td>
+        <td class="ver"><span>7.2.6</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
       </tr>
       <tr>
-        <td>microservice-restclient-aggregator</td>
-        <td class="version"><span>6.0.2</span></td>
-        <td class="version"><span>6.0.2</span></td>
-        <td class="version"><span>6.3.4</span></td>
-        <td class="version"><span>7.0.5</span></td>
+        <td class="art">sample-context-tests</td>
+        <td class="ver"><span>7.1.6</span></td>
+        <td class="ver"><span>7.2.6</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
       </tr>
       <tr>
-        <td>mongo-evolution-aggregator</td>
-        <td class="version"><span>7.0.2</span></td>
-        <td class="version"><span>7.0.2</span></td>
-        <td class="version"><span>7.3.4</span></td>
-        <td class="version"><span>8.0.5</span></td>
+        <td class="art">spring-context-aggregator</td>
+        <td class="ver"><span>7.1.6</span></td>
+        <td class="ver"><span>7.2.6</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="14">core-context-propagation-quarkus</td>
+        <td class="art">cloud-core-context-propagation</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>7.0.3</span></td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
       </tr>
       <tr>
-        <td>netcracker-spring-boot-starter-parent</td>
-        <td class="missing">—</td>
-        <td class="missing">—</td>
-        <td class="version"><span>11.3.4</span></td>
-        <td class="version"><span>12.0.5</span></td>
+        <td class="art">cloud-core-context-propagation-bom</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>7.0.3</span></td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
       </tr>
       <tr>
-        <td>process-engine</td>
-        <td class="version"><span>1.0.3</span></td>
-        <td class="version"><span>1.0.3</span></td>
-        <td class="version"><span>1.3.4</span></td>
-        <td class="version"><span>1.4.7</span></td>
+        <td class="art">cloud-core-context-propagation-bom-aggregator</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>7.0.3</span></td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
       </tr>
       <tr>
-        <td>qubership-spring-boot-starter-parent</td>
-        <td class="version"><span>11.0.1</span></td>
-        <td class="version"><span>11.0.1</span></td>
-        <td class="version"><span>11.0.1</span></td>
-        <td class="version"><span>11.0.1</span></td>
+        <td class="art">cloud-core-context-propagation-bom-internal</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>7.0.3</span></td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
       </tr>
       <tr>
-        <td>rest-libraries</td>
-        <td class="version"><span>6.0.2</span></td>
-        <td class="version"><span>6.2.5</span></td>
-        <td class="version"><span>6.3.4</span></td>
-        <td class="version"><span>7.1.1</span></td>
+        <td class="art">cloud-core-context-propagation-build-parent</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>7.0.3</span></td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">cloud-core-context-propagation-report-aggregate</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>7.0.3</span></td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">context-propagation</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>7.0.3</span></td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">context-propagation-deployment</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>7.0.3</span></td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">context-propagation-parent</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>7.0.3</span></td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">context-propagation-reactive-test</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>7.0.3</span></td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">framework-contexts</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>7.0.3</span></td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">framework-contexts-deployment</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>7.0.3</span></td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">framework-contexts-parent</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>7.0.3</span></td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">integration-tests</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>7.0.3</span></td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="4">core-error-handling</td>
+        <td class="art">core-error-handling</td>
+        <td class="ver"><span>3.1.6</span></td>
+        <td class="ver"><span>3.2.6</span></td>
+        <td class="ver"><span>3.3.4</span></td>
+        <td class="ver"><span>4.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">core-error-handling-report-aggregate</td>
+        <td class="ver"><span>3.1.6</span></td>
+        <td class="ver"><span>3.2.6</span></td>
+        <td class="ver"><span>3.3.4</span></td>
+        <td class="ver"><span>4.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">core-error-handling-rest</td>
+        <td class="ver"><span>3.1.6</span></td>
+        <td class="ver"><span>3.2.6</span></td>
+        <td class="ver"><span>3.3.4</span></td>
+        <td class="ver"><span>4.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">core-error-handling-runtime</td>
+        <td class="ver"><span>3.1.6</span></td>
+        <td class="ver"><span>3.2.6</span></td>
+        <td class="ver"><span>3.3.4</span></td>
+        <td class="ver"><span>4.0.3</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="3">core-junit-k8s-extension</td>
+        <td class="art">cloud-core-extension</td>
+        <td class="ver"><span>8.0.2</span></td>
+        <td class="ver"><span>8.4.6</span></td>
+        <td class="ver"><span>8.7.4</span></td>
+        <td class="ver"><span>8.8.7</span></td>
+      </tr>
+      <tr>
+        <td class="art">cloud-core-extension-bom</td>
+        <td class="ver"><span>8.0.2</span></td>
+        <td class="ver"><span>8.4.6</span></td>
+        <td class="ver"><span>8.7.4</span></td>
+        <td class="ver"><span>8.8.7</span></td>
+      </tr>
+      <tr>
+        <td class="art">cloud-core-parent</td>
+        <td class="ver"><span>8.0.2</span></td>
+        <td class="ver"><span>8.4.6</span></td>
+        <td class="ver"><span>8.7.4</span></td>
+        <td class="ver"><span>8.8.7</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="2">core-microservice-dependencies</td>
+        <td class="art">cloud-core-java-bom</td>
+        <td class="ver"><span>11.1.4</span></td>
+        <td class="ver"><span>11.2.9</span></td>
+        <td class="ver"><span>11.3.4</span></td>
+        <td class="ver"><span>12.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">cloud-core-java-bom-parent</td>
+        <td class="ver"><span>11.1.4</span></td>
+        <td class="ver"><span>11.2.9</span></td>
+        <td class="ver"><span>11.3.4</span></td>
+        <td class="ver"><span>12.0.3</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="6">core-microservice-framework</td>
+        <td class="art">microservice-framework-aggregator</td>
+        <td class="ver"><span>7.1.3</span></td>
+        <td class="ver"><span>7.2.9</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">microservice-framework-common</td>
+        <td class="ver"><span>7.1.3</span></td>
+        <td class="ver"><span>7.2.9</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">microservice-framework-parent</td>
+        <td class="ver"><span>7.1.3</span></td>
+        <td class="ver"><span>7.2.9</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">microservice-framework-report-aggregate</td>
+        <td class="ver"><span>7.1.3</span></td>
+        <td class="ver"><span>7.2.9</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">microservice-framework-resttemplate</td>
+        <td class="ver"><span>7.1.3</span></td>
+        <td class="ver"><span>7.2.9</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">microservice-framework-webclient</td>
+        <td class="ver"><span>7.1.3</span></td>
+        <td class="ver"><span>7.2.9</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="7">core-microservice-framework-extensions</td>
+        <td class="art">framework-extension-bom</td>
+        <td class="ver"><span>6.1.5</span></td>
+        <td class="ver"><span>6.2.6</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">framework-extension-health-indicators</td>
+        <td class="ver"><span>6.1.5</span></td>
+        <td class="ver"><span>6.2.6</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">framework-extension-metrics</td>
+        <td class="ver"><span>6.1.5</span></td>
+        <td class="ver"><span>6.2.6</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">framework-extension-springdoc-swagger</td>
+        <td class="ver"><span>6.1.5</span></td>
+        <td class="ver"><span>6.2.6</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">framework-extensions-parent</td>
+        <td class="ver"><span>6.1.5</span></td>
+        <td class="ver"><span>6.2.6</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">framework-extensions-report-aggregate</td>
+        <td class="ver"><span>6.1.5</span></td>
+        <td class="ver"><span>6.2.6</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">framework-extensions-root</td>
+        <td class="ver"><span>6.1.5</span></td>
+        <td class="ver"><span>6.2.6</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.0.5</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="4">core-mongo-evolution</td>
+        <td class="art">mongo-evolution</td>
+        <td class="ver"><span>7.1.5</span></td>
+        <td class="ver"><span>7.2.6</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">mongo-evolution-aggregator</td>
+        <td class="ver"><span>7.1.5</span></td>
+        <td class="ver"><span>7.2.6</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">mongo-evolution-report-aggregate</td>
+        <td class="ver"><span>7.1.5</span></td>
+        <td class="ver"><span>7.2.6</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">mongo-evolution-spring</td>
+        <td class="ver"><span>7.1.5</span></td>
+        <td class="ver"><span>7.2.6</span></td>
+        <td class="ver"><span>7.3.4</span></td>
+        <td class="ver"><span>8.0.5</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="1">core-process-orchestrator</td>
+        <td class="art">process-engine</td>
+        <td class="ver"><span>1.1.8</span></td>
+        <td class="ver"><span>1.2.6</span></td>
+        <td class="ver"><span>1.3.4</span></td>
+        <td class="ver"><span>1.4.7</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="58">core-quarkus-extensions</td>
+        <td class="art">build-parent</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">cloud-core-quarkus</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">cloud-core-quarkus-bom</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">cloud-core-quarkus-bom-internal</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">cloud-core-quarkus-bom-parent</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">cloud-core-quarkus-bom-publish</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">common-config-source</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">config-sources</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">consul-client</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">consul-client-deployment</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">consul-client-parent</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">consul-config-source</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">consul-config-source-deployment</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">consul-config-source-parent</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">context-parent</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-cassandra-client</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-cassandra-client-deployment</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-cassandra-client-parent</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-test</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-common</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-common-deployment</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-common-parent</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-datasource-postgresql</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-datasource-postgresql-deployment</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-datasource-postgresql-parent</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-mongo-client</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-mongo-client-deployment</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-mongo-client-parent</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-opensearch-client</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-opensearch-client-deployment</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-opensearch-parent</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">external-config-source-common-deployment</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">log-manager</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">log-manager-deployment</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">log-manager-parent</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-parent</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-quarkus</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-quarkus-deployment</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">messaging-context</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">messaging-context-deployment</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">messaging-context-parent</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">report-aggregate</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">rest-api-deprecation-switcher-parent</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">rest-api-deprecation-switcher-quarkus</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">rest-api-deprecation-switcher-quarkus-deployment</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">routes-registrator</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">routes-registrator-deployment</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">routes-registrator-parent</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">security-adapters</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">security-adapters-deployment</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">security-adapters-parent</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">springcloud-config-source</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">springcloud-config-source-deployment</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">springcloud-config-source-parent</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">stomp-ws-server</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">stomp-ws-server-aggregator</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">stomp-ws-server-deployment</td>
+        <td class="ver"><span>7.1.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.1.1</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="32">core-rest-libraries</td>
+        <td class="art">config-server-loader</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">config-server-loader-common</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">config-server-loader-resttemplate</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">config-server-loader-webclient</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">consul-config-provider</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">consul-config-provider-common</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">consul-config-provider-spring-common</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">consul-config-provider-spring-resttemplate</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">consul-config-provider-spring-webclient</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">core-rest-libraries-report-aggregate</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">log-manager</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">log-manager-common</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">logger-manager-spring</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">rest-api-deprecation-switcher-common</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">rest-api-deprecation-switcher-parent</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">rest-api-deprecation-switcher-spring</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">rest-legacy-bom</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">rest-libraries</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">rest-libraries-bom</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">rest-libraries-parent</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">rest-security-adapters</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">rest-third-party</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">restclient</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">restlegacy</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">restlegacy-parent</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">resttemplate</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">route-registration</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">route-registration-common</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">route-registration-common-spring</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">route-registration-resttemplate</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">route-registration-webclient</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr>
+        <td class="art">webclient</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.10</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.1.1</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="7">core-restclient</td>
+        <td class="art">microservice-restclient-aggregator</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.6</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">microservice-restclient-api</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.6</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">microservice-restclient-parent</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.6</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">microservice-restclient-report-aggregate</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.6</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">microservice-restclient-resttemplate</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.6</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">microservice-restclient-test-utils</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.6</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">microservice-restclient-webclient</td>
+        <td class="ver"><span>6.1.4</span></td>
+        <td class="ver"><span>6.2.6</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.0.5</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="2">core-springboot-starter</td>
+        <td class="art">netcracker-spring-boot-starter-parent</td>
+        <td class="ver"><span>11.1.3</span></td>
+        <td class="ver"><span>11.2.11</span></td>
+        <td class="ver"><span>11.3.4</span></td>
+        <td class="ver"><span>12.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">qubership-spring-boot-starter-parent</td>
+        <td class="ver"><span>11.1.3</span></td>
+        <td class="ver"><span>11.2.11</span></td>
+        <td class="ver"><span>11.3.4</span></td>
+        <td class="ver"><span>12.0.5</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="3">core-utils</td>
+        <td class="art">core-utils-aggregator</td>
+        <td class="ver"><span>2.1.6</span></td>
+        <td class="ver"><span>2.2.6</span></td>
+        <td class="ver"><span>2.3.4</span></td>
+        <td class="ver"><span>3.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">k8s-utils</td>
+        <td class="ver"><span>2.1.6</span></td>
+        <td class="ver"><span>2.2.6</span></td>
+        <td class="ver"><span>2.3.4</span></td>
+        <td class="ver"><span>3.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">tls-utils</td>
+        <td class="ver"><span>2.1.6</span></td>
+        <td class="ver"><span>2.2.6</span></td>
+        <td class="ver"><span>2.3.4</span></td>
+        <td class="ver"><span>3.0.3</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="38">dbaas-client</td>
+        <td class="art">cassandra-sample-test</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-arangodb-base</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-arangodb-starter</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-base</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-base-test</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-bom</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-bom-internal</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-bom-parent</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-cassandra-base</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-cassandra-migration</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-cassandra-starter</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-clickhouse-base</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-clickhouse-starter</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-core</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-java</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-java-parent</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-light</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-mongo-base</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-mongo-starter</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-opensearch-base</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-opensearch-starter</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-parent</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-postgres-base</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-postgres-flyway</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-postgres-starter</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-redis-base</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-redis-starter</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-report-aggregate</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-restclient</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-resttemplate</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-root</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-sample-tests</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-spring-parent</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-test-bom</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-test-parent</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">dbaas-client-webclient</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">mongo-sample-test</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr>
+        <td class="art">postgres-sample-test</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.4.4</span></td>
+        <td class="ver"><span>9.0.5</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="10">maas-client</td>
+        <td class="art">deployment-version-tracker</td>
+        <td class="ver"><span>11.1.4</span></td>
+        <td class="ver"><span>11.2.7</span></td>
+        <td class="ver"><span>11.3.4</span></td>
+        <td class="ver"><span>12.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">kafka-blue-green-consumer</td>
+        <td class="ver"><span>11.1.4</span></td>
+        <td class="ver"><span>11.2.7</span></td>
+        <td class="ver"><span>11.3.4</span></td>
+        <td class="ver"><span>12.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">kafka-context-propagation</td>
+        <td class="ver"><span>11.1.4</span></td>
+        <td class="ver"><span>11.2.7</span></td>
+        <td class="ver"><span>11.3.4</span></td>
+        <td class="ver"><span>12.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">kafka-streams-adapter</td>
+        <td class="ver"><span>11.1.4</span></td>
+        <td class="ver"><span>11.2.7</span></td>
+        <td class="ver"><span>11.3.4</span></td>
+        <td class="ver"><span>12.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client</td>
+        <td class="ver"><span>11.1.4</span></td>
+        <td class="ver"><span>11.2.7</span></td>
+        <td class="ver"><span>11.3.4</span></td>
+        <td class="ver"><span>12.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-bom</td>
+        <td class="ver"><span>11.1.4</span></td>
+        <td class="ver"><span>11.2.7</span></td>
+        <td class="ver"><span>11.3.4</span></td>
+        <td class="ver"><span>12.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-parent</td>
+        <td class="ver"><span>11.1.4</span></td>
+        <td class="ver"><span>11.2.7</span></td>
+        <td class="ver"><span>11.3.4</span></td>
+        <td class="ver"><span>12.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-report-aggregate</td>
+        <td class="ver"><span>11.1.4</span></td>
+        <td class="ver"><span>11.2.7</span></td>
+        <td class="ver"><span>11.3.4</span></td>
+        <td class="ver"><span>12.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">rabbit-blue-green</td>
+        <td class="ver"><span>11.1.4</span></td>
+        <td class="ver"><span>11.2.7</span></td>
+        <td class="ver"><span>11.3.4</span></td>
+        <td class="ver"><span>12.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">rabbit-context-propagation</td>
+        <td class="ver"><span>11.1.4</span></td>
+        <td class="ver"><span>11.2.7</span></td>
+        <td class="ver"><span>11.3.4</span></td>
+        <td class="ver"><span>12.0.3</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="12">maas-client-quarkus</td>
+        <td class="art">maas-client-quarkus-bom</td>
+        <td class="ver"><span>8.1.3</span></td>
+        <td class="ver"><span>9.0.3</span></td>
+        <td class="ver"><span>9.2.4</span></td>
+        <td class="ver"><span>10.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-quarkus-common</td>
+        <td class="ver"><span>8.1.3</span></td>
+        <td class="ver"><span>9.0.3</span></td>
+        <td class="ver"><span>9.2.4</span></td>
+        <td class="ver"><span>10.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-quarkus-common-deployment</td>
+        <td class="ver"><span>8.1.3</span></td>
+        <td class="ver"><span>9.0.3</span></td>
+        <td class="ver"><span>9.2.4</span></td>
+        <td class="ver"><span>10.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-quarkus-common-parent</td>
+        <td class="ver"><span>8.1.3</span></td>
+        <td class="ver"><span>9.0.3</span></td>
+        <td class="ver"><span>9.2.4</span></td>
+        <td class="ver"><span>10.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-quarkus-kafka</td>
+        <td class="ver"><span>8.1.3</span></td>
+        <td class="ver"><span>9.0.3</span></td>
+        <td class="ver"><span>9.2.4</span></td>
+        <td class="ver"><span>10.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-quarkus-kafka-deployment</td>
+        <td class="ver"><span>8.1.3</span></td>
+        <td class="ver"><span>9.0.3</span></td>
+        <td class="ver"><span>9.2.4</span></td>
+        <td class="ver"><span>10.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-quarkus-kafka-parent</td>
+        <td class="ver"><span>8.1.3</span></td>
+        <td class="ver"><span>9.0.3</span></td>
+        <td class="ver"><span>9.2.4</span></td>
+        <td class="ver"><span>10.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-quarkus-parent</td>
+        <td class="ver"><span>8.1.3</span></td>
+        <td class="ver"><span>9.0.3</span></td>
+        <td class="ver"><span>9.2.4</span></td>
+        <td class="ver"><span>10.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-quarkus-rabbit</td>
+        <td class="ver"><span>8.1.3</span></td>
+        <td class="ver"><span>9.0.3</span></td>
+        <td class="ver"><span>9.2.4</span></td>
+        <td class="ver"><span>10.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-quarkus-rabbit-deployment</td>
+        <td class="ver"><span>8.1.3</span></td>
+        <td class="ver"><span>9.0.3</span></td>
+        <td class="ver"><span>9.2.4</span></td>
+        <td class="ver"><span>10.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-quarkus-rabbit-parent</td>
+        <td class="ver"><span>8.1.3</span></td>
+        <td class="ver"><span>9.0.3</span></td>
+        <td class="ver"><span>9.2.4</span></td>
+        <td class="ver"><span>10.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-quarkus-report-aggregate</td>
+        <td class="ver"><span>8.1.3</span></td>
+        <td class="ver"><span>9.0.3</span></td>
+        <td class="ver"><span>9.2.4</span></td>
+        <td class="ver"><span>10.0.3</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="5">maas-client-spring</td>
+        <td class="art">maas-client-spring</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.0.6</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-spring-kafka</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.0.6</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-spring-parent</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.0.6</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-spring-rabbit</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.0.6</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-client-spring-report-aggregate</td>
+        <td class="ver"><span>8.1.4</span></td>
+        <td class="ver"><span>8.2.7</span></td>
+        <td class="ver"><span>8.3.4</span></td>
+        <td class="ver"><span>9.0.6</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="2">maas-declarative-client-commons</td>
+        <td class="art">maas-declarative-kafka-client</td>
+        <td class="ver"><span>5.1.4</span></td>
+        <td class="ver"><span>5.2.8</span></td>
+        <td class="ver"><span>5.3.4</span></td>
+        <td class="ver"><span>6.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-declarative-kafka-client-parent</td>
+        <td class="ver"><span>5.1.4</span></td>
+        <td class="ver"><span>5.2.8</span></td>
+        <td class="ver"><span>5.3.4</span></td>
+        <td class="ver"><span>6.0.3</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="5">maas-declarative-client-quarkus</td>
+        <td class="art">maas-declarative-kafka-client-quarkus</td>
+        <td class="ver"><span>6.1.3</span></td>
+        <td class="ver"><span>7.0.3</span></td>
+        <td class="ver"><span>7.2.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-declarative-kafka-client-quarkus-bom</td>
+        <td class="ver"><span>6.1.3</span></td>
+        <td class="ver"><span>7.0.3</span></td>
+        <td class="ver"><span>7.2.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-declarative-kafka-client-quarkus-deployment</td>
+        <td class="ver"><span>6.1.3</span></td>
+        <td class="ver"><span>7.0.3</span></td>
+        <td class="ver"><span>7.2.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-declarative-kafka-client-quarkus-parent</td>
+        <td class="ver"><span>6.1.3</span></td>
+        <td class="ver"><span>7.0.3</span></td>
+        <td class="ver"><span>7.2.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-kafka-quarkus-client-report-aggregate</td>
+        <td class="ver"><span>6.1.3</span></td>
+        <td class="ver"><span>7.0.3</span></td>
+        <td class="ver"><span>7.2.4</span></td>
+        <td class="ver"><span>8.0.3</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="2">maas-declarative-client-spring</td>
+        <td class="art">maas-declarative-kafka-client-spring</td>
+        <td class="ver"><span>6.1.3</span></td>
+        <td class="ver"><span>6.2.8</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.0.6</span></td>
+      </tr>
+      <tr>
+        <td class="art">maas-declarative-kafka-client-spring-bom</td>
+        <td class="ver"><span>6.1.3</span></td>
+        <td class="ver"><span>6.2.8</span></td>
+        <td class="ver"><span>6.3.4</span></td>
+        <td class="ver"><span>7.0.6</span></td>
       </tr>
     </tbody>
   </table>
 </div>
-<script>
-  function filterTable(q) {
-    q = q.toLowerCase();
-    document.querySelectorAll('#report tbody tr').forEach(tr => {
-      tr.style.display = tr.cells[0].textContent.toLowerCase().includes(q) ? '' : 'none';
-    });
-  }
-</script>
 </body>
 </html>
