@@ -75,6 +75,20 @@ def extract_field(text, tag):
     return None
 
 
+def extract_group_id(text):
+    """Return own <groupId> if present, otherwise fall back to <parent>'s <groupId>."""
+    own = extract_field(text, 'groupId')
+    if own:
+        return own
+    in_parent, open_tag, close_tag = False, '<groupId>', '</groupId>'
+    for line in text.splitlines():
+        if '<parent>'  in line: in_parent = True
+        if '</parent>' in line: in_parent = False; continue
+        if in_parent and open_tag in line and close_tag in line:
+            return line.split(open_tag)[1].split(close_tag)[0].strip()
+    return None
+
+
 def released_version(snapshot):
     base = snapshot.removesuffix('-SNAPSHOT')
     prefix, patch = base.rsplit('.', 1)
@@ -104,12 +118,15 @@ def collect_branch(branch):
             is_root = len(parts) == 2  # <module>/pom.xml
 
             artifact_id = extract_field(content, 'artifactId')
+            group_id    = extract_group_id(content)
             if not artifact_id:
                 continue
 
+            artifact = f'{group_id}:{artifact_id}' if group_id else artifact_id
+
             if module not in data:
                 data[module] = {'version': None, 'artifacts': set()}
-            data[module]['artifacts'].add(artifact_id)
+            data[module]['artifacts'].add(artifact)
 
             if is_root:
                 version = extract_field(content, 'version')
@@ -123,11 +140,29 @@ def collect_branch(branch):
 # HTML output
 # ---------------------------------------------------------------------------
 
+def export_filename(branch):
+    return branch.replace('/', '_') + '.txt'
+
+
+def write_export_files(branches, modules, artifacts, versions, output_dir):
+    for branch in branches:
+        lines = []
+        for module in modules:
+            ver = versions.get(branch, {}).get(module)
+            if not ver:
+                continue
+            for artifact in artifacts[module]:
+                lines.append(f'{artifact}:{ver}')
+        (output_dir / export_filename(branch)).write_text('\n'.join(lines), encoding='utf-8')
+
+
 def generate_html(branches, modules, artifacts, versions, output_path):
     ts = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
 
     branch_headers = '\n'.join(
-        f'        <th class="ver">{b}</th>' for b in branches
+        f'        <th class="ver">{b}<br>'
+        f'<a class="dl" href="{export_filename(b)}" download>&#8595; export</a></th>'
+        for b in branches
     )
 
     rows = []
@@ -184,6 +219,9 @@ def generate_html(branches, modules, artifacts, versions, output_path):
     td.ver span {{ background: #ddf4ff; color: #0969da; border-radius: 12px;
                    padding: 2px 10px; display: inline-block; }}
     td.miss {{ text-align: center; color: #8c959f; }}
+    a.dl {{ display: inline-block; margin-top: 4px; font-size: 11px; padding: 2px 8px;
+            background: #0969da; color: #fff; border-radius: 4px; text-decoration: none; }}
+    a.dl:hover {{ background: #0550ae; }}
   </style>
 </head>
 <body>
@@ -298,6 +336,7 @@ def main():
         modules   = sorted(all_artifacts)
         artifacts = {m: sorted(all_artifacts[m]) for m in modules}
         output    = Path(args.output)
+        write_export_files(branches, modules, artifacts, versions, output.parent)
         generate_html(branches, modules, artifacts, versions, output)
         print(f'Report written to: {output}')
 
