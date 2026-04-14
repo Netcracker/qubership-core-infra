@@ -2,12 +2,12 @@ com.netcracker.cloud:blue-green-state-monitor-java:2.0.5
 com.netcracker.cloud:blue-green-state-monitor-report-aggregate:2.0.5
 org.projectlombok:blue-green-state-monitor-java-plain:2.0.5
 org.springframework.boot:blue-green-state-monitor-spring:2.0.5
-${project.groupId}:aggregator-for-jacoco:3.0.3
+com.netcracker.cloud.quarkus:aggregator-for-jacoco:3.0.3
 com.netcracker.cloud.quarkus:blue-green-state-monitor-java-quarkus-parent:3.0.3
 io.quarkus:blue-green-state-monitor-quarkus:3.0.3
 io.quarkus:blue-green-state-monitor-quarkus-deployment:3.0.3
-${project.groupId}:context-propagation-api-tests:8.0.5
 com.netcracker.cloud:context-propagation:8.0.5
+com.netcracker.cloud:context-propagation-api-tests:8.0.5
 com.netcracker.cloud:context-propagation-bom:8.0.5
 com.netcracker.cloud:context-propagation-report-aggregate:8.0.5
 com.netcracker.cloud:context-propagation-spring-resttemplate:8.0.5
@@ -34,8 +34,8 @@ io.quarkus:framework-contexts-deployment:8.0.3
 org.apache.maven.plugins:context-propagation-parent:8.0.3
 org.apache.maven.plugins:framework-contexts-parent:8.0.3
 org.apache.maven.plugins:integration-tests:8.0.3
-${project.groupId}:core-error-handling-report-aggregate:4.0.3
 com.netcracker.cloud:core-error-handling:4.0.3
+com.netcracker.cloud:core-error-handling-report-aggregate:4.0.3
 com.netcracker.cloud:core-error-handling-rest:4.0.3
 org.projectlombok:core-error-handling-runtime:4.0.3
 com.netcracker.cloud.junit.cloudcore:cloud-core-parent:8.8.7
@@ -49,7 +49,7 @@ com.netcracker.cloud:microservice-framework-report-aggregate:8.0.5
 org.springframework:microservice-framework-common:8.0.5
 org.springframework:microservice-framework-resttemplate:8.0.5
 org.springframework:microservice-framework-webclient:8.0.5
-${project.groupId}:framework-extension-bom:7.0.5
+com.netcracker.cloud:framework-extension-bom:7.0.5
 com.netcracker.cloud:framework-extensions-parent:7.0.5
 com.netcracker.cloud:framework-extensions-report-aggregate:7.0.5
 com.netcracker.cloud:framework-extensions-root:7.0.5
@@ -61,7 +61,6 @@ com.netcracker.cloud:mongo-evolution-aggregator:8.0.5
 com.netcracker.cloud:mongo-evolution-report-aggregate:8.0.5
 com.netcracker.cloud:mongo-evolution-spring:8.0.5
 com.netcracker.core:process-engine:1.4.7
-${project.groupId}:security-adapters-deployment:9.1.1
 com.netcracker.cloud.quarkus:build-parent:9.1.1
 com.netcracker.cloud.quarkus:cloud-core-quarkus:9.1.1
 com.netcracker.cloud.quarkus:cloud-core-quarkus-bom:9.1.1
@@ -89,6 +88,7 @@ com.netcracker.cloud.quarkus:messaging-context-parent:9.1.1
 com.netcracker.cloud.quarkus:report-aggregate:9.1.1
 com.netcracker.cloud.quarkus:rest-api-deprecation-switcher-parent:9.1.1
 com.netcracker.cloud.quarkus:routes-registrator-parent:9.1.1
+com.netcracker.cloud.quarkus:security-adapters-deployment:9.1.1
 com.netcracker.cloud.quarkus:security-adapters-parent:9.1.1
 com.netcracker.cloud.quarkus:springcloud-config-source:9.1.1
 com.netcracker.cloud.quarkus:springcloud-config-source-parent:9.1.1
@@ -152,10 +152,10 @@ org.apache.logging.log4j:log-manager-common:7.1.1
 org.apache.maven.plugins:config-server-loader:7.1.1
 org.apache.maven.plugins:consul-config-provider:7.1.1
 org.springframework:route-registration-common-spring:7.1.1
-${project.groupId}:microservice-restclient-report-aggregate:7.0.5
 com.netcracker.cloud:microservice-restclient-aggregator:7.0.5
 com.netcracker.cloud:microservice-restclient-api:7.0.5
 com.netcracker.cloud:microservice-restclient-parent:7.0.5
+com.netcracker.cloud:microservice-restclient-report-aggregate:7.0.5
 com.netcracker.cloud:microservice-restclient-resttemplate:7.0.5
 com.netcracker.cloud:microservice-restclient-test-utils:7.0.5
 com.netcracker.cloud:microservice-restclient-webclient:7.0.5
@@ -164,9 +164,6 @@ com.netcracker.cloud:qubership-spring-boot-starter-parent:12.0.5
 com.netcracker.cloud.security.core.utils:core-utils-aggregator:3.0.3
 org.projectlombok:k8s-utils:3.0.3
 org.projectlombok:tls-utils:3.0.3
-${project.groupId}:dbaas-client-bom:9.0.5
-${project.groupId}:dbaas-client-core:9.0.5
-${project.groupId}:dbaas-client-test-bom:9.0.5
 ch.qos.logback:cassandra-sample-test:9.0.5
 com.datastax.oss:dbaas-client-cassandra-migration:9.0.5
 com.netcracker.cloud.security.core.utils:dbaas-client-mongo-starter:9.0.5
@@ -174,10 +171,12 @@ com.netcracker.cloud.security.core.utils:dbaas-client-opensearch-starter:9.0.5
 com.netcracker.cloud:dbaas-client-arangodb-base:9.0.5
 com.netcracker.cloud:dbaas-client-arangodb-starter:9.0.5
 com.netcracker.cloud:dbaas-client-base-test:9.0.5
+com.netcracker.cloud:dbaas-client-bom:9.0.5
 com.netcracker.cloud:dbaas-client-bom-internal:9.0.5
 com.netcracker.cloud:dbaas-client-bom-parent:9.0.5
 com.netcracker.cloud:dbaas-client-cassandra-starter:9.0.5
 com.netcracker.cloud:dbaas-client-clickhouse-starter:9.0.5
+com.netcracker.cloud:dbaas-client-core:9.0.5
 com.netcracker.cloud:dbaas-client-java:9.0.5
 com.netcracker.cloud:dbaas-client-java-parent:9.0.5
 com.netcracker.cloud:dbaas-client-mongo-base:9.0.5
@@ -191,6 +190,7 @@ com.netcracker.cloud:dbaas-client-report-aggregate:9.0.5
 com.netcracker.cloud:dbaas-client-restclient:9.0.5
 com.netcracker.cloud:dbaas-client-root:9.0.5
 com.netcracker.cloud:dbaas-client-sample-tests:9.0.5
+com.netcracker.cloud:dbaas-client-test-bom:9.0.5
 com.netcracker.cloud:dbaas-client-test-parent:9.0.5
 com.netcracker.cloud:mongo-sample-test:9.0.5
 org.apache.cassandra:dbaas-client-cassandra-migration:9.0.5
