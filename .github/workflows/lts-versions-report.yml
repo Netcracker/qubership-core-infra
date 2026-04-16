@@ -30,6 +30,9 @@ jobs:
       - name: Fetch all remote branches
         run: git -C java-libs fetch --all --prune
 
+      - name: Install dependencies
+        run: pip install jinja2
+
       - name: Generate HTML report
         run: |
           mkdir -p _site

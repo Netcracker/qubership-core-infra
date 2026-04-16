@@ -1,29 +1,22 @@
 #!/usr/bin/env python3
 """
-LTS versions for qubership-core-java-libs.
+Generate HTML report with LTS and main SNAPSHOT versions for qubership-core-java-libs.
 
-HTML report (all branches):
-    lts-versions.py [output.html]
-
-Single-branch text output:
-    lts-versions.py --branch lts/26.2
-    lts-versions.py --branch lts/26.2 --format properties
-    lts-versions.py --branch lts/26.2 --format csv
+    lts-versions.py [output.html] [--repo <monorepo-path>]
 """
 import argparse
 import io
 import subprocess
 import sys
 import tarfile
+from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
+from jinja2 import Environment, FileSystemLoader
+
 REPO_ROOT = Path(__file__).resolve().parent.parent  # overridden by --repo
 
-
-# ---------------------------------------------------------------------------
-# Git helpers
-# ---------------------------------------------------------------------------
 
 def git_text(*args):
     return subprocess.run(
@@ -38,10 +31,6 @@ def git_bytes(*args):
         capture_output=True, check=True,
     ).stdout
 
-
-# ---------------------------------------------------------------------------
-# Data collection
-# ---------------------------------------------------------------------------
 
 def get_branches():
     lines = git_text('branch', '-a', '--list', '*lts/*').splitlines()
@@ -62,40 +51,30 @@ def get_ref(branch):
     raise RuntimeError(f'Cannot resolve ref for branch: {branch}')
 
 
-def extract_field(text, tag):
-    """Return value of first <tag>…</tag> outside the <parent> block."""
+def extract_field(text, tag, parent_fallback=False):
+    """Return value of first <tag>…</tag> outside the <parent> block.
+
+    With parent_fallback=True: skips variable references (${...}), stops at
+    <dependencies>/<build>/etc., and returns the parent's value as a fallback.
+    Used for groupId, which may be absent or inherited from parent.
+    """
     in_parent = False
     open_tag, close_tag = f'<{tag}>', f'</{tag}>'
+    parent_val = None
     for line in text.splitlines():
         if '<parent>'  in line: in_parent = True
         if '</parent>' in line: in_parent = False; continue
-        if in_parent:           continue
-        if open_tag in line and close_tag in line:
-            return line.split(open_tag)[1].split(close_tag)[0].strip()
-    return None
-
-
-def extract_group_id(text):
-    """Return the project's own groupId, or the parent's groupId if absent/variable."""
-    in_parent = False
-    parent_group = None
-    open_tag, close_tag = '<groupId>', '</groupId>'
-    stop_tags = ('<dependencies>', '<build>', '<profiles>', '<reporting>')
-    for line in text.splitlines():
-        stripped = line.strip()
-        if '<parent>'  in stripped: in_parent = True
-        if '</parent>' in stripped: in_parent = False; continue
         if in_parent:
-            if open_tag in stripped and close_tag in stripped:
-                parent_group = stripped.split(open_tag)[1].split(close_tag)[0].strip()
+            if parent_fallback and open_tag in line and close_tag in line:
+                parent_val = line.split(open_tag)[1].split(close_tag)[0].strip()
             continue
-        if any(t in stripped for t in stop_tags):
+        if parent_fallback and any(t in line for t in ('<dependencies>', '<build>', '<profiles>', '<reporting>')):
             break
-        if open_tag in stripped and close_tag in stripped:
-            val = stripped.split(open_tag)[1].split(close_tag)[0].strip()
-            if '${' not in val:
+        if open_tag in line and close_tag in line:
+            val = line.split(open_tag)[1].split(close_tag)[0].strip()
+            if not (parent_fallback and '${' in val):
                 return val
-    return parent_group
+    return parent_val
 
 
 def released_version(snapshot):
@@ -104,7 +83,7 @@ def released_version(snapshot):
     return f'{prefix}.{int(patch) - 1}'
 
 
-def collect_branch(branch):
+def collect_branch(branch, raw_version=False):
     """Return {module: {'version': str | None, 'artifacts': set[str]}}"""
     ref = get_ref(branch)
 
@@ -127,7 +106,7 @@ def collect_branch(branch):
             is_root = len(parts) == 2  # <module>/pom.xml
 
             artifact_id = extract_field(content, 'artifactId')
-            group_id    = extract_group_id(content)
+            group_id    = extract_field(content, 'groupId', parent_fallback=True)
             if not artifact_id:
                 continue
 
@@ -140,165 +119,51 @@ def collect_branch(branch):
             if is_root:
                 version = extract_field(content, 'version')
                 if version and '-SNAPSHOT' in version:
-                    data[module]['version'] = released_version(version)
+                    data[module]['version'] = version if raw_version else released_version(version)
 
     return data
 
-
-# ---------------------------------------------------------------------------
-# HTML output
-# ---------------------------------------------------------------------------
 
 def export_filename(branch):
     return branch.replace('/', '_') + '.txt'
 
 
-def write_export_files(branches, modules, artifacts, versions, output_dir):
-    for branch in branches:
+def write_export_files(branches, modules, artifacts, versions, main_versions, output_dir):
+    def write(filename, ver_map):
         lines = []
         for module in modules:
-            ver = versions.get(branch, {}).get(module)
-            if not ver:
-                continue
-            for artifact in artifacts[module]:
-                lines.append(f'{artifact}:{ver}')
-        (output_dir / export_filename(branch)).write_text('\n'.join(lines), encoding='utf-8')
+            ver = ver_map.get(module)
+            if ver:
+                lines.extend(f'{artifact}:{ver}' for artifact in artifacts[module])
+        (output_dir / filename).write_text('\n'.join(lines), encoding='utf-8')
+
+    for branch in branches:
+        write(export_filename(branch), versions.get(branch, {}))
+    write('main_snapshot.txt', main_versions)
 
 
-def generate_html(branches, modules, artifacts, versions, output_path):
-    ts = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
-
-    branch_headers = '\n'.join(
-        f'        <th class="ver">{b}<br>'
-        f'<a class="dl" href="{export_filename(b)}" download>&#8595; export</a></th>'
-        for b in branches
+def generate_html(branches, modules, artifacts, versions, main_versions, output_path):
+    env = Environment(
+        loader=FileSystemLoader(Path(__file__).parent),
+        trim_blocks=True,
+        lstrip_blocks=True,
     )
-
-    rows = []
-    for module in modules:
-        module_artifacts = artifacts[module]
-        rowspan = len(module_artifacts)
-        for i, artifact in enumerate(module_artifacts):
-            cells = []
-            if i == 0:
-                cells.append(
-                    f'        <td class="mod" rowspan="{rowspan}">{module}</td>'
-                )
-            cells.append(f'        <td class="art">{artifact}</td>')
-            for branch in branches:
-                ver = versions.get(branch, {}).get(module)
-                if ver:
-                    cells.append(f'        <td class="ver"><span>{ver}</span></td>')
-                else:
-                    cells.append('        <td class="miss">—</td>')
-            row_class = ' class="ms"' if i == 0 else ''
-            rows.append(
-                f'      <tr{row_class}>\n' + '\n'.join(cells) + '\n      </tr>'
-            )
-
-    rows_html = '\n'.join(rows)
-    html = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Qubership Core Java Libs — LTS Versions</title>
-  <style>
-    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-    body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-           font-size: 14px; background: #f6f8fa; color: #24292f; }}
-    header {{ background: #24292f; color: #fff; padding: 16px 24px;
-             display: flex; align-items: center; justify-content: space-between; }}
-    header h1 {{ font-size: 18px; font-weight: 600; }}
-    header span {{ font-size: 12px; opacity: 0.6; }}
-    .container {{ padding: 24px; overflow-x: auto; }}
-    table {{ border-collapse: collapse; width: 100%; background: #fff;
-            border: 1px solid #d0d7de; border-radius: 6px; overflow: hidden; }}
-    th {{ background: #f6f8fa; border-bottom: 2px solid #d0d7de; padding: 10px 16px;
-         text-align: left; font-weight: 600; white-space: nowrap;
-         position: sticky; top: 0; z-index: 1; }}
-    th.ver {{ text-align: center; }}
-    td {{ padding: 7px 16px; border-bottom: 1px solid #eaeef2; }}
-    tr.ms td {{ border-top: 2px solid #d0d7de; }}
-    td.mod {{ font-weight: 600; border-right: 1px solid #d0d7de;
-              vertical-align: top; white-space: nowrap; }}
-    td.art {{ font-family: 'SFMono-Regular', Consolas, monospace; font-size: 13px; }}
-    td.ver {{ text-align: center; font-family: 'SFMono-Regular', Consolas, monospace;
-              font-size: 13px; }}
-    td.ver span {{ background: #ddf4ff; color: #0969da; border-radius: 12px;
-                   padding: 2px 10px; display: inline-block; }}
-    td.miss {{ text-align: center; color: #8c959f; }}
-    a.dl {{ display: inline-block; margin-top: 4px; font-size: 11px; padding: 2px 8px;
-            background: #0969da; color: #fff; border-radius: 4px; text-decoration: none; }}
-    a.dl:hover {{ background: #0550ae; }}
-  </style>
-</head>
-<body>
-<header>
-  <h1>Qubership Core Java Libs — LTS Versions</h1>
-  <span>Generated: {ts}</span>
-</header>
-<div class="container">
-  <table>
-    <thead>
-      <tr>
-        <th>Module</th>
-        <th>Artifact</th>
-{branch_headers}
-      </tr>
-    </thead>
-    <tbody>
-{rows_html}
-    </tbody>
-  </table>
-</div>
-</body>
-</html>"""
-
+    html = env.get_template('report.html.j2').render(
+        ts=datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC'),
+        branches=branches,
+        modules=modules,
+        artifacts=artifacts,
+        versions=versions,
+        main_versions=main_versions,
+    )
     output_path.write_text(html, encoding='utf-8')
 
 
-# ---------------------------------------------------------------------------
-# Text output
-# ---------------------------------------------------------------------------
-
-def print_table(rows):
-    w = 40
-    print(f"{'MODULE':<{w}}  {'ARTIFACT':<{w}}  VERSION")
-    print(f"{'-'*w}  {'-'*w}  -------")
-    for module, artifact, version in rows:
-        print(f"{module:<{w}}  {artifact:<{w}}  {version}")
-
-
-def print_properties(rows):
-    for _, artifact, version in rows:
-        print(f"{artifact.replace('-', '.')}.version={version}")
-
-
-def print_csv(rows):
-    print("module,artifact,version")
-    for row in rows:
-        print(','.join(row))
-
-
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
-
 def main():
-    parser = argparse.ArgumentParser(
-        description='LTS versions for qubership-core-java-libs.',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__,
-    )
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         'output', nargs='?', default='versions-report.html',
         help='output HTML file (default: versions-report.html)',
-    )
-    parser.add_argument('--branch', help='branch for single-branch text output')
-    parser.add_argument(
-        '--format', choices=['table', 'properties', 'csv'], default='table',
-        help='text format when --branch is used (default: table)',
     )
     parser.add_argument(
         '--repo', default=None,
@@ -310,44 +175,32 @@ def main():
         global REPO_ROOT
         REPO_ROOT = Path(args.repo).resolve()
 
-    if args.branch:
-        data = collect_branch(args.branch)
-        if not data:
-            print(f'No modules found on branch {args.branch!r}', file=sys.stderr)
-            sys.exit(1)
-        rows = [
-            (module, artifact, data[module]['version'])
-            for module in sorted(data)
-            for artifact in sorted(data[module]['artifacts'])
-            if data[module]['version']
-        ]
-        {'table': print_table, 'properties': print_properties, 'csv': print_csv}[args.format](rows)
+    branches = get_branches()
+    if not branches:
+        print('No lts/* branches found.', file=sys.stderr)
+        sys.exit(1)
+    print(f'Collecting versions from branches: {", ".join(branches)}')
 
-    else:
-        if args.format != 'table':
-            print('Warning: --format is ignored without --branch', file=sys.stderr)
-        branches = get_branches()
-        if not branches:
-            print('No lts/* branches found.', file=sys.stderr)
-            sys.exit(1)
-        print(f'Collecting versions from branches: {", ".join(branches)}')
+    all_artifacts = defaultdict(set)
+    versions = {}
+    for branch in branches:
+        data = collect_branch(branch)
+        versions[branch] = {m: d['version'] for m, d in data.items()}
+        for module, d in data.items():
+            all_artifacts[module].update(d['artifacts'])
 
-        all_artifacts = {}
-        versions = {}
-        for branch in branches:
-            data = collect_branch(branch)
-            versions[branch] = {m: d['version'] for m, d in data.items()}
-            for module, d in data.items():
-                if module not in all_artifacts:
-                    all_artifacts[module] = set()
-                all_artifacts[module].update(d['artifacts'])
+    print('Collecting SNAPSHOT versions from main...')
+    main_data = collect_branch('main', raw_version=True)
+    main_versions = {m: d['version'] for m, d in main_data.items()}
+    for module, d in main_data.items():
+        all_artifacts[module].update(d['artifacts'])
 
-        modules   = sorted(all_artifacts)
-        artifacts = {m: sorted(all_artifacts[m]) for m in modules}
-        output    = Path(args.output)
-        write_export_files(branches, modules, artifacts, versions, output.parent)
-        generate_html(branches, modules, artifacts, versions, output)
-        print(f'Report written to: {output}')
+    modules   = sorted(all_artifacts)
+    artifacts = {m: sorted(all_artifacts[m]) for m in modules}
+    output    = Path(args.output)
+    write_export_files(branches, modules, artifacts, versions, main_versions, output.parent)
+    generate_html(branches, modules, artifacts, versions, main_versions, output)
+    print(f'Report written to: {output}')
 
 
 if __name__ == '__main__':
