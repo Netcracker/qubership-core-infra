@@ -64,7 +64,7 @@ on:
         default: false
 
 concurrency:
-  group: "core-libs-monorepo"
+  group: "core-libs-monorepo-${{ inputs.branch }}"
   cancel-in-progress: false
 
 permissions:
