@@ -10,6 +10,34 @@ on:
         type: string
         description: "branch"
         default: "main"
+      moduleToRelease:
+        type: choice
+        description: "The Module to bulk release from. Select 'all' to release all modules"
+        options:
+          - all
+          - core-blue-green-state-monitor-quarkus
+          - core-blue-green-state-monitor
+          - core-context-propagation-quarkus
+          - core-context-propagation
+          - core-error-handling
+          - core-junit-k8s-extension
+          - core-microservice-dependencies
+          - core-microservice-framework-extensions
+          - core-microservice-framework
+          - core-mongo-evolution
+          - core-process-orchestrator
+          - core-quarkus-extensions
+          - core-rest-libraries
+          - core-restclient
+          - core-springboot-starter
+          - core-utils
+          - dbaas-client
+          - maas-client-quarkus
+          - maas-client-spring
+          - maas-client
+          - maas-declarative-client-commons
+          - maas-declarative-client-quarkus
+          - maas-declarative-client-spring
       gavs:
         type: string
         description: "Comma separated list of GAV(s)"
@@ -133,6 +161,7 @@ jobs:
         env:
           GAVS: ${{ steps.download-gavs.outputs.gavs }}
           BRANCH: ${{ inputs.branch }}
+          MODULE_TO_RELEASE: ${{ inputs.moduleToRelease }}
           VERSION_INCREMENT_TYPE: ${{ inputs.versionIncrementType }}
           SKIP_TEST: ${{ inputs.skipTest }}
           DRY_RUN: ${{ inputs.dryRun }}
@@ -180,7 +209,7 @@ jobs:
           args="${args} --summaryFile=${GITHUB_STEP_SUMMARY}"
           args="${args} --gavsResultFile=/tmp/gavs.txt"
           args="${args} --dependencyGraphFile=/tmp/graph.dot"
-                    
+          
           repositories="https://github.com/Netcracker/qubership-core-java-libs[branch=${BRANCH},pomFolder=core-blue-green-state-monitor-quarkus]
           https://github.com/Netcracker/qubership-core-java-libs[branch=${BRANCH},pomFolder=core-blue-green-state-monitor]
           https://github.com/Netcracker/qubership-core-java-libs[branch=${BRANCH},pomFolder=core-context-propagation-quarkus]
@@ -204,6 +233,12 @@ jobs:
           https://github.com/Netcracker/qubership-core-java-libs[branch=${BRANCH},pomFolder=maas-declarative-client-commons]
           https://github.com/Netcracker/qubership-core-java-libs[branch=${BRANCH},pomFolder=maas-declarative-client-quarkus]
           https://github.com/Netcracker/qubership-core-java-libs[branch=${BRANCH},pomFolder=maas-declarative-client-spring]"
+          
+          # set module to release from
+          if [ "${MODULE_TO_RELEASE}" != "all" ]; then
+            repositoryToReleaseFrom=$(echo "${repositories}" | grep -E ".*pomFolder=${MODULE_TO_RELEASE}\]")
+            args="${args} --repositoryToReleaseFrom=${repositoryToReleaseFrom}"
+          fi
           
           tmpfile=$(mktemp)
           cat >"$tmpfile" <<EOF
