@@ -4,12 +4,6 @@ on:
   schedule:
     - cron: '0 4 * * *'
   workflow_dispatch:
-    inputs:
-      state:
-        description: PR state (open, closed, all)
-        default: open
-        type: choice
-        options: [open, closed, all]
 
 jobs:
   generate-report:
@@ -30,7 +24,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
         run: |
           mkdir -p _site
-          python3 pr-report/pr-report.py _site/index.html --state ${{ inputs.state || 'open' }}
+          python3 pr-report/pr-report.py _site/index.html
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4

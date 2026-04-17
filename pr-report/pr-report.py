@@ -174,7 +174,6 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output", nargs="?", default="pr-report.html", help="Output HTML file")
     parser.add_argument("--token", default=os.environ.get("GITHUB_TOKEN"), help="GitHub token")
-    parser.add_argument("--state", default="open", choices=["open", "closed", "all"], help="PR state filter")
     parser.add_argument("--exclude", default=str(Path(__file__).resolve().parent / "exclude-repos.txt"), help="File with excluded repo names")
     parser.add_argument("--workers", type=int, default=8, help="Number of parallel workers")
     args = parser.parse_args()
@@ -195,7 +194,7 @@ def main():
     # Fetch PRs for all repos in parallel
     repo_prs = []
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
-        futures = {pool.submit(fetch_repo_prs, args.token, repo, args.state): repo for repo in repos}
+        futures = {pool.submit(fetch_repo_prs, args.token, repo, "open"): repo for repo in repos}
         for future in as_completed(futures):
             repo, prs = future.result()
             if prs:
@@ -224,7 +223,7 @@ def main():
     template = env.get_template("report.html.j2")
 
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    html = template.render(rows=rows, generated_at=generated_at, org=ORG, topics=TOPICS, state=args.state)
+    html = template.render(rows=rows, generated_at=generated_at, org=ORG, topics=TOPICS)
 
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
