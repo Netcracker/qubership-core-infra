@@ -1,0 +1,41 @@
+name: PR Report
+
+on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+    inputs:
+      state:
+        description: PR state (open, closed, all)
+        default: open
+        type: choice
+        options: [open, closed, all]
+
+jobs:
+  generate-report:
+    name: Generate and deploy PR report
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: pip install requests jinja2
+
+      - name: Generate HTML report
+        env:
+          GITHUB_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+        run: |
+          mkdir -p _site
+          python3 pr-report/pr-report.py _site/index.html --state ${{ inputs.state || 'open' }}
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: '_site'
+          destination_dir: 'pr-report'
+          keep_files: true

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Netcracker — Open Pull Requests</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           font-size: 14px; background: #f6f8fa; color: #24292f; }
+
+    header { background: #24292f; color: #fff; padding: 16px 24px;
+             display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    header h1 { font-size: 18px; font-weight: 600; }
+    header span { font-size: 12px; opacity: 0.6; }
+
+    .toolbar { padding: 16px 24px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .toolbar input, .toolbar select {
+      padding: 6px 10px; border: 1px solid #d0d7de; border-radius: 6px;
+      font-size: 13px; background: #fff; }
+    .toolbar input { width: 260px; }
+    .toolbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+    .count { font-size: 13px; color: #57606a; }
+    .btn-show-all { padding: 6px 12px; border: 1px solid #d0d7de; border-radius: 6px;
+                    font-size: 13px; background: #fff; cursor: pointer; color: #24292f; }
+    .btn-show-all:hover { background: #f6f8fa; }
+
+    .container { padding: 0 24px 24px; overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; background: #fff;
+            border: 1px solid #d0d7de; border-radius: 6px; overflow: hidden; }
+    th { background: #f6f8fa; border-bottom: 2px solid #d0d7de; padding: 10px 14px;
+         text-align: left; font-weight: 600; white-space: nowrap;
+         position: sticky; top: 0; z-index: 1; cursor: pointer; user-select: none; }
+    th:hover { background: #eaeef2; }
+    th .sort-icon { margin-left: 4px; opacity: 0.4; font-size: 11px; }
+    th.sorted-asc .sort-icon::after { content: '▲'; opacity: 1; }
+    th.sorted-desc .sort-icon::after { content: '▼'; opacity: 1; }
+    th:not(.sorted-asc):not(.sorted-desc) .sort-icon::after { content: '⇅'; }
+
+    td { padding: 8px 14px; border-bottom: 1px solid #eaeef2; vertical-align: top; }
+    tr:hover td { background: #f6f8fa; }
+    tr.hidden { display: none; }
+
+    .repo-link { font-weight: 600; color: #0969da; text-decoration: none; font-size: 13px; }
+    .repo-link:hover { text-decoration: underline; }
+
+    .pr-link { color: #0969da; text-decoration: none; font-weight: 500; }
+    .pr-link:hover { text-decoration: underline; }
+    .pr-number { color: #57606a; font-size: 12px; display: inline-block;
+                 min-width: 3.5em; text-align: right; margin-right: 6px; }
+
+    .author-link { color: #57606a; text-decoration: none; font-size: 13px; }
+    .author-link:hover { text-decoration: underline; color: #0969da; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .badge-draft { background: #f6f8fa; color: #57606a; border: 1px solid #d0d7de; }
+    .badge-open { background: #dafbe1; color: #1a7f37; border: 1px solid #aceebb; }
+    .badge-closed { background: #ffebe9; color: #cf222e; border: 1px solid #ffc1c0; }
+
+    .label { display: inline-block; padding: 2px 7px; border-radius: 12px; font-size: 11px;
+             background: #ddf4ff; color: #0969da; border: 1px solid #b6e3ff;
+             margin: 1px 2px 1px 0; white-space: nowrap; }
+
+    .date { font-size: 12px; color: #57606a; white-space: nowrap; }
+    .base { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 12px;
+            color: #57606a; background: #f6f8fa; padding: 1px 5px; border-radius: 4px; }
+
+    .checks { display: inline-flex; align-items: center; gap: 5px; font-size: 12px;
+              text-decoration: none; color: inherit; }
+    .checks:hover { text-decoration: underline; }
+    .check-fail { color: #cf222e; font-size: 13px; font-weight: 700; text-decoration: none;
+                  margin-left: 4px; cursor: pointer; }
+    .check-fail:hover { text-decoration: underline; }
+    .check-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .check-dot.success { background: #1a7f37; }
+    .check-dot.failure { background: #cf222e; }
+    .check-dot.pending { background: #bf8700; }
+    .check-dot.none { background: #d0d7de; }
+    .check-counts { color: #57606a; }
+
+    .empty { text-align: center; padding: 48px; color: #57606a; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Netcracker — Pull Requests</h1>
+  <span>Topics: {{ topics | join(', ') }} &nbsp;·&nbsp; Generated: {{ generated_at }}</span>
+</header>
+
+<div class="toolbar">
+  <select id="repo-filter" onchange="applyFilters()">
+    <option value="">All repositories</option>
+    {% set repos = rows | map(attribute='repo') | list | unique | sort %}
+    {% for r in repos %}
+    <option value="{{ r }}">{{ r }}</option>
+    {% endfor %}
+  </select>
+  <select id="state-filter" onchange="applyFilters()">
+    <option value="">All states</option>
+    <option value="open">Open</option>
+    <option value="draft">Draft</option>
+    <option value="closed">Closed</option>
+  </select>
+  <select id="author-filter" onchange="applyFilters()">
+    <option value="">All PRs</option>
+    <option value="bot">Bot PRs</option>
+    <option value="human">Developer PRs</option>
+  </select>
+  <select id="lang-filter" onchange="applyFilters()">
+    <option value="">All languages</option>
+    <option value="go">Go</option>
+    <option value="java">Java</option>
+    <option value="other">Other</option>
+  </select>
+  <select id="type-filter" onchange="applyFilters()">
+    <option value="">All types</option>
+    <option value="lib">Lib</option>
+    <option value="service">Service</option>
+    <option value="other">Other</option>
+  </select>
+  <button class="btn-show-all" onclick="showAll()">Show All</button>
+  <div class="toolbar-right">
+    <span class="count" id="count">{{ rows | length }} PRs</span>
+    <input type="text" id="search" placeholder="Search repo, title, author, label…" oninput="applyFilters()">
+  </div>
+</div>
+
+<div class="container">
+  {% if rows %}
+  <table id="pr-table">
+    <thead>
+      <tr>
+        <th onclick="sortTable(0)" data-col="0">Repository<span class="sort-icon"></span></th>
+        <th onclick="sortTable(1)" data-col="1">Pull Request<span class="sort-icon"></span></th>
+        <th onclick="sortTable(2)" data-col="2">Author<span class="sort-icon"></span></th>
+        <th onclick="sortTable(3)" data-col="3">Status<span class="sort-icon"></span></th>
+        <th onclick="sortTable(4)" data-col="4">Labels<span class="sort-icon"></span></th>
+        <th onclick="sortTable(5)" data-col="5">Base<span class="sort-icon"></span></th>
+        <th onclick="sortTable(6)" data-col="6">Created<span class="sort-icon"></span></th>
+        <th onclick="sortTable(7)" data-col="7">Updated<span class="sort-icon"></span></th>
+        <th onclick="sortTable(8)" data-col="8">Checks<span class="sort-icon"></span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr
+        data-repo="{{ row.repo }}"
+        data-state="{{ 'draft' if row.draft else row.state }}"
+        data-author="{{ row.author }}"
+        data-bot="{{ 'true' if row.is_bot else 'false' }}"
+        data-lang="{{ row.lang }}"
+        data-type="{{ row.repo_type }}"
+        data-text="{{ row.repo }} {{ row.title }} {{ row.author }} {{ row.labels | join(' ') }}"
+      >
+        <td><a class="repo-link" href="{{ row.repo_url }}" target="_blank">{{ row.repo }}</a></td>
+        <td>
+          <span class="pr-number">#{{ row.number }}</span>
+          <a class="pr-link" href="{{ row.url }}" target="_blank">{{ row.title }}</a>
+        </td>
+        <td><a class="author-link" href="{{ row.author_url }}" target="_blank">{{ row.author }}</a></td>
+        <td>
+          {% if row.draft %}
+            <span class="badge badge-draft">Draft</span>
+          {% elif row.state == 'open' %}
+            <span class="badge badge-open">Open</span>
+          {% else %}
+            <span class="badge badge-closed">Closed</span>
+          {% endif %}
+        </td>
+        <td>{% for label in row.labels %}<span class="label">{{ label }}</span>{% endfor %}</td>
+        <td><span class="base">{{ row.base }}</span></td>
+        <td><span class="date">{{ row.created_at }}</span></td>
+        <td><span class="date">{{ row.updated_at }}</span></td>
+        <td>
+          {% set c = row.checks %}
+          {% if c.total == 0 %}
+            <span class="checks"><span class="check-dot none"></span><span class="check-counts">—</span></span>
+          {% else %}
+            <a class="checks" href="{{ row.checks_url }}" target="_blank">
+              <span class="check-dot {{ c.status }}"></span>
+              <span class="check-counts">{{ c.passed }}/{{ c.total }}</span>
+            </a>
+            {% for run in c.failed_runs %}
+              <a class="check-fail" href="{{ run.url }}" target="_blank" title="{{ run.name }}">✗</a>
+            {% endfor %}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">No pull requests found.</div>
+  {% endif %}
+</div>
+
+<script>
+  function showAll() {
+    ['repo-filter', 'state-filter', 'author-filter', 'lang-filter', 'type-filter'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('search').value = '';
+    applyFilters();
+  }
+
+  let sortCol = -1, sortDir = 1;
+
+  function applyFilters() {
+    const search = document.getElementById('search').value.toLowerCase();
+    const repoFilter = document.getElementById('repo-filter').value;
+    const stateFilter = document.getElementById('state-filter').value;
+    const authorFilter = document.getElementById('author-filter').value;
+    const langFilter = document.getElementById('lang-filter').value;
+    const typeFilter = document.getElementById('type-filter').value;
+    const rows = document.querySelectorAll('#pr-table tbody tr');
+    let visible = 0;
+    rows.forEach(tr => {
+      const show = (!search || tr.dataset.text.toLowerCase().includes(search))
+        && (!repoFilter || tr.dataset.repo === repoFilter)
+        && (!stateFilter || tr.dataset.state === stateFilter)
+        && (!authorFilter || (authorFilter === 'bot' ? tr.dataset.bot === 'true' : tr.dataset.bot === 'false'))
+        && (!langFilter || tr.dataset.lang === langFilter)
+        && (!typeFilter || tr.dataset.type === typeFilter);
+      tr.classList.toggle('hidden', !show);
+      if (show) visible++;
+    });
+    document.getElementById('count').textContent = visible + ' PRs';
+  }
+
+  function sortTable(col) {
+    const table = document.getElementById('pr-table');
+    const tbody = table.querySelector('tbody');
+    const ths = table.querySelectorAll('th');
+    if (sortCol === col) {
+      sortDir = -sortDir;
+    } else {
+      sortCol = col;
+      sortDir = 1;
+    }
+    ths.forEach((th, i) => {
+      th.classList.remove('sorted-asc', 'sorted-desc');
+      if (i === col) th.classList.add(sortDir === 1 ? 'sorted-asc' : 'sorted-desc');
+    });
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((a, b) => {
+      const aVal = a.cells[col].textContent.trim();
+      const bVal = b.cells[col].textContent.trim();
+      return aVal.localeCompare(bVal) * sortDir;
+    });
+    rows.forEach(r => tbody.appendChild(r));
+  }
+</script>
+
+</body>
+</html>
