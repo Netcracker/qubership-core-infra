@@ -24,6 +24,10 @@
     .btn-show-all { padding: 6px 12px; border: 1px solid #d0d7de; border-radius: 6px;
                     font-size: 13px; background: #fff; cursor: pointer; color: #24292f; }
     .btn-show-all:hover { background: #f6f8fa; }
+    .btn-regenerate { padding: 6px 12px; border: 1px solid #d0d7de; border-radius: 6px;
+                      font-size: 13px; background: #fff; color: #24292f; text-decoration: none;
+                      white-space: nowrap; }
+    .btn-regenerate:hover { background: #f6f8fa; }
 
     .container { padding: 0 24px 24px; overflow-x: auto; }
     table { border-collapse: collapse; width: 100%; background: #fff;
@@ -42,9 +46,11 @@
     tr.hidden { display: none; }
 
     .repo-link { font-weight: 600; color: #0969da; text-decoration: none; font-size: 13px; }
+    .repo-link:visited { color: #6f42c1; }
     .repo-link:hover { text-decoration: underline; }
 
     .pr-link { color: #0969da; text-decoration: none; font-weight: 500; }
+    .pr-link:visited { color: #6f42c1; }
     .pr-link:hover { text-decoration: underline; }
     .pr-number { color: #57606a; font-size: 12px; display: inline-block;
                  min-width: 3.5em; text-align: right; margin-right: 6px; }
@@ -85,7 +91,7 @@
 
 <header>
   <h1>Netcracker — Pull Requests</h1>
-  <span>Topics: qubership-core &nbsp;·&nbsp; Generated: 2026-04-27 05:03 UTC</span>
+  <span>Topics: qubership-core &nbsp;·&nbsp; Generated: 2026-04-27 09:28 UTC &nbsp;·&nbsp; v1.1.0</span>
 </header>
 
 <div class="toolbar">
@@ -201,8 +207,9 @@
   </select>
   <button class="btn-show-all" onclick="showAll()">Show All</button>
   <div class="toolbar-right">
-    <span class="count" id="count">209 PRs</span>
+    <span class="count" id="count">174 PRs</span>
     <input type="text" id="search" placeholder="Search repo, title, author, label…" oninput="applyFilters()">
+    <a class="btn-regenerate" href="https://github.com/Netcracker/qubership-core-infra/actions/workflows/pr-report.yml" target="_blank">↻ Regenerate</a>
   </div>
 </div>
 
@@ -339,6 +346,42 @@
         data-bot="true"
         data-lang="other"
         data-type="other"
+        data-text="qubership-core-bootstrap chore(deps): update netcracker/qubership-workflow-hub action to v2.2.1 renovate[bot] "
+      >
+        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-bootstrap" target="_blank">qubership-core-bootstrap</a></td>
+        <td>
+          <span class="pr-number">#128</span>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-bootstrap/pull/128" target="_blank">chore(deps): update netcracker/qubership-workflow-hub action to v2.2.1</a>
+        </td>
+        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
+        <td>
+          
+            <span class="badge badge-open">Open</span>
+          
+        </td>
+        <td></td>
+        <td><span class="base">main</span></td>
+        <td><span class="date">2026-04-27</span></td>
+        <td><span class="date">2026-04-27</span></td>
+        <td>
+          
+          
+            <a class="checks" href="https://github.com/Netcracker/qubership-core-bootstrap/pull/128/checks" target="_blank">
+              <span class="check-dot success"></span>
+              <span class="check-counts">6/6</span>
+            </a>
+            
+          
+        </td>
+      </tr>
+      
+      <tr
+        data-repo="qubership-core-bootstrap"
+        data-state="open"
+        data-author="renovate[bot]"
+        data-bot="true"
+        data-lang="other"
+        data-type="other"
         data-text="qubership-core-bootstrap chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] "
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-bootstrap" target="_blank">qubership-core-bootstrap</a></td>
@@ -375,42 +418,6 @@
         data-bot="true"
         data-lang="other"
         data-type="other"
-        data-text="qubership-core-bootstrap chore(deps): update module github.com/rs/zerolog to v1.35.1 renovate[bot] "
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-bootstrap" target="_blank">qubership-core-bootstrap</a></td>
-        <td>
-          <span class="pr-number">#126</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-bootstrap/pull/126" target="_blank">chore(deps): update module github.com/rs/zerolog to v1.35.1</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-21</span></td>
-        <td><span class="date">2026-04-21</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-bootstrap/pull/126/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-bootstrap"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="other"
-        data-type="other"
         data-text="qubership-core-bootstrap chore(deps): update module k8s.io/client-go to v0.36.0 renovate[bot] "
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-bootstrap" target="_blank">qubership-core-bootstrap</a></td>
@@ -427,16 +434,16 @@
         <td></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-16</span></td>
-        <td><span class="date">2026-04-23</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-bootstrap/pull/125/checks" target="_blank">
               <span class="check-dot failure"></span>
-              <span class="check-counts">14/15</span>
+              <span class="check-counts">13/14</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-bootstrap/actions/runs/24812334572/job/72619653021" target="_blank" title="docker-build / Build Docker Images (core-bootstrap, core-bootstrap/Dockerfile, ./core-bootstrap, false)">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-bootstrap/actions/runs/24986001354/job/73159362667" target="_blank" title="docker-build / Build Docker Images (core-bootstrap, core-bootstrap/Dockerfile, ./core-bootstrap, false)">✗</a>
             
           
         </td>
@@ -465,13 +472,13 @@
         <td></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-16</span></td>
-        <td><span class="date">2026-04-23</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-bootstrap/pull/124/checks" target="_blank">
               <span class="check-dot success"></span>
-              <span class="check-counts">16/16</span>
+              <span class="check-counts">14/14</span>
             </a>
             
           
@@ -513,42 +520,6 @@
               <a class="check-fail" href="https://github.com/Netcracker/qubership-core-bootstrap/actions/runs/24812330111/job/72619645335" target="_blank" title="docker-build / Build Docker Images (cr-synchronizer, cr-synchronizer/Dockerfile, ./cr-synchronizer, false)">✗</a>
             
               <a class="check-fail" href="https://github.com/Netcracker/qubership-core-bootstrap/actions/runs/24812330095/job/72619643938" target="_blank" title="docker-build / Build Docker Images (core-bootstrap, core-bootstrap/Dockerfile, ./core-bootstrap, false)">✗</a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-bootstrap"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="other"
-        data-type="other"
-        data-text="qubership-core-bootstrap chore(deps): update ghcr.io/netcracker/qubership-core-base docker tag to v2.2.12 renovate[bot] "
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-bootstrap" target="_blank">qubership-core-bootstrap</a></td>
-        <td>
-          <span class="pr-number">#122</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-bootstrap/pull/122" target="_blank">chore(deps): update ghcr.io/netcracker/qubership-core-base docker tag to v2.2.12</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-14</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-bootstrap/pull/122/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">15/15</span>
-            </a>
             
           
         </td>
@@ -793,12 +764,12 @@
         data-bot="true"
         data-lang="java"
         data-type="service"
-        data-text="qubership-core-config-server chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
+        data-text="qubership-core-config-server chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-config-server" target="_blank">qubership-core-config-server</a></td>
         <td>
           <span class="pr-number">#164</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-config-server/pull/164" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-config-server/pull/164" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -809,83 +780,11 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-config-server/pull/164/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-config-server"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="java"
-        data-type="service"
-        data-text="qubership-core-config-server chore(deps): update ghcr.io/netcracker/qubership-java-base docker tag to v21-alpine-2.2.12 renovate[bot] branch:main renovate:core manager:docker"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-config-server" target="_blank">qubership-core-config-server</a></td>
-        <td>
-          <span class="pr-number">#162</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-config-server/pull/162" target="_blank">chore(deps): update ghcr.io/netcracker/qubership-java-base docker tag to v21-alpine-2.2.12</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:docker</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-14</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-config-server/pull/162/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">12/12</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-config-server"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="java"
-        data-type="service"
-        data-text="qubership-core-config-server chore(deps): update maven renovate[bot] branch:main renovate:core manager:maven group:maven"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-config-server" target="_blank">qubership-core-config-server</a></td>
-        <td>
-          <span class="pr-number">#161</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-config-server/pull/161" target="_blank">chore(deps): update maven</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:maven</span><span class="label">group:maven</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-13</span></td>
-        <td><span class="date">2026-04-22</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-config-server/pull/161/checks" target="_blank">
               <span class="check-dot success"></span>
               <span class="check-counts">11/11</span>
             </a>
@@ -901,12 +800,12 @@
         data-bot="true"
         data-lang="go"
         data-type="service"
-        data-text="qubership-core-control-plane chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
+        data-text="qubership-core-control-plane chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-control-plane" target="_blank">qubership-core-control-plane</a></td>
         <td>
           <span class="pr-number">#267</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-control-plane/pull/267" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-control-plane/pull/267" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -917,13 +816,13 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-control-plane/pull/267/checks" target="_blank">
               <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
+              <span class="check-counts">12/12</span>
             </a>
             
           
@@ -953,88 +852,16 @@
         <td><span class="label">bug</span><span class="label">enhancement</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-control-plane/pull/266/checks" target="_blank">
               <span class="check-dot failure"></span>
-              <span class="check-counts">20/21</span>
+              <span class="check-counts">10/11</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-control-plane/runs/72848651813" target="_blank" title="SonarCloud Code Analysis">✗</a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-control-plane"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
-        data-text="qubership-core-control-plane chore(deps): update module github.com/jackc/pgx/v5 to v5.9.2 [security] renovate[bot] branch:main renovate:core security"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-control-plane" target="_blank">qubership-core-control-plane</a></td>
-        <td>
-          <span class="pr-number">#265</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-control-plane/pull/265" target="_blank">chore(deps): update module github.com/jackc/pgx/v5 to v5.9.2 [security]</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">security</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-control-plane/pull/265/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-control-plane"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
-        data-text="qubership-core-control-plane chore(deps): update module github.com/gofiber/fiber/v2 to v2.52.13 renovate[bot] branch:main renovate:core manager:go group:go"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-control-plane" target="_blank">qubership-core-control-plane</a></td>
-        <td>
-          <span class="pr-number">#264</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-control-plane/pull/264" target="_blank">chore(deps): update module github.com/gofiber/fiber/v2 to v2.52.13</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-19</span></td>
-        <td><span class="date">2026-04-25</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-control-plane/pull/264/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">15/15</span>
-            </a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-control-plane/runs/73149515191" target="_blank" title="SonarCloud Code Analysis">✗</a>
             
           
         </td>
@@ -1099,52 +926,14 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-16</span></td>
-        <td><span class="date">2026-04-22</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-control-plane/pull/261/checks" target="_blank">
               <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
+              <span class="check-counts">12/12</span>
             </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-control-plane"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
-        data-text="qubership-core-control-plane chore(deps): update ghcr.io/netcracker/qubership-core-base docker tag to v2.2.12 renovate[bot] branch:main renovate:core manager:docker"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-control-plane" target="_blank">qubership-core-control-plane</a></td>
-        <td>
-          <span class="pr-number">#260</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-control-plane/pull/260" target="_blank">chore(deps): update ghcr.io/netcracker/qubership-core-base docker tag to v2.2.12</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:docker</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-14</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-control-plane/pull/260/checks" target="_blank">
-              <span class="check-dot failure"></span>
-              <span class="check-counts">12/13</span>
-            </a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-control-plane/actions/runs/24828023659/job/72668952767" target="_blank" title="linkChecker">✗</a>
             
           
         </td>
@@ -1173,49 +962,13 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-13</span></td>
-        <td><span class="date">2026-04-22</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-control-plane/pull/259/checks" target="_blank">
               <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-control-plane"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
-        data-text="qubership-core-control-plane chore(deps): update maven renovate[bot] branch:main renovate:core manager:maven group:maven"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-control-plane" target="_blank">qubership-core-control-plane</a></td>
-        <td>
-          <span class="pr-number">#258</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-control-plane/pull/258" target="_blank">chore(deps): update maven</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:maven</span><span class="label">group:maven</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-13</span></td>
-        <td><span class="date">2026-04-27</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-control-plane/pull/258/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">27/27</span>
+              <span class="check-counts">12/12</span>
             </a>
             
           
@@ -1245,16 +998,16 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-09</span></td>
-        <td><span class="date">2026-04-22</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-control-plane/pull/257/checks" target="_blank">
               <span class="check-dot failure"></span>
-              <span class="check-counts">7/8</span>
+              <span class="check-counts">8/9</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-control-plane/actions/runs/24762876147/job/72450348859" target="_blank" title="Build and test / Test and analyze">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-control-plane/actions/runs/24986311263/job/73160368280" target="_blank" title="Build and test / Test and analyze">✗</a>
             
           
         </td>
@@ -1409,42 +1162,6 @@
       <tr
         data-repo="qubership-core-control-plane"
         data-state="open"
-        data-author="NetcrackerCLPLCI"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
-        data-text="qubership-core-control-plane feat(ci): added new workflow to lint renovate.json file on change NetcrackerCLPLCI enhancement"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-control-plane" target="_blank">qubership-core-control-plane</a></td>
-        <td>
-          <span class="pr-number">#232</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-control-plane/pull/232" target="_blank">feat(ci): added new workflow to lint renovate.json file on change</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/NetcrackerCLPLCI" target="_blank">NetcrackerCLPLCI</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">enhancement</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-03-16</span></td>
-        <td><span class="date">2026-03-16</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-control-plane/pull/232/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-control-plane"
-        data-state="open"
         data-author="renovate[bot]"
         data-bot="true"
         data-lang="go"
@@ -1465,18 +1182,18 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-01-14</span></td>
-        <td><span class="date">2026-04-25</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-control-plane/pull/189/checks" target="_blank">
               <span class="check-dot failure"></span>
-              <span class="check-counts">9/11</span>
+              <span class="check-counts">8/10</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-control-plane/actions/runs/24931740343/job/73010524115" target="_blank" title="Build and test / Test and analyze">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-control-plane/actions/runs/24986396734/job/73160656129" target="_blank" title="Build and test / Test and analyze">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-control-plane/actions/runs/24931739739/job/73010522653" target="_blank" title="build-test-service">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-control-plane/actions/runs/24986394737/job/73160648999" target="_blank" title="build-test-service">✗</a>
             
           
         </td>
@@ -1567,12 +1284,12 @@
         data-bot="true"
         data-lang="java"
         data-type="service"
-        data-text="qubership-core-core-operator chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
+        data-text="qubership-core-core-operator chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-core-operator" target="_blank">qubership-core-core-operator</a></td>
         <td>
           <span class="pr-number">#160</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-core-operator/pull/160" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-core-operator/pull/160" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -1583,52 +1300,14 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-core-operator/pull/160/checks" target="_blank">
               <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
+              <span class="check-counts">12/12</span>
             </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-core-operator"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="java"
-        data-type="service"
-        data-text="qubership-core-core-operator chore(deps): update ghcr.io/netcracker/qubership-java-base docker tag to v21-alpine-2.2.12 renovate[bot] branch:main renovate:core manager:docker"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-core-operator" target="_blank">qubership-core-core-operator</a></td>
-        <td>
-          <span class="pr-number">#159</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-core-operator/pull/159" target="_blank">chore(deps): update ghcr.io/netcracker/qubership-java-base docker tag to v21-alpine-2.2.12</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:docker</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-14</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-core-operator/pull/159/checks" target="_blank">
-              <span class="check-dot failure"></span>
-              <span class="check-counts">11/12</span>
-            </a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-core-operator/actions/runs/24846806526/job/72736039865" target="_blank" title="linkChecker">✗</a>
             
           
         </td>
@@ -1657,7 +1336,7 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:maven</span><span class="label">group:maven</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-13</span></td>
-        <td><span class="date">2026-04-22</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -1751,48 +1430,12 @@
         data-bot="true"
         data-lang="go"
         data-type="service"
-        data-text="qubership-core-dbaas-agent chore(deps): update module github.com/gofiber/fiber/v2 to v2.52.13 renovate[bot] branch:main renovate:core manager:go group:go"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-dbaas-agent" target="_blank">qubership-core-dbaas-agent</a></td>
-        <td>
-          <span class="pr-number">#144</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-dbaas-agent/pull/144" target="_blank">chore(deps): update module github.com/gofiber/fiber/v2 to v2.52.13</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-25</span></td>
-        <td><span class="date">2026-04-25</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-dbaas-agent/pull/144/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-dbaas-agent"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
-        data-text="qubership-core-dbaas-agent chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
+        data-text="qubership-core-dbaas-agent chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-dbaas-agent" target="_blank">qubership-core-dbaas-agent</a></td>
         <td>
           <span class="pr-number">#143</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-dbaas-agent/pull/143" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-dbaas-agent/pull/143" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -1803,7 +1446,7 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -1859,42 +1502,6 @@
         data-bot="true"
         data-lang="go"
         data-type="service"
-        data-text="qubership-core-dbaas-agent chore(deps): update ghcr.io/netcracker/qubership-core-base docker tag to v2.2.12 renovate[bot] branch:main renovate:core manager:docker"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-dbaas-agent" target="_blank">qubership-core-dbaas-agent</a></td>
-        <td>
-          <span class="pr-number">#141</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-dbaas-agent/pull/141" target="_blank">chore(deps): update ghcr.io/netcracker/qubership-core-base docker tag to v2.2.12</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:docker</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-14</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-dbaas-agent/pull/141/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">13/13</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-dbaas-agent"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
         data-text="qubership-core-dbaas-agent chore(deps): update module github.com/valyala/fasthttp to v1.70.0 renovate[bot] branch:main renovate:core manager:go group:go"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-dbaas-agent" target="_blank">qubership-core-dbaas-agent</a></td>
@@ -1911,7 +1518,7 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-09</span></td>
-        <td><span class="date">2026-04-22</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -1920,43 +1527,7 @@
               <span class="check-counts">7/8</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-dbaas-agent/actions/runs/24763033397/job/72450826946" target="_blank" title="Build and test / Test and analyze">✗</a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-dbaas-agent"
-        data-state="open"
-        data-author="NetcrackerCLPLCI"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
-        data-text="qubership-core-dbaas-agent feat(ci): added new workflow to lint renovate.json file on change NetcrackerCLPLCI enhancement"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-dbaas-agent" target="_blank">qubership-core-dbaas-agent</a></td>
-        <td>
-          <span class="pr-number">#129</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-dbaas-agent/pull/129" target="_blank">feat(ci): added new workflow to lint renovate.json file on change</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/NetcrackerCLPLCI" target="_blank">NetcrackerCLPLCI</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">enhancement</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-03-16</span></td>
-        <td><span class="date">2026-03-16</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-dbaas-agent/pull/129/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
-            </a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-dbaas-agent/actions/runs/24986281697/job/73160268721" target="_blank" title="Build and test / Test and analyze">✗</a>
             
           
         </td>
@@ -1985,16 +1556,16 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-01-14</span></td>
-        <td><span class="date">2026-04-25</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-dbaas-agent/pull/105/checks" target="_blank">
               <span class="check-dot failure"></span>
-              <span class="check-counts">9/10</span>
+              <span class="check-counts">8/9</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-dbaas-agent/actions/runs/24931186075/job/73009097014" target="_blank" title="Build and test / Test and analyze">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-dbaas-agent/actions/runs/24986359533/job/73160531609" target="_blank" title="Build and test / Test and analyze">✗</a>
             
           
         </td>
@@ -2007,12 +1578,12 @@
         data-bot="true"
         data-lang="go"
         data-type="service"
-        data-text="qubership-core-facade-operator chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
+        data-text="qubership-core-facade-operator chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-facade-operator" target="_blank">qubership-core-facade-operator</a></td>
         <td>
           <span class="pr-number">#180</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-facade-operator/pull/180" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-facade-operator/pull/180" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -2023,7 +1594,7 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -2032,9 +1603,9 @@
               <span class="check-counts">9/11</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24886472064/job/72867609271" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24986253505/job/73160171934" target="_blank" title="linkChecker">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24886470836/job/72867605158" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24986251579/job/73160165533" target="_blank" title="linkChecker">✗</a>
             
           
         </td>
@@ -2063,20 +1634,20 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-22</span></td>
-        <td><span class="date">2026-04-23</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-facade-operator/pull/179/checks" target="_blank">
               <span class="check-dot failure"></span>
-              <span class="check-counts">6/9</span>
+              <span class="check-counts">5/8</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24803795416/job/72592921657" target="_blank" title="Build and test / Test and analyze">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24986276116/job/73160250679" target="_blank" title="Build and test / Test and analyze">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24803795173/job/72592920276" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24986275714/job/73160247968" target="_blank" title="linkChecker">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24803793231/job/72592913728" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24986273790/job/73160241956" target="_blank" title="linkChecker">✗</a>
             
           
         </td>
@@ -2135,126 +1706,6 @@
         data-bot="true"
         data-lang="go"
         data-type="service"
-        data-text="qubership-core-facade-operator chore(deps): update github.com/openshift/api digest to 4f63a40 renovate[bot] branch:main renovate:core manager:go group:go"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-facade-operator" target="_blank">qubership-core-facade-operator</a></td>
-        <td>
-          <span class="pr-number">#177</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-facade-operator/pull/177" target="_blank">chore(deps): update github.com/openshift/api digest to 4f63a40</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-16</span></td>
-        <td><span class="date">2026-04-24</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-facade-operator/pull/177/checks" target="_blank">
-              <span class="check-dot failure"></span>
-              <span class="check-counts">10/12</span>
-            </a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24905895325/job/72935037238" target="_blank" title="linkChecker">✗</a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24905893917/job/72935032863" target="_blank" title="linkChecker">✗</a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-facade-operator"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
-        data-text="qubership-core-facade-operator chore(deps): update ghcr.io/netcracker/qubership-core-base docker tag to v2.2.12 renovate[bot] branch:main renovate:core manager:docker"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-facade-operator" target="_blank">qubership-core-facade-operator</a></td>
-        <td>
-          <span class="pr-number">#176</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-facade-operator/pull/176" target="_blank">chore(deps): update ghcr.io/netcracker/qubership-core-base docker tag to v2.2.12</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:docker</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-14</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-facade-operator/pull/176/checks" target="_blank">
-              <span class="check-dot failure"></span>
-              <span class="check-counts">11/13</span>
-            </a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24829126806/job/72672777627" target="_blank" title="linkChecker">✗</a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24829125054/job/72672771958" target="_blank" title="linkChecker">✗</a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-facade-operator"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
-        data-text="qubership-core-facade-operator chore(deps): update go-patch renovate[bot] branch:main renovate:core manager:go group:go"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-facade-operator" target="_blank">qubership-core-facade-operator</a></td>
-        <td>
-          <span class="pr-number">#175</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-facade-operator/pull/175" target="_blank">chore(deps): update go-patch</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-11</span></td>
-        <td><span class="date">2026-04-25</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-facade-operator/pull/175/checks" target="_blank">
-              <span class="check-dot failure"></span>
-              <span class="check-counts">10/12</span>
-            </a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24933654577/job/73015434898" target="_blank" title="linkChecker">✗</a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24933653902/job/73015433359" target="_blank" title="linkChecker">✗</a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-facade-operator"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
         data-text="qubership-core-facade-operator chore(deps): update module github.com/gofiber/fiber/v2 to v3 renovate[bot] branch:main renovate:core manager:go group:go"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-facade-operator" target="_blank">qubership-core-facade-operator</a></td>
@@ -2271,60 +1722,20 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-03-23</span></td>
-        <td><span class="date">2026-04-25</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-facade-operator/pull/159/checks" target="_blank">
               <span class="check-dot failure"></span>
-              <span class="check-counts">7/10</span>
+              <span class="check-counts">5/8</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24931085402/job/73008853584" target="_blank" title="Build and test / Test and analyze">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24986342282/job/73160474390" target="_blank" title="Build and test / Test and analyze">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24931085311/job/73008853075" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24986341884/job/73160472612" target="_blank" title="linkChecker">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24931084775/job/73008851568" target="_blank" title="linkChecker">✗</a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-facade-operator"
-        data-state="open"
-        data-author="NetcrackerCLPLCI"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
-        data-text="qubership-core-facade-operator feat(ci): added new workflow to lint renovate.json file on change NetcrackerCLPLCI enhancement"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-facade-operator" target="_blank">qubership-core-facade-operator</a></td>
-        <td>
-          <span class="pr-number">#158</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-facade-operator/pull/158" target="_blank">feat(ci): added new workflow to lint renovate.json file on change</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/NetcrackerCLPLCI" target="_blank">NetcrackerCLPLCI</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">enhancement</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-03-16</span></td>
-        <td><span class="date">2026-03-16</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-facade-operator/pull/158/checks" target="_blank">
-              <span class="check-dot failure"></span>
-              <span class="check-counts">9/11</span>
-            </a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/23139679050/job/67212404480" target="_blank" title="linkChecker">✗</a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/23139674389/job/67212389686" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-facade-operator/actions/runs/24986339562/job/73160465282" target="_blank" title="linkChecker">✗</a>
             
           
         </td>
@@ -2415,12 +1826,12 @@
         data-bot="true"
         data-lang="other"
         data-type="service"
-        data-text="qubership-core-ingress-gateway chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
+        data-text="qubership-core-ingress-gateway chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-ingress-gateway" target="_blank">qubership-core-ingress-gateway</a></td>
         <td>
           <span class="pr-number">#51</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-ingress-gateway/pull/51" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-ingress-gateway/pull/51" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -2431,54 +1842,16 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-ingress-gateway/pull/51/checks" target="_blank">
               <span class="check-dot failure"></span>
-              <span class="check-counts">15/16</span>
+              <span class="check-counts">12/13</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-ingress-gateway/actions/runs/24884339743/job/72860467367" target="_blank" title="run-lint">✗</a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-ingress-gateway"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="other"
-        data-type="service"
-        data-text="qubership-core-ingress-gateway chore(deps): update coredns/coredns docker tag to v1.14.3 renovate[bot] branch:main manager:docker renovate:core"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-ingress-gateway" target="_blank">qubership-core-ingress-gateway</a></td>
-        <td>
-          <span class="pr-number">#50</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-ingress-gateway/pull/50" target="_blank">chore(deps): update coredns/coredns docker tag to v1.14.3</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">manager:docker</span><span class="label">renovate:core</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-22</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-ingress-gateway/pull/50/checks" target="_blank">
-              <span class="check-dot failure"></span>
-              <span class="check-counts">15/16</span>
-            </a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-ingress-gateway/actions/runs/24802948769/job/72590014756" target="_blank" title="run-lint">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-ingress-gateway/actions/runs/24985976867/job/73159228918" target="_blank" title="run-lint">✗</a>
             
           
         </td>
@@ -2507,16 +1880,52 @@
         <td><span class="label">branch:main</span><span class="label">manager:docker</span><span class="label">renovate:core</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-11</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-ingress-gateway/pull/49/checks" target="_blank">
               <span class="check-dot failure"></span>
-              <span class="check-counts">15/16</span>
+              <span class="check-counts">9/10</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-ingress-gateway/actions/runs/24868417378/job/72809508906" target="_blank" title="run-lint">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-ingress-gateway/actions/runs/24985981908/job/73159245524" target="_blank" title="run-lint">✗</a>
+            
+          
+        </td>
+      </tr>
+      
+      <tr
+        data-repo="qubership-core-java-libs"
+        data-state="draft"
+        data-author="TaurMorchant"
+        data-bot="false"
+        data-lang="java"
+        data-type="lib"
+        data-text="qubership-core-java-libs feat: monorepo internal boms TaurMorchant enhancement"
+      >
+        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-java-libs" target="_blank">qubership-core-java-libs</a></td>
+        <td>
+          <span class="pr-number">#42</span>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-java-libs/pull/42" target="_blank">feat: monorepo internal boms</a>
+        </td>
+        <td><a class="author-link" href="https://github.com/TaurMorchant" target="_blank">TaurMorchant</a></td>
+        <td>
+          
+            <span class="badge badge-draft">Draft</span>
+          
+        </td>
+        <td><span class="label">enhancement</span></td>
+        <td><span class="base">main</span></td>
+        <td><span class="date">2026-04-27</span></td>
+        <td><span class="date">2026-04-27</span></td>
+        <td>
+          
+          
+            <a class="checks" href="https://github.com/Netcracker/qubership-core-java-libs/pull/42/checks" target="_blank">
+              <span class="check-dot pending"></span>
+              <span class="check-counts">4/5</span>
+            </a>
             
           
         </td>
@@ -2529,12 +1938,12 @@
         data-bot="true"
         data-lang="java"
         data-type="lib"
-        data-text="qubership-core-java-libs chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main manager:github-actions renovate:core"
+        data-text="qubership-core-java-libs chore(deps): update github-actions renovate[bot] branch:main manager:github-actions renovate:core"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-java-libs" target="_blank">qubership-core-java-libs</a></td>
         <td>
           <span class="pr-number">#41</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-java-libs/pull/41" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-java-libs/pull/41" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -2545,49 +1954,13 @@
         <td><span class="label">branch:main</span><span class="label">manager:github-actions</span><span class="label">renovate:core</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-java-libs/pull/41/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">10/10</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-java-libs"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="java"
-        data-type="lib"
-        data-text="qubership-core-java-libs chore(deps): update dependency org.springframework.boot:spring-boot-jackson2 to v4.0.6 renovate[bot] branch:main renovate:core group:maven manager:maven"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-java-libs" target="_blank">qubership-core-java-libs</a></td>
-        <td>
-          <span class="pr-number">#40</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-java-libs/pull/40" target="_blank">chore(deps): update dependency org.springframework.boot:spring-boot-jackson2 to v4.0.6</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">group:maven</span><span class="label">manager:maven</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td><span class="date">2026-04-24</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-java-libs/pull/40/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">14/14</span>
+              <span class="check-dot pending"></span>
+              <span class="check-counts">4/5</span>
             </a>
             
           
@@ -2617,13 +1990,13 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">group:maven</span><span class="label">manager:maven</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-16</span></td>
-        <td><span class="date">2026-04-22</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-java-libs/pull/35/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">9/9</span>
+              <span class="check-dot pending"></span>
+              <span class="check-counts">4/5</span>
             </a>
             
           
@@ -2653,7 +2026,7 @@
         <td></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-13</span></td>
-        <td><span class="date">2026-04-23</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -2725,7 +2098,7 @@
         <td><span class="label">enhancement</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-16</span></td>
-        <td><span class="date">2026-04-23</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -2783,12 +2156,12 @@
         data-bot="true"
         data-lang="go"
         data-type="lib"
-        data-text="qubership-core-lib-go-actuator-common chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
+        data-text="qubership-core-lib-go-actuator-common chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-lib-go-actuator-common" target="_blank">qubership-core-lib-go-actuator-common</a></td>
         <td>
           <span class="pr-number">#72</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-actuator-common/pull/72" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-actuator-common/pull/72" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -2799,13 +2172,13 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-actuator-common/pull/72/checks" target="_blank">
               <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
+              <span class="check-counts">12/12</span>
             </a>
             
           
@@ -2819,12 +2192,12 @@
         data-bot="true"
         data-lang="go"
         data-type="lib"
-        data-text="qubership-core-lib-go-bg-kafka chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
+        data-text="qubership-core-lib-go-bg-kafka chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-lib-go-bg-kafka" target="_blank">qubership-core-lib-go-bg-kafka</a></td>
         <td>
           <span class="pr-number">#63</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-bg-kafka/pull/63" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-bg-kafka/pull/63" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -2835,13 +2208,13 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-bg-kafka/pull/63/checks" target="_blank">
               <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
+              <span class="check-counts">12/12</span>
             </a>
             
           
@@ -2891,12 +2264,12 @@
         data-bot="true"
         data-lang="go"
         data-type="lib"
-        data-text="qubership-core-lib-go-bg-state-monitor chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
+        data-text="qubership-core-lib-go-bg-state-monitor chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-lib-go-bg-state-monitor" target="_blank">qubership-core-lib-go-bg-state-monitor</a></td>
         <td>
           <span class="pr-number">#73</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-bg-state-monitor/pull/73" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-bg-state-monitor/pull/73" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -2907,13 +2280,13 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-bg-state-monitor/pull/73/checks" target="_blank">
               <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
+              <span class="check-counts">12/12</span>
             </a>
             
           
@@ -3073,12 +2446,12 @@
         data-bot="true"
         data-lang="go"
         data-type="lib"
-        data-text="qubership-core-lib-go-dbaas-base-client chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
+        data-text="qubership-core-lib-go-dbaas-base-client chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-base-client" target="_blank">qubership-core-lib-go-dbaas-base-client</a></td>
         <td>
           <span class="pr-number">#58</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-base-client/pull/58" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-base-client/pull/58" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -3089,13 +2462,13 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-base-client/pull/58/checks" target="_blank">
               <span class="check-dot success"></span>
-              <span class="check-counts">13/13</span>
+              <span class="check-counts">15/15</span>
             </a>
             
           
@@ -3147,12 +2520,12 @@
         data-bot="true"
         data-lang="go"
         data-type="lib"
-        data-text="qubership-core-lib-go-dbaas-cassandra-client chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
+        data-text="qubership-core-lib-go-dbaas-cassandra-client chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-cassandra-client" target="_blank">qubership-core-lib-go-dbaas-cassandra-client</a></td>
         <td>
           <span class="pr-number">#64</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-cassandra-client/pull/64" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-cassandra-client/pull/64" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -3163,13 +2536,13 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-25</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-cassandra-client/pull/64/checks" target="_blank">
               <span class="check-dot success"></span>
-              <span class="check-counts">13/13</span>
+              <span class="check-counts">15/15</span>
             </a>
             
           
@@ -3531,12 +2904,12 @@
         data-bot="true"
         data-lang="go"
         data-type="lib"
-        data-text="qubership-core-lib-go-dbaas-postgres-client chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
+        data-text="qubership-core-lib-go-dbaas-postgres-client chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-postgres-client" target="_blank">qubership-core-lib-go-dbaas-postgres-client</a></td>
         <td>
           <span class="pr-number">#74</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-postgres-client/pull/74" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-postgres-client/pull/74" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -3547,58 +2920,18 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-postgres-client/pull/74/checks" target="_blank">
               <span class="check-dot failure"></span>
-              <span class="check-counts">11/13</span>
+              <span class="check-counts">10/12</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-postgres-client/actions/runs/24886497278/job/72867689166" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-postgres-client/actions/runs/24985813457/job/73158691038" target="_blank" title="linkChecker">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-postgres-client/actions/runs/24886496118/job/72867685838" target="_blank" title="linkChecker">✗</a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-lib-go-dbaas-postgres-client"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="lib"
-        data-text="qubership-core-lib-go-dbaas-postgres-client chore(deps): update module github.com/jackc/pgx/v5 to v5.9.2 [security] renovate[bot] branch:main renovate:core security"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-postgres-client" target="_blank">qubership-core-lib-go-dbaas-postgres-client</a></td>
-        <td>
-          <span class="pr-number">#73</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-postgres-client/pull/73" target="_blank">chore(deps): update module github.com/jackc/pgx/v5 to v5.9.2 [security]</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">security</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-postgres-client/pull/73/checks" target="_blank">
-              <span class="check-dot failure"></span>
-              <span class="check-counts">11/13</span>
-            </a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-postgres-client/actions/runs/24814368801/job/72625517761" target="_blank" title="linkChecker">✗</a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-postgres-client/actions/runs/24814368185/job/72625515933" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-postgres-client/actions/runs/24985811531/job/73158684865" target="_blank" title="linkChecker">✗</a>
             
           
         </td>
@@ -3627,7 +2960,7 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-09</span></td>
-        <td><span class="date">2026-04-22</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -3636,9 +2969,9 @@
               <span class="check-counts">10/12</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-postgres-client/actions/runs/24763144055/job/72451175481" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-postgres-client/actions/runs/24985830026/job/73158747408" target="_blank" title="linkChecker">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-postgres-client/actions/runs/24763142653/job/72451171120" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-lib-go-dbaas-postgres-client/actions/runs/24985827822/job/73158740293" target="_blank" title="linkChecker">✗</a>
             
           
         </td>
@@ -3687,48 +3020,12 @@
         data-bot="true"
         data-lang="go"
         data-type="lib"
-        data-text="qubership-core-lib-go-fiber-server-utils chore(deps): update module github.com/gofiber/fiber/v2 to v2.52.13 renovate[bot] branch:main renovate:core manager:go group:go"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-lib-go-fiber-server-utils" target="_blank">qubership-core-lib-go-fiber-server-utils</a></td>
-        <td>
-          <span class="pr-number">#85</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-fiber-server-utils/pull/85" target="_blank">chore(deps): update module github.com/gofiber/fiber/v2 to v2.52.13</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-25</span></td>
-        <td><span class="date">2026-04-25</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-fiber-server-utils/pull/85/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-lib-go-fiber-server-utils"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="lib"
-        data-text="qubership-core-lib-go-fiber-server-utils chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
+        data-text="qubership-core-lib-go-fiber-server-utils chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-lib-go-fiber-server-utils" target="_blank">qubership-core-lib-go-fiber-server-utils</a></td>
         <td>
           <span class="pr-number">#84</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-fiber-server-utils/pull/84" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-fiber-server-utils/pull/84" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -3739,13 +3036,13 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-fiber-server-utils/pull/84/checks" target="_blank">
               <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
+              <span class="check-counts">12/12</span>
             </a>
             
           
@@ -3775,7 +3072,7 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-09</span></td>
-        <td><span class="date">2026-04-22</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -3784,7 +3081,7 @@
               <span class="check-counts">7/8</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-lib-go-fiber-server-utils/actions/runs/24763025355/job/72450802760" target="_blank" title="Build and test / Test and analyze">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-lib-go-fiber-server-utils/actions/runs/24986445719/job/73160822127" target="_blank" title="Build and test / Test and analyze">✗</a>
             
           
         </td>
@@ -3813,7 +3110,7 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-07</span></td>
-        <td><span class="date">2026-04-22</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -3849,16 +3146,16 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-03-23</span></td>
-        <td><span class="date">2026-04-25</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-fiber-server-utils/pull/76/checks" target="_blank">
               <span class="check-dot failure"></span>
-              <span class="check-counts">9/10</span>
+              <span class="check-counts">8/9</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-lib-go-fiber-server-utils/actions/runs/24931045071/job/73008753415" target="_blank" title="Build and test / Test and analyze">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-lib-go-fiber-server-utils/actions/runs/24986525618/job/73161089882" target="_blank" title="Build and test / Test and analyze">✗</a>
             
           
         </td>
@@ -3871,12 +3168,12 @@
         data-bot="true"
         data-lang="go"
         data-type="lib"
-        data-text="qubership-core-lib-go-maas-bg-segmentio chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
+        data-text="qubership-core-lib-go-maas-bg-segmentio chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-lib-go-maas-bg-segmentio" target="_blank">qubership-core-lib-go-maas-bg-segmentio</a></td>
         <td>
           <span class="pr-number">#61</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-maas-bg-segmentio/pull/61" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-maas-bg-segmentio/pull/61" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -3887,49 +3184,13 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-maas-bg-segmentio/pull/61/checks" target="_blank">
               <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-lib-go-maas-bg-segmentio"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="lib"
-        data-text="qubership-core-lib-go-maas-bg-segmentio chore(deps): update module github.com/segmentio/kafka-go to v0.4.51 renovate[bot] branch:main renovate:core manager:go group:go"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-lib-go-maas-bg-segmentio" target="_blank">qubership-core-lib-go-maas-bg-segmentio</a></td>
-        <td>
-          <span class="pr-number">#60</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-maas-bg-segmentio/pull/60" target="_blank">chore(deps): update module github.com/segmentio/kafka-go to v0.4.51</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-maas-bg-segmentio/pull/60/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
+              <span class="check-counts">12/12</span>
             </a>
             
           
@@ -3959,7 +3220,7 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-09</span></td>
-        <td><span class="date">2026-04-22</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -3968,7 +3229,7 @@
               <span class="check-counts">7/8</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-lib-go-maas-bg-segmentio/actions/runs/24763139775/job/72451161867" target="_blank" title="Build and test / Test and analyze">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-lib-go-maas-bg-segmentio/actions/runs/24986457401/job/73160861178" target="_blank" title="Build and test / Test and analyze">✗</a>
             
           
         </td>
@@ -4053,12 +3314,12 @@
         data-bot="true"
         data-lang="go"
         data-type="lib"
-        data-text="qubership-core-lib-go-maas-core chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
+        data-text="qubership-core-lib-go-maas-core chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-lib-go-maas-core" target="_blank">qubership-core-lib-go-maas-core</a></td>
         <td>
           <span class="pr-number">#59</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-maas-core/pull/59" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-maas-core/pull/59" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -4069,13 +3330,13 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-maas-core/pull/59/checks" target="_blank">
               <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
+              <span class="check-counts">12/12</span>
             </a>
             
           
@@ -4089,12 +3350,12 @@
         data-bot="true"
         data-lang="go"
         data-type="lib"
-        data-text="qubership-core-lib-go-maas-segmentio chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
+        data-text="qubership-core-lib-go-maas-segmentio chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-lib-go-maas-segmentio" target="_blank">qubership-core-lib-go-maas-segmentio</a></td>
         <td>
           <span class="pr-number">#55</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-maas-segmentio/pull/55" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-maas-segmentio/pull/55" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -4105,119 +3366,11 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-maas-segmentio/pull/55/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-lib-go-maas-segmentio"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="lib"
-        data-text="qubership-core-lib-go-maas-segmentio chore(deps): update module github.com/segmentio/kafka-go to v0.4.51 renovate[bot] branch:main renovate:core group:go manager:go"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-lib-go-maas-segmentio" target="_blank">qubership-core-lib-go-maas-segmentio</a></td>
-        <td>
-          <span class="pr-number">#54</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-maas-segmentio/pull/54" target="_blank">chore(deps): update module github.com/segmentio/kafka-go to v0.4.51</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">group:go</span><span class="label">manager:go</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-maas-segmentio/pull/54/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-lib-go-paas-mediation-client"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="lib"
-        data-text="qubership-core-lib-go-paas-mediation-client chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-lib-go-paas-mediation-client" target="_blank">qubership-core-lib-go-paas-mediation-client</a></td>
-        <td>
-          <span class="pr-number">#112</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-paas-mediation-client/pull/112" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-paas-mediation-client/pull/112/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-lib-go-paas-mediation-client"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="lib"
-        data-text="qubership-core-lib-go-paas-mediation-client chore(deps): update go-digest renovate[bot] branch:main renovate:core manager:go group:go"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-lib-go-paas-mediation-client" target="_blank">qubership-core-lib-go-paas-mediation-client</a></td>
-        <td>
-          <span class="pr-number">#111</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-paas-mediation-client/pull/111" target="_blank">chore(deps): update go-digest</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-16</span></td>
-        <td><span class="date">2026-04-24</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-paas-mediation-client/pull/111/checks" target="_blank">
               <span class="check-dot success"></span>
               <span class="check-counts">12/12</span>
             </a>
@@ -4233,12 +3386,12 @@
         data-bot="true"
         data-lang="go"
         data-type="lib"
-        data-text="qubership-core-lib-go-paas-mediation-client chore(deps): update module github.com/cert-manager/cert-manager to v1.20.2 renovate[bot] branch:main renovate:core manager:go group:go"
+        data-text="qubership-core-lib-go-paas-mediation-client chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-lib-go-paas-mediation-client" target="_blank">qubership-core-lib-go-paas-mediation-client</a></td>
         <td>
-          <span class="pr-number">#110</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-paas-mediation-client/pull/110" target="_blank">chore(deps): update module github.com/cert-manager/cert-manager to v1.20.2</a>
+          <span class="pr-number">#112</span>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-paas-mediation-client/pull/112" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -4246,14 +3399,14 @@
             <span class="badge badge-open">Open</span>
           
         </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
+        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-11</span></td>
-        <td><span class="date">2026-04-23</span></td>
+        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-paas-mediation-client/pull/110/checks" target="_blank">
+            <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-paas-mediation-client/pull/112/checks" target="_blank">
               <span class="check-dot success"></span>
               <span class="check-counts">12/12</span>
             </a>
@@ -4285,16 +3438,16 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-09</span></td>
-        <td><span class="date">2026-04-23</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-paas-mediation-client/pull/109/checks" target="_blank">
               <span class="check-dot failure"></span>
-              <span class="check-counts">8/9</span>
+              <span class="check-counts">7/8</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-lib-go-paas-mediation-client/actions/runs/24811011785/job/72615699084" target="_blank" title="Build and test / Test and analyze">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-lib-go-paas-mediation-client/actions/runs/24986578473/job/73161270632" target="_blank" title="Build and test / Test and analyze">✗</a>
             
           
         </td>
@@ -4307,12 +3460,12 @@
         data-bot="true"
         data-lang="go"
         data-type="lib"
-        data-text="qubership-core-lib-go-rest-utils chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
+        data-text="qubership-core-lib-go-rest-utils chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-lib-go-rest-utils" target="_blank">qubership-core-lib-go-rest-utils</a></td>
         <td>
           <span class="pr-number">#81</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-rest-utils/pull/81" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-rest-utils/pull/81" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -4323,49 +3476,13 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-rest-utils/pull/81/checks" target="_blank">
               <span class="check-dot success"></span>
               <span class="check-counts">11/11</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-lib-go-rest-utils"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="lib"
-        data-text="qubership-core-lib-go-rest-utils chore(deps): update module github.com/hashicorp/consul/api to v1.34.2 renovate[bot] branch:main renovate:core manager:go group:go"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-lib-go-rest-utils" target="_blank">qubership-core-lib-go-rest-utils</a></td>
-        <td>
-          <span class="pr-number">#80</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-lib-go-rest-utils/pull/80" target="_blank">chore(deps): update module github.com/hashicorp/consul/api to v1.34.2</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-14</span></td>
-        <td><span class="date">2026-04-22</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-lib-go-rest-utils/pull/80/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">12/12</span>
             </a>
             
           
@@ -4433,7 +3550,7 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-01-14</span></td>
-        <td><span class="date">2026-04-22</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -4442,7 +3559,7 @@
               <span class="check-counts">7/8</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-lib-go-rest-utils/actions/runs/24763001760/job/72450730064" target="_blank" title="Build and test / Test and analyze">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-lib-go-rest-utils/actions/runs/24986631079/job/73161452840" target="_blank" title="Build and test / Test and analyze">✗</a>
             
           
         </td>
@@ -4491,48 +3608,12 @@
         data-bot="true"
         data-lang="go"
         data-type="service"
-        data-text="qubership-core-maas-agent chore(deps): update module github.com/gofiber/fiber/v2 to v2.52.13 renovate[bot] branch:main renovate:core manager:go group:go"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-maas-agent" target="_blank">qubership-core-maas-agent</a></td>
-        <td>
-          <span class="pr-number">#143</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-maas-agent/pull/143" target="_blank">chore(deps): update module github.com/gofiber/fiber/v2 to v2.52.13</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-25</span></td>
-        <td><span class="date">2026-04-25</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-maas-agent/pull/143/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-maas-agent"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
-        data-text="qubership-core-maas-agent chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
+        data-text="qubership-core-maas-agent chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-maas-agent" target="_blank">qubership-core-maas-agent</a></td>
         <td>
           <span class="pr-number">#142</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-maas-agent/pull/142" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-maas-agent/pull/142" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -4543,7 +3624,7 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -4599,42 +3680,6 @@
         data-bot="true"
         data-lang="go"
         data-type="service"
-        data-text="qubership-core-maas-agent chore(deps): update ghcr.io/netcracker/qubership-core-base docker tag to v2.2.12 renovate[bot] branch:main renovate:core manager:docker"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-maas-agent" target="_blank">qubership-core-maas-agent</a></td>
-        <td>
-          <span class="pr-number">#140</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-maas-agent/pull/140" target="_blank">chore(deps): update ghcr.io/netcracker/qubership-core-base docker tag to v2.2.12</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:docker</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-14</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-maas-agent/pull/140/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">13/13</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-maas-agent"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
         data-text="qubership-core-maas-agent chore(deps): update module github.com/valyala/fasthttp to v1.70.0 renovate[bot] branch:main renovate:core manager:go group:go"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-maas-agent" target="_blank">qubership-core-maas-agent</a></td>
@@ -4651,7 +3696,7 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-09</span></td>
-        <td><span class="date">2026-04-22</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -4687,52 +3732,16 @@
         <td></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-03-24</span></td>
-        <td><span class="date">2026-04-25</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-maas-agent/pull/127/checks" target="_blank">
               <span class="check-dot failure"></span>
-              <span class="check-counts">9/10</span>
+              <span class="check-counts">8/9</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-maas-agent/actions/runs/24931084407/job/73008850513" target="_blank" title="Build and test / Test and analyze">✗</a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-maas-agent"
-        data-state="open"
-        data-author="NetcrackerCLPLCI"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
-        data-text="qubership-core-maas-agent feat(ci): added new workflow to lint renovate.json file on change NetcrackerCLPLCI enhancement"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-maas-agent" target="_blank">qubership-core-maas-agent</a></td>
-        <td>
-          <span class="pr-number">#126</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-maas-agent/pull/126" target="_blank">feat(ci): added new workflow to lint renovate.json file on change</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/NetcrackerCLPLCI" target="_blank">NetcrackerCLPLCI</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">enhancement</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-03-16</span></td>
-        <td><span class="date">2026-03-16</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-maas-agent/pull/126/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">11/11</span>
-            </a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-maas-agent/actions/runs/24986650968/job/73161521668" target="_blank" title="Build and test / Test and analyze">✗</a>
             
           
         </td>
@@ -4787,12 +3796,12 @@
         data-bot="true"
         data-lang="go"
         data-type="service"
-        data-text="qubership-core-paas-mediation chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
+        data-text="qubership-core-paas-mediation chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-paas-mediation" target="_blank">qubership-core-paas-mediation</a></td>
         <td>
           <span class="pr-number">#179</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-paas-mediation/pull/179" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-paas-mediation/pull/179" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -4803,60 +3812,20 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-paas-mediation/pull/179/checks" target="_blank">
               <span class="check-dot failure"></span>
-              <span class="check-counts">9/11</span>
+              <span class="check-counts">5/8</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24886422716/job/72867452674" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24986550761/job/73161175566" target="_blank" title="Build and test / Test and analyze">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24886421906/job/72867450849" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24986550489/job/73161174075" target="_blank" title="linkChecker">✗</a>
             
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-paas-mediation"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
-        data-text="qubership-core-paas-mediation chore(deps): update module github.com/gofiber/fiber/v2 to v2.52.13 renovate[bot] branch:main renovate:core manager:go group:go"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-paas-mediation" target="_blank">qubership-core-paas-mediation</a></td>
-        <td>
-          <span class="pr-number">#178</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-paas-mediation/pull/178" target="_blank">chore(deps): update module github.com/gofiber/fiber/v2 to v2.52.13</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-16</span></td>
-        <td><span class="date">2026-04-25</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-paas-mediation/pull/178/checks" target="_blank">
-              <span class="check-dot failure"></span>
-              <span class="check-counts">10/13</span>
-            </a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24932123312/job/73011511828" target="_blank" title="linkChecker">✗</a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24932122503/job/73011509527" target="_blank" title="linkChecker">✗</a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24932122050/job/73011508407" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24986547757/job/73161164454" target="_blank" title="linkChecker">✗</a>
             
           
         </td>
@@ -4909,86 +3878,6 @@
         data-bot="true"
         data-lang="go"
         data-type="service"
-        data-text="qubership-core-paas-mediation chore(deps): update ghcr.io/netcracker/qubership-core-base docker tag to v2.2.12 renovate[bot] branch:main renovate:core manager:docker"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-paas-mediation" target="_blank">qubership-core-paas-mediation</a></td>
-        <td>
-          <span class="pr-number">#176</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-paas-mediation/pull/176" target="_blank">chore(deps): update ghcr.io/netcracker/qubership-core-base docker tag to v2.2.12</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:docker</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-14</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-paas-mediation/pull/176/checks" target="_blank">
-              <span class="check-dot failure"></span>
-              <span class="check-counts">11/13</span>
-            </a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24827596853/job/72667487857" target="_blank" title="linkChecker">✗</a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24827594743/job/72667481599" target="_blank" title="linkChecker">✗</a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-paas-mediation"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
-        data-text="qubership-core-paas-mediation chore(deps): update dependency com.netcracker.cloud.junit.cloudcore:cloud-core-extension to v8.8.9 renovate[bot] branch:main renovate:core group:maven manager:maven"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-paas-mediation" target="_blank">qubership-core-paas-mediation</a></td>
-        <td>
-          <span class="pr-number">#175</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-paas-mediation/pull/175" target="_blank">chore(deps): update dependency com.netcracker.cloud.junit.cloudcore:cloud-core-extension to v8.8.9</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">group:maven</span><span class="label">manager:maven</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-13</span></td>
-        <td><span class="date">2026-04-22</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-paas-mediation/pull/175/checks" target="_blank">
-              <span class="check-dot failure"></span>
-              <span class="check-counts">9/11</span>
-            </a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24763024253/job/72450799041" target="_blank" title="linkChecker">✗</a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24763022824/job/72450794515" target="_blank" title="linkChecker">✗</a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-paas-mediation"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
         data-text="qubership-core-paas-mediation chore(deps): update go-minor renovate[bot] branch:main renovate:core manager:go group:go"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-paas-mediation" target="_blank">qubership-core-paas-mediation</a></td>
@@ -5005,20 +3894,20 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-09</span></td>
-        <td><span class="date">2026-04-22</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-paas-mediation/pull/174/checks" target="_blank">
               <span class="check-dot failure"></span>
-              <span class="check-counts">6/9</span>
+              <span class="check-counts">5/8</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24804866951/job/72596451758" target="_blank" title="Build and test / Test and analyze">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24986571990/job/73161248619" target="_blank" title="Build and test / Test and analyze">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24804866657/job/72596450483" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24986571540/job/73161246371" target="_blank" title="linkChecker">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24804864827/job/72596444078" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24986569452/job/73161240059" target="_blank" title="linkChecker">✗</a>
             
           
         </td>
@@ -5047,7 +3936,7 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-09</span></td>
-        <td><span class="date">2026-04-22</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -5056,9 +3945,9 @@
               <span class="check-counts">9/11</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24763048994/job/72450875571" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24986582124/job/73161282599" target="_blank" title="linkChecker">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24763047162/job/72450869891" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24986579554/job/73161273458" target="_blank" title="linkChecker">✗</a>
             
           
         </td>
@@ -5087,7 +3976,7 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-03-23</span></td>
-        <td><span class="date">2026-04-25</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -5096,51 +3985,11 @@
               <span class="check-counts">6/9</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24932151823/job/73011584036" target="_blank" title="Build and test / Test and analyze">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24986648375/job/73161512345" target="_blank" title="Build and test / Test and analyze">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24932151685/job/73011583476" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24986648024/job/73161510814" target="_blank" title="linkChecker">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24932150560/job/73011580791" target="_blank" title="linkChecker">✗</a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-paas-mediation"
-        data-state="open"
-        data-author="NetcrackerCLPLCI"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
-        data-text="qubership-core-paas-mediation feat(ci): added new workflow to lint renovate.json file on change NetcrackerCLPLCI enhancement"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-paas-mediation" target="_blank">qubership-core-paas-mediation</a></td>
-        <td>
-          <span class="pr-number">#149</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-paas-mediation/pull/149" target="_blank">feat(ci): added new workflow to lint renovate.json file on change</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/NetcrackerCLPLCI" target="_blank">NetcrackerCLPLCI</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">enhancement</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-03-16</span></td>
-        <td><span class="date">2026-03-16</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-paas-mediation/pull/149/checks" target="_blank">
-              <span class="check-dot failure"></span>
-              <span class="check-counts">9/11</span>
-            </a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/23139884143/job/67213103070" target="_blank" title="linkChecker">✗</a>
-            
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/23139880316/job/67213091655" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24986646124/job/73161504881" target="_blank" title="linkChecker">✗</a>
             
           
         </td>
@@ -5205,18 +4054,18 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">group:maven</span><span class="label">manager:maven</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-02-16</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-paas-mediation/pull/139/checks" target="_blank">
               <span class="check-dot failure"></span>
-              <span class="check-counts">10/12</span>
+              <span class="check-counts">9/11</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24896570539/job/72902859606" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24986585392/job/73161294296" target="_blank" title="linkChecker">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24896568600/job/72902852985" target="_blank" title="linkChecker">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-paas-mediation/actions/runs/24986582698/job/73161284406" target="_blank" title="linkChecker">✗</a>
             
           
         </td>
@@ -5625,12 +4474,12 @@
         data-bot="true"
         data-lang="go"
         data-type="service"
-        data-text="qubership-core-site-management chore(deps): update webiny/action-conventional-commits action to v1.4.2 renovate[bot] branch:main renovate:core manager:github-actions"
+        data-text="qubership-core-site-management chore(deps): update github-actions renovate[bot] branch:main renovate:core manager:github-actions"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-site-management" target="_blank">qubership-core-site-management</a></td>
         <td>
           <span class="pr-number">#179</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-site-management/pull/179" target="_blank">chore(deps): update webiny/action-conventional-commits action to v1.4.2</a>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-site-management/pull/179" target="_blank">chore(deps): update github-actions</a>
         </td>
         <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
         <td>
@@ -5641,49 +4490,13 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-24</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-site-management/pull/179/checks" target="_blank">
               <span class="check-dot success"></span>
-              <span class="check-counts">13/13</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-site-management"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
-        data-text="qubership-core-site-management chore(deps): update module github.com/gofiber/fiber/v2 to v2.52.13 renovate[bot] branch:main renovate:core manager:go group:go"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-site-management" target="_blank">qubership-core-site-management</a></td>
-        <td>
-          <span class="pr-number">#178</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-site-management/pull/178" target="_blank">chore(deps): update module github.com/gofiber/fiber/v2 to v2.52.13</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-16</span></td>
-        <td><span class="date">2026-04-25</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-site-management/pull/178/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">16/16</span>
+              <span class="check-counts">12/12</span>
             </a>
             
           
@@ -5735,42 +4548,6 @@
         data-bot="true"
         data-lang="go"
         data-type="service"
-        data-text="qubership-core-site-management chore(deps): update ghcr.io/netcracker/qubership-core-base docker tag to v2.2.12 renovate[bot] branch:main renovate:core manager:docker"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-site-management" target="_blank">qubership-core-site-management</a></td>
-        <td>
-          <span class="pr-number">#176</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-site-management/pull/176" target="_blank">chore(deps): update ghcr.io/netcracker/qubership-core-base docker tag to v2.2.12</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:docker</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-14</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-site-management/pull/176/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">18/18</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-site-management"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
         data-text="qubership-core-site-management chore(deps): update go-minor renovate[bot] branch:main renovate:core manager:go group:go"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-site-management" target="_blank">qubership-core-site-management</a></td>
@@ -5787,13 +4564,13 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-09</span></td>
-        <td><span class="date">2026-04-22</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-site-management/pull/175/checks" target="_blank">
               <span class="check-dot success"></span>
-              <span class="check-counts">15/15</span>
+              <span class="check-counts">12/12</span>
             </a>
             
           
@@ -5823,49 +4600,13 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-09</span></td>
-        <td><span class="date">2026-04-22</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-site-management/pull/174/checks" target="_blank">
               <span class="check-dot success"></span>
               <span class="check-counts">12/12</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-site-management"
-        data-state="open"
-        data-author="NetcrackerCLPLCI"
-        data-bot="true"
-        data-lang="go"
-        data-type="service"
-        data-text="qubership-core-site-management feat(ci): added new workflow to lint renovate.json file on change NetcrackerCLPLCI enhancement"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-site-management" target="_blank">qubership-core-site-management</a></td>
-        <td>
-          <span class="pr-number">#161</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-site-management/pull/161" target="_blank">feat(ci): added new workflow to lint renovate.json file on change</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/NetcrackerCLPLCI" target="_blank">NetcrackerCLPLCI</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">enhancement</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-03-16</span></td>
-        <td><span class="date">2026-03-16</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-site-management/pull/161/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">13/13</span>
             </a>
             
           
@@ -5895,16 +4636,16 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-01-14</span></td>
-        <td><span class="date">2026-04-25</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-site-management/pull/138/checks" target="_blank">
               <span class="check-dot failure"></span>
-              <span class="check-counts">14/15</span>
+              <span class="check-counts">11/12</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-site-management/actions/runs/24931225821/job/73009199247" target="_blank" title="Build and test / Test and analyze">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-site-management/actions/runs/24986770462/job/73161931732" target="_blank" title="Build and test / Test and analyze">✗</a>
             
           
         </td>
@@ -5943,6 +4684,82 @@
             </a>
             
               <a class="check-fail" href="https://github.com/Netcracker/qubership-core-site-management/runs/52240155796" target="_blank" title="SonarCloud Code Analysis">✗</a>
+            
+          
+        </td>
+      </tr>
+      
+      <tr
+        data-repo="qubership-core-test-apps"
+        data-state="open"
+        data-author="renovate[bot]"
+        data-bot="true"
+        data-lang="go"
+        data-type="other"
+        data-text="qubership-core-test-apps chore(deps): update module github.com/gofiber/fiber/v2 to v3 renovate[bot] branch:main renovate:core group:go manager:go"
+      >
+        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-test-apps" target="_blank">qubership-core-test-apps</a></td>
+        <td>
+          <span class="pr-number">#67</span>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-test-apps/pull/67" target="_blank">chore(deps): update module github.com/gofiber/fiber/v2 to v3</a>
+        </td>
+        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
+        <td>
+          
+            <span class="badge badge-open">Open</span>
+          
+        </td>
+        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">group:go</span><span class="label">manager:go</span></td>
+        <td><span class="base">main</span></td>
+        <td><span class="date">2026-04-27</span></td>
+        <td><span class="date">2026-04-27</span></td>
+        <td>
+          
+          
+            <a class="checks" href="https://github.com/Netcracker/qubership-core-test-apps/pull/67/checks" target="_blank">
+              <span class="check-dot failure"></span>
+              <span class="check-counts">4/6</span>
+            </a>
+            
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-test-apps/actions/runs/24986798876/job/73162028925" target="_blank" title="build / Build and test with coverage">✗</a>
+            
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-test-apps/actions/runs/24986797443/job/73162024248" target="_blank" title="build / Build and test with coverage">✗</a>
+            
+          
+        </td>
+      </tr>
+      
+      <tr
+        data-repo="qubership-core-test-apps"
+        data-state="open"
+        data-author="renovate[bot]"
+        data-bot="true"
+        data-lang="go"
+        data-type="other"
+        data-text="qubership-core-test-apps chore(deps): update module github.com/gofiber/fiber/v2 to v2.52.13 renovate[bot] branch:main renovate:core group:go manager:go"
+      >
+        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-test-apps" target="_blank">qubership-core-test-apps</a></td>
+        <td>
+          <span class="pr-number">#66</span>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-test-apps/pull/66" target="_blank">chore(deps): update module github.com/gofiber/fiber/v2 to v2.52.13</a>
+        </td>
+        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
+        <td>
+          
+            <span class="badge badge-open">Open</span>
+          
+        </td>
+        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">group:go</span><span class="label">manager:go</span></td>
+        <td><span class="base">main</span></td>
+        <td><span class="date">2026-04-27</span></td>
+        <td><span class="date">2026-04-27</span></td>
+        <td>
+          
+          
+            <a class="checks" href="https://github.com/Netcracker/qubership-core-test-apps/pull/66/checks" target="_blank">
+              <span class="check-dot success"></span>
+              <span class="check-counts">10/10</span>
+            </a>
             
           
         </td>
@@ -6016,42 +4833,6 @@
             <a class="checks" href="https://github.com/Netcracker/qubership-core-test-apps/pull/63/checks" target="_blank">
               <span class="check-dot success"></span>
               <span class="check-counts">24/24</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-test-apps"
-        data-state="open"
-        data-author="NetcrackerCLPLCI"
-        data-bot="true"
-        data-lang="go"
-        data-type="other"
-        data-text="qubership-core-test-apps chore: added empty .qubership/grand-report.json file NetcrackerCLPLCI "
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-test-apps" target="_blank">qubership-core-test-apps</a></td>
-        <td>
-          <span class="pr-number">#62</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-test-apps/pull/62" target="_blank">chore: added empty .qubership/grand-report.json file</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/NetcrackerCLPLCI" target="_blank">NetcrackerCLPLCI</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-07</span></td>
-        <td><span class="date">2026-04-07</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-test-apps/pull/62/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">2/2</span>
             </a>
             
           
@@ -6193,13 +4974,13 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:docker</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-01-15</span></td>
-        <td><span class="date">2026-04-07</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-test-apps/pull/52/checks" target="_blank">
               <span class="check-dot success"></span>
-              <span class="check-counts">22/22</span>
+              <span class="check-counts">10/10</span>
             </a>
             
           
@@ -6229,7 +5010,7 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">group:go</span><span class="label">group:go-version</span><span class="label">manager:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-01-15</span></td>
-        <td><span class="date">2026-04-09</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -6238,9 +5019,9 @@
               <span class="check-counts">4/6</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-test-apps/actions/runs/24194659744/job/70621104128" target="_blank" title="build / Build and test with coverage">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-test-apps/actions/runs/24986725401/job/73161778911" target="_blank" title="build / Build and test with coverage">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-test-apps/actions/runs/24194655561/job/70621086601" target="_blank" title="build / Build and test with coverage">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-test-apps/actions/runs/24986723574/job/73161771449" target="_blank" title="build / Build and test with coverage">✗</a>
             
           
         </td>
@@ -6269,7 +5050,7 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-01-14</span></td>
-        <td><span class="date">2026-04-08</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -6305,13 +5086,13 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:docker</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-01-14</span></td>
-        <td><span class="date">2026-04-07</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-test-apps/pull/49/checks" target="_blank">
               <span class="check-dot success"></span>
-              <span class="check-counts">28/28</span>
+              <span class="check-counts">22/22</span>
             </a>
             
           
@@ -6341,13 +5122,13 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:docker</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-01-14</span></td>
-        <td><span class="date">2026-04-07</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-test-apps/pull/48/checks" target="_blank">
               <span class="check-dot success"></span>
-              <span class="check-counts">22/22</span>
+              <span class="check-counts">10/10</span>
             </a>
             
           
@@ -6386,49 +5167,13 @@
               <span class="check-counts">18/22</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-test-apps/actions/runs/24570956433/job/71843673538" target="_blank" title="mvn / Build (no Sonar) / mvn">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-test-apps/actions/runs/24986730613/job/73161817612" target="_blank" title="mvn / Build (no Sonar) / mvn">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-test-apps/actions/runs/24570956460/job/71843668669" target="_blank" title="mvn / Build (no Sonar) / mvn">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-test-apps/actions/runs/24986730650/job/73161814702" target="_blank" title="mvn / Build (no Sonar) / mvn">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-test-apps/actions/runs/24570953539/job/71843664714" target="_blank" title="mvn / Build (no Sonar) / mvn">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-test-apps/actions/runs/24986728973/job/73161808594" target="_blank" title="mvn / Build (no Sonar) / mvn">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-test-apps/actions/runs/24570953583/job/71843659442" target="_blank" title="mvn / Build (no Sonar) / mvn">✗</a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-core-test-apps"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="other"
-        data-text="qubership-core-test-apps chore(deps): update module github.com/gofiber/fiber/v2 to v2.52.12 [security] renovate[bot] branch:main renovate:core security"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-core-test-apps" target="_blank">qubership-core-test-apps</a></td>
-        <td>
-          <span class="pr-number">#46</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-core-test-apps/pull/46" target="_blank">chore(deps): update module github.com/gofiber/fiber/v2 to v2.52.12 [security]</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">security</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-01-14</span></td>
-        <td><span class="date">2026-04-22</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-core-test-apps/pull/46/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">22/22</span>
-            </a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-core-test-apps/actions/runs/24986728959/job/73161807306" target="_blank" title="mvn / Build (no Sonar) / mvn">✗</a>
             
           
         </td>
@@ -6457,7 +5202,7 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-01-14</span></td>
-        <td><span class="date">2026-04-13</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -6493,13 +5238,13 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:docker</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-01-14</span></td>
-        <td><span class="date">2026-04-07</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-core-test-apps/pull/44/checks" target="_blank">
               <span class="check-dot success"></span>
-              <span class="check-counts">22/22</span>
+              <span class="check-counts">10/10</span>
             </a>
             
           
@@ -6529,7 +5274,7 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">group:maven</span><span class="label">manager:maven</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-01-14</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -6923,7 +5668,7 @@
         <td></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2025-12-05</span></td>
-        <td><span class="date">2025-12-05</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -7187,6 +5932,116 @@
               <a class="check-fail" href="https://github.com/Netcracker/qubership-core-test-apps/actions/runs/17317878907/job/49164260229" target="_blank" title="linkChecker">✗</a>
             
               <a class="check-fail" href="https://github.com/Netcracker/qubership-core-test-apps/actions/runs/17317876933/job/49164253641" target="_blank" title="linkChecker">✗</a>
+            
+          
+        </td>
+      </tr>
+      
+      <tr
+        data-repo="qubership-dbaas"
+        data-state="open"
+        data-author="TheHollowMonarch"
+        data-bot="false"
+        data-lang="java"
+        data-type="other"
+        data-text="qubership-dbaas Feat/db policy migration TheHollowMonarch enhancement"
+      >
+        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-dbaas" target="_blank">qubership-dbaas</a></td>
+        <td>
+          <span class="pr-number">#414</span>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-dbaas/pull/414" target="_blank">Feat/db policy migration</a>
+        </td>
+        <td><a class="author-link" href="https://github.com/TheHollowMonarch" target="_blank">TheHollowMonarch</a></td>
+        <td>
+          
+            <span class="badge badge-open">Open</span>
+          
+        </td>
+        <td><span class="label">enhancement</span></td>
+        <td><span class="base">main</span></td>
+        <td><span class="date">2026-04-27</span></td>
+        <td><span class="date">2026-04-27</span></td>
+        <td>
+          
+          
+            <a class="checks" href="https://github.com/Netcracker/qubership-dbaas/pull/414/checks" target="_blank">
+              <span class="check-dot failure"></span>
+              <span class="check-counts">9/10</span>
+            </a>
+            
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-dbaas/actions/runs/24982337142/job/73147269590" target="_blank" title="Validate PR title">✗</a>
+            
+          
+        </td>
+      </tr>
+      
+      <tr
+        data-repo="qubership-dbaas"
+        data-state="open"
+        data-author="renovate[bot]"
+        data-bot="true"
+        data-lang="java"
+        data-type="other"
+        data-text="qubership-dbaas chore(deps): update module github.com/onsi/ginkgo/v2 to v2.28.2 renovate[bot] branch:main renovate:core group:go manager:go"
+      >
+        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-dbaas" target="_blank">qubership-dbaas</a></td>
+        <td>
+          <span class="pr-number">#413</span>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-dbaas/pull/413" target="_blank">chore(deps): update module github.com/onsi/ginkgo/v2 to v2.28.2</a>
+        </td>
+        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
+        <td>
+          
+            <span class="badge badge-open">Open</span>
+          
+        </td>
+        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">group:go</span><span class="label">manager:go</span></td>
+        <td><span class="base">main</span></td>
+        <td><span class="date">2026-04-27</span></td>
+        <td><span class="date">2026-04-27</span></td>
+        <td>
+          
+          
+            <a class="checks" href="https://github.com/Netcracker/qubership-dbaas/pull/413/checks" target="_blank">
+              <span class="check-dot success"></span>
+              <span class="check-counts">10/10</span>
+            </a>
+            
+          
+        </td>
+      </tr>
+      
+      <tr
+        data-repo="qubership-dbaas"
+        data-state="open"
+        data-author="TheHollowMonarch"
+        data-bot="false"
+        data-lang="java"
+        data-type="other"
+        data-text="qubership-dbaas refactor: adding missing labels and adjusting existing ones TheHollowMonarch refactor"
+      >
+        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-dbaas" target="_blank">qubership-dbaas</a></td>
+        <td>
+          <span class="pr-number">#412</span>
+          <a class="pr-link" href="https://github.com/Netcracker/qubership-dbaas/pull/412" target="_blank">refactor: adding missing labels and adjusting existing ones</a>
+        </td>
+        <td><a class="author-link" href="https://github.com/TheHollowMonarch" target="_blank">TheHollowMonarch</a></td>
+        <td>
+          
+            <span class="badge badge-open">Open</span>
+          
+        </td>
+        <td><span class="label">refactor</span></td>
+        <td><span class="base">main</span></td>
+        <td><span class="date">2026-04-27</span></td>
+        <td><span class="date">2026-04-27</span></td>
+        <td>
+          
+          
+            <a class="checks" href="https://github.com/Netcracker/qubership-dbaas/pull/412/checks" target="_blank">
+              <span class="check-dot success"></span>
+              <span class="check-counts">10/10</span>
+            </a>
             
           
         </td>
@@ -7599,78 +6454,6 @@
         data-bot="true"
         data-lang="go"
         data-type="other"
-        data-text="qubership-maas chore(deps): update module github.com/jackc/pgx/v5 to v5.9.2 [security] renovate[bot] branch:main renovate:core security"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-maas" target="_blank">qubership-maas</a></td>
-        <td>
-          <span class="pr-number">#190</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-maas/pull/190" target="_blank">chore(deps): update module github.com/jackc/pgx/v5 to v5.9.2 [security]</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">security</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-maas/pull/190/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">26/26</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-maas"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="other"
-        data-text="qubership-maas chore(deps): update dependency org.apache.kafka:kafka-clients to v4.1.2 [security] renovate[bot] branch:main renovate:core security"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-maas" target="_blank">qubership-maas</a></td>
-        <td>
-          <span class="pr-number">#189</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-maas/pull/189" target="_blank">chore(deps): update dependency org.apache.kafka:kafka-clients to v4.1.2 [security]</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">security</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-04-13</span></td>
-        <td><span class="date">2026-04-24</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-maas/pull/189/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">35/35</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-maas"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="other"
         data-text="qubership-maas chore(deps): update golang.org/x/exp digest to 746e56f renovate[bot] branch:main renovate:core manager:go group:go"
       >
         <td><a class="repo-link" href="https://github.com/Netcracker/qubership-maas" target="_blank">qubership-maas</a></td>
@@ -7687,13 +6470,13 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-04-10</span></td>
-        <td><span class="date">2026-04-13</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-maas/pull/188/checks" target="_blank">
               <span class="check-dot success"></span>
-              <span class="check-counts">25/25</span>
+              <span class="check-counts">41/41</span>
             </a>
             
           
@@ -7723,83 +6506,11 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:maven</span><span class="label">group:maven</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-03-31</span></td>
-        <td><span class="date">2026-04-19</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-maas/pull/183/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">61/61</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-maas"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="other"
-        data-text="qubership-maas chore(deps): update ghcr.io/netcracker/qubership-core-base docker tag to v2.2.12 renovate[bot] branch:main renovate:core manager:docker"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-maas" target="_blank">qubership-maas</a></td>
-        <td>
-          <span class="pr-number">#181</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-maas/pull/181" target="_blank">chore(deps): update ghcr.io/netcracker/qubership-core-base docker tag to v2.2.12</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:docker</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-03-20</span></td>
-        <td><span class="date">2026-04-23</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-maas/pull/181/checks" target="_blank">
-              <span class="check-dot success"></span>
-              <span class="check-counts">37/37</span>
-            </a>
-            
-          
-        </td>
-      </tr>
-      
-      <tr
-        data-repo="qubership-maas"
-        data-state="open"
-        data-author="renovate[bot]"
-        data-bot="true"
-        data-lang="go"
-        data-type="other"
-        data-text="qubership-maas chore(deps): update go-patch renovate[bot] branch:main renovate:core manager:go group:go group:go-version"
-      >
-        <td><a class="repo-link" href="https://github.com/Netcracker/qubership-maas" target="_blank">qubership-maas</a></td>
-        <td>
-          <span class="pr-number">#177</span>
-          <a class="pr-link" href="https://github.com/Netcracker/qubership-maas/pull/177" target="_blank">chore(deps): update go-patch</a>
-        </td>
-        <td><a class="author-link" href="https://github.com/apps/renovate" target="_blank">renovate[bot]</a></td>
-        <td>
-          
-            <span class="badge badge-open">Open</span>
-          
-        </td>
-        <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span><span class="label">group:go-version</span></td>
-        <td><span class="base">main</span></td>
-        <td><span class="date">2026-03-18</span></td>
-        <td><span class="date">2026-04-25</span></td>
-        <td>
-          
-          
-            <a class="checks" href="https://github.com/Netcracker/qubership-maas/pull/177/checks" target="_blank">
               <span class="check-dot success"></span>
               <span class="check-counts">28/28</span>
             </a>
@@ -7867,18 +6578,18 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-03-16</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-maas/pull/175/checks" target="_blank">
               <span class="check-dot failure"></span>
-              <span class="check-counts">14/16</span>
+              <span class="check-counts">20/22</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24887813566/job/72872111805" target="_blank" title="run-lint">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24986286284/job/73160312245" target="_blank" title="run-lint">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24887814965/job/72872105908" target="_blank" title="run-lint">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24986283713/job/73160298429" target="_blank" title="run-lint">✗</a>
             
           
         </td>
@@ -7907,7 +6618,7 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-03-16</span></td>
-        <td><span class="date">2026-04-24</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
@@ -7916,17 +6627,17 @@
               <span class="check-counts">18/24</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24867779433/job/72807549620" target="_blank" title="integration-tests / Build (no Sonar) / mvn">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24986293373/job/73160334727" target="_blank" title="integration-tests / Build (no Sonar) / mvn">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24867778516/job/72807547315" target="_blank" title="integration-tests / Build (no Sonar) / mvn">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24986295635/job/73160330532" target="_blank" title="integration-tests / Build (no Sonar) / mvn">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24867779433/job/72807537585" target="_blank" title="build / Build and test with coverage">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24986295635/job/73160315635" target="_blank" title="build / Build and test with coverage">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24867779179/job/72807536548" target="_blank" title="golangci-lint">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24986295103/job/73160314153" target="_blank" title="golangci-lint">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24867778516/job/72807534332" target="_blank" title="build / Build and test with coverage">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24986293373/job/73160308733" target="_blank" title="build / Build and test with coverage">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24867778331/job/72807533950" target="_blank" title="golangci-lint">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24986292801/job/73160306592" target="_blank" title="golangci-lint">✗</a>
             
           
         </td>
@@ -7955,18 +6666,22 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:github-actions</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-03-16</span></td>
-        <td><span class="date">2026-04-13</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-maas/pull/169/checks" target="_blank">
               <span class="check-dot failure"></span>
-              <span class="check-counts">11/13</span>
+              <span class="check-counts">12/16</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24332028032/job/71039915610" target="_blank" title="run-lint">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24986302471/job/73160360968" target="_blank" title="run-lint">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24332026402/job/71039915304" target="_blank" title="run-lint">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24986299512/job/73160352659" target="_blank" title="run-lint">✗</a>
+            
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24986302471/job/73160337539" target="_blank" title="golangci-lint">✗</a>
+            
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24986299512/job/73160327963" target="_blank" title="golangci-lint">✗</a>
             
           
         </td>
@@ -7995,26 +6710,26 @@
         <td><span class="label">branch:main</span><span class="label">renovate:core</span><span class="label">manager:go</span><span class="label">group:go</span></td>
         <td><span class="base">main</span></td>
         <td><span class="date">2026-03-16</span></td>
-        <td><span class="date">2026-04-25</span></td>
+        <td><span class="date">2026-04-27</span></td>
         <td>
           
           
             <a class="checks" href="https://github.com/Netcracker/qubership-maas/pull/168/checks" target="_blank">
               <span class="check-dot failure"></span>
-              <span class="check-counts">21/27</span>
+              <span class="check-counts">18/24</span>
             </a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24931143153/job/73008998712" target="_blank" title="integration-tests / Build (no Sonar) / mvn">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24986357093/job/73160547264" target="_blank" title="integration-tests / Build (no Sonar) / mvn">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24931142545/job/73008994510" target="_blank" title="integration-tests / Build (no Sonar) / mvn">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24986359011/job/73160546453" target="_blank" title="integration-tests / Build (no Sonar) / mvn">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24931143153/job/73008991982" target="_blank" title="build / Build and test with coverage">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24986359011/job/73160529781" target="_blank" title="build / Build and test with coverage">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24931142986/job/73008991471" target="_blank" title="golangci-lint">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24986358425/job/73160527517" target="_blank" title="golangci-lint">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24931142545/job/73008990091" target="_blank" title="build / Build and test with coverage">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24986357093/job/73160523202" target="_blank" title="build / Build and test with coverage">✗</a>
             
-              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24931142472/job/73008989922" target="_blank" title="golangci-lint">✗</a>
+              <a class="check-fail" href="https://github.com/Netcracker/qubership-maas/actions/runs/24986356770/job/73160522445" target="_blank" title="golangci-lint">✗</a>
             
           
         </td>
