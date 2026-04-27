@@ -128,7 +128,7 @@
   <button class="btn-show-all" onclick="showAll()">Show All</button>
   <div class="toolbar-right">
     <span class="count" id="count">{{ rows | length }} PRs</span>
-    <input type="text" id="search" placeholder="Search repo, title, author, label…" oninput="applyFilters()">
+    <input type="text" id="search" placeholder='Search: word "exact phrase" -exclude …' oninput="applyFilters()">
     <a class="btn-regenerate" href="https://github.com/Netcracker/qubership-core-infra/actions/workflows/pr-report.yml" target="_blank">↻ Regenerate</a>
   </div>
 </div>
@@ -213,8 +213,24 @@
 
   let sortCol = -1, sortDir = 1;
 
+  function parseSearchTerms(raw) {
+    const include = [], exclude = [];
+    const re = /(-?"[^"]*"|-?"[^"]*$|-?\S+)/g;
+    let m;
+    while ((m = re.exec(raw)) !== null) {
+      let t = m[1];
+      const neg = t.startsWith('-');
+      if (neg) t = t.slice(1);
+      if (t.startsWith('"')) t = t.slice(1);
+      if (t.endsWith('"')) t = t.slice(0, -1);
+      if (t) (neg ? exclude : include).push(t);
+    }
+    return { include, exclude };
+  }
+
   function applyFilters() {
-    const search = document.getElementById('search').value.toLowerCase();
+    const raw = document.getElementById('search').value.toLowerCase();
+    const { include, exclude } = parseSearchTerms(raw);
     const repoFilter = document.getElementById('repo-filter').value;
     const stateFilter = document.getElementById('state-filter').value;
     const authorFilter = document.getElementById('author-filter').value;
@@ -223,7 +239,9 @@
     const rows = document.querySelectorAll('#pr-table tbody tr');
     let visible = 0;
     rows.forEach(tr => {
-      const show = (!search || tr.dataset.text.toLowerCase().includes(search))
+      const text = tr.dataset.text.toLowerCase();
+      const matchSearch = include.every(t => text.includes(t)) && exclude.every(t => !text.includes(t));
+      const show = matchSearch
         && (!repoFilter || tr.dataset.repo === repoFilter)
         && (!stateFilter || tr.dataset.state === stateFilter)
         && (!authorFilter || (authorFilter === 'bot' ? tr.dataset.bot === 'true' : tr.dataset.bot === 'false'))
