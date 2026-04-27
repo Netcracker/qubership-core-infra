@@ -222,8 +222,9 @@ def main():
     env = Environment(loader=FileSystemLoader(str(script_dir)), autoescape=True)
     template = env.get_template("report.html.j2")
 
+    version = (script_dir / "VERSION").read_text(encoding="utf-8").strip()
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    html = template.render(rows=rows, generated_at=generated_at, org=ORG, topics=TOPICS)
+    html = template.render(rows=rows, generated_at=generated_at, org=ORG, topics=TOPICS, version=version)
 
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)

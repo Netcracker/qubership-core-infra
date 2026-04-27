@@ -24,6 +24,10 @@
     .btn-show-all { padding: 6px 12px; border: 1px solid #d0d7de; border-radius: 6px;
                     font-size: 13px; background: #fff; cursor: pointer; color: #24292f; }
     .btn-show-all:hover { background: #f6f8fa; }
+    .btn-regenerate { padding: 6px 12px; border: 1px solid #d0d7de; border-radius: 6px;
+                      font-size: 13px; background: #fff; color: #24292f; text-decoration: none;
+                      white-space: nowrap; }
+    .btn-regenerate:hover { background: #f6f8fa; }
 
     .container { padding: 0 24px 24px; overflow-x: auto; }
     table { border-collapse: collapse; width: 100%; background: #fff;
@@ -42,9 +46,11 @@
     tr.hidden { display: none; }
 
     .repo-link { font-weight: 600; color: #0969da; text-decoration: none; font-size: 13px; }
+    .repo-link:visited { color: #6f42c1; }
     .repo-link:hover { text-decoration: underline; }
 
     .pr-link { color: #0969da; text-decoration: none; font-weight: 500; }
+    .pr-link:visited { color: #6f42c1; }
     .pr-link:hover { text-decoration: underline; }
     .pr-number { color: #57606a; font-size: 12px; display: inline-block;
                  min-width: 3.5em; text-align: right; margin-right: 6px; }
@@ -85,7 +91,7 @@
 
 <header>
   <h1>Netcracker — Pull Requests</h1>
-  <span>Topics: {{ topics | join(', ') }} &nbsp;·&nbsp; Generated: {{ generated_at }}</span>
+  <span>Topics: {{ topics | join(', ') }} &nbsp;·&nbsp; Generated: {{ generated_at }} &nbsp;·&nbsp; v{{ version }}</span>
 </header>
 
 <div class="toolbar">
@@ -123,6 +129,7 @@
   <div class="toolbar-right">
     <span class="count" id="count">{{ rows | length }} PRs</span>
     <input type="text" id="search" placeholder="Search repo, title, author, label…" oninput="applyFilters()">
+    <a class="btn-regenerate" href="https://github.com/Netcracker/qubership-core-infra/actions/workflows/pr-report.yml" target="_blank">↻ Regenerate</a>
   </div>
 </div>
 
