@@ -9,6 +9,7 @@
 #       with:
 #         sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
 #         install-envtest: true  # for Kubernetes operators
+#         go-module-configs: '[{"dir":".","cover-packages":"./controllers/...,./api/..."},{"dir":"cmd/etcd-certs-to-secret","cover-packages":"./..."}]'
 #       secrets: inherit
 #
 # Features:
@@ -36,6 +37,10 @@ on:
         type: string
       go-module-dirs:
         description: 'Optional newline-separated list of directories containing go.mod files. Takes precedence over automatic discovery.'
+        required: false
+        type: string
+      go-module-configs:
+        description: 'Optional JSON array of module configs, for example [{"dir":".","cover-packages":"./controllers/...,./api/..."},{"dir":"cmd/etcd-certs-to-secret","cover-packages":"./..."}]. Takes precedence over go-module-dirs.'
         required: false
         type: string
 
@@ -130,6 +135,7 @@ jobs:
 
           add_module() {
             local module_dir="$1"
+            local module_cover_packages="${2:-${{ inputs.cover-packages }}}"
             local normalized_dir
             local module_file
             local module_name
@@ -163,12 +169,32 @@ jobs:
               jq -c \
                 --arg dir "$normalized_dir" \
                 --arg name "$module_name" \
-                '. + [{"dir": $dir, "name": $name}]' \
+                --arg cover_packages "$module_cover_packages" \
+                '. + [{"dir": $dir, "name": $name, "cover_packages": $cover_packages}]' \
                 <<<"$modules_json"
             )
           }
 
-          if [ -n "${{ inputs.go-module-dirs }}" ]; then
+          if [ -n "${{ inputs.go-module-configs }}" ]; then
+            echo "::info:: Using go-module-configs input..."
+            while IFS=$'\t' read -r module_dir module_cover_packages; do
+              [ -z "$module_dir" ] && continue
+              add_module "$module_dir" "$module_cover_packages"
+            done < <(
+              jq -r '
+                if type != "array" then
+                  error("go-module-configs must be a JSON array")
+                else
+                  .[]
+                  | if (.dir // "") == "" then
+                      error("Each go-module-configs entry must contain non-empty dir")
+                    else
+                      [ .dir, (.["cover-packages"] // "./...") ] | @tsv
+                    end
+                end
+              ' <<< '${{ inputs.go-module-configs }}'
+            )
+          elif [ -n "${{ inputs.go-module-dirs }}" ]; then
             echo "::info:: Using go-module-dirs input..."
             while IFS= read -r module_dir; do
               module_dir="$(printf '%s' "$module_dir" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
@@ -271,7 +297,8 @@ jobs:
         working-directory: ${{ matrix.module.dir }}
         run: |
           echo "::info:: Running tests with coverage..."
-          go test -v ./... -coverpkg="${{ inputs.cover-packages }}" -coverprofile coverage.out
+          echo "::info:: Using cover packages: ${{ matrix.module.cover_packages }}"
+          go test -v ./... -coverpkg="${{ matrix.module.cover_packages }}" -coverprofile coverage.out
 
       - name: Prepare coverage artifact
         if: inputs.sonar-project-key != ''
