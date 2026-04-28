@@ -12,9 +12,9 @@
 #       secrets: inherit
 #
 # Features:
-#   - Automatic go.mod file detection (supports mono-repos with go-module-dir input)
+#   - Automatic go.mod discovery with multi-module mono-repo support
 #   - Go tests with coverage
-#   - SonarQube code quality and security scanning (optional)
+#   - SonarQube code quality and security scanning with aggregated coverage (optional)
 #   - Envtest support for Kubernetes operators (optional)
 #   - Automatic Docker image build (skipped if no config or for fork PRs)
 #
@@ -32,6 +32,10 @@ on:
       # Go module configuration
       go-module-dir:
         description: 'Optional directory containing go.mod file. If not specified, will search for go.mod files in the repository.'
+        required: false
+        type: string
+      go-module-dirs:
+        description: 'Optional newline-separated list of directories containing go.mod files. Takes precedence over automatic discovery.'
         required: false
         type: string
 
@@ -100,9 +104,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Test and analyze
+  discover:
+    name: Discover Go modules
     runs-on: ubuntu-latest
+    outputs:
+      modules: ${{ steps.discover.outputs.modules }}
+      module-count: ${{ steps.discover.outputs.module_count }}
+      first-module-dir: ${{ steps.discover.outputs.first_module_dir }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -110,63 +118,116 @@ jobs:
           ref: ${{ inputs.ref }}
           fetch-depth: 0
 
-      - name: Find go.mod files
-        id: find
+      - name: Discover go.mod files
+        id: discover
         shell: bash
         run: |
-          echo "::info:: Processing go.mod file location..."
+          set -euo pipefail
 
-          if [ -n "${{ inputs.go-module-dir }}" ]; then
-            # If go-module-dir is specified, only look in that directory
-            GO_MOD_DIR="${{ inputs.go-module-dir }}"
-            GO_MOD_FILE="${GO_MOD_DIR}/go.mod"
+          echo "::info:: Resolving Go module directories..."
 
-            if [ ! -d "$GO_MOD_DIR" ]; then
-              echo "::error:: Directory not found: ${GO_MOD_DIR}"
+          modules_json="[]"
+
+          add_module() {
+            local module_dir="$1"
+            local normalized_dir
+            local module_file
+            local module_name
+
+            normalized_dir="${module_dir#./}"
+            if [ -z "$normalized_dir" ]; then
+              normalized_dir="."
+            fi
+
+            module_file="${normalized_dir}/go.mod"
+            if [ "$normalized_dir" = "." ]; then
+              module_file="go.mod"
+            fi
+
+            if [ ! -d "$normalized_dir" ]; then
+              echo "::error:: Directory not found: ${normalized_dir}"
               exit 1
             fi
 
-            if [ ! -f "$GO_MOD_FILE" ]; then
-              echo "::error:: go.mod file not found in directory: ${GO_MOD_DIR}"
+            if [ ! -f "$module_file" ]; then
+              echo "::error:: go.mod file not found in directory: ${normalized_dir}"
               exit 1
             fi
 
-            echo "::info:: Using specified Go module directory: ${GO_MOD_DIR}"
+            module_name=$(echo "$normalized_dir" | tr '/.' '__' | tr -cd '[:alnum:]_-')
+            if [ -z "$module_name" ]; then
+              module_name="root"
+            fi
+
+            modules_json=$(
+              jq -c \
+                --arg dir "$normalized_dir" \
+                --arg name "$module_name" \
+                '. + [{"dir": $dir, "name": $name}]' \
+                <<<"$modules_json"
+            )
+          }
+
+          if [ -n "${{ inputs.go-module-dirs }}" ]; then
+            echo "::info:: Using go-module-dirs input..."
+            while IFS= read -r module_dir; do
+              module_dir="$(printf '%s' "$module_dir" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+              [ -z "$module_dir" ] && continue
+              add_module "$module_dir"
+            done <<'EOF'
+          ${{ inputs.go-module-dirs }}
+          EOF
+          elif [ -n "${{ inputs.go-module-dir }}" ]; then
+            echo "::info:: Using go-module-dir input..."
+            add_module "${{ inputs.go-module-dir }}"
           else
-            # Search for go.mod files in the repository
             echo "::info:: Searching for go.mod files..."
-            GO_MOD_FILES=$(find . -name go.mod)
-
-            if [ -z "$GO_MOD_FILES" ]; then
-              echo "::error:: No go.mod files found in the repository"
-              exit 1
-            fi
-
-            echo "::info:: Counting go.mod files..."
-            GO_MOD_COUNT=$(echo "$GO_MOD_FILES" | wc -l)
-            if [ "$GO_MOD_COUNT" -gt 1 ]; then
-              echo "::error:: Multiple go.mod files found. Please specify go-module-dir input parameter."
-              exit 1
-            fi
-
-            GO_MOD_FILE=$(echo "$GO_MOD_FILES" | head -n 1)
-            GO_MOD_DIR=$(dirname "${GO_MOD_FILE}")
-            echo "::info:: Using Go module at ${GO_MOD_DIR}"
+            while IFS= read -r module_file; do
+              [ -z "$module_file" ] && continue
+              add_module "$(dirname "${module_file}")"
+            done < <(find . -path '*/vendor/*' -prune -o -name go.mod -print | sort)
           fi
 
-          echo "GO_MOD_FILE=${GO_MOD_FILE}" >> "$GITHUB_ENV"
-          echo "GO_MOD_DIR=${GO_MOD_DIR}" >> "$GITHUB_ENV"
+          module_count=$(jq 'length' <<<"$modules_json")
+          if [ "$module_count" -eq 0 ]; then
+            echo "::error:: No go.mod files found in the repository"
+            exit 1
+          fi
+
+          echo "::info:: Found ${module_count} Go module(s)"
+          jq -r '.[] | "::info:: Module: \(.dir)"' <<<"$modules_json"
+
+          {
+            echo "modules=${modules_json}"
+            echo "module_count=${module_count}"
+            echo "first_module_dir=$(jq -r '.[0].dir' <<<"$modules_json")"
+          } >> "$GITHUB_OUTPUT"
+
+  test:
+    name: Test ${{ matrix.module.dir }}
+    needs: [discover]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: ${{ fromJson(needs.discover.outputs.modules) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
           cache: true
-          cache-dependency-path: "**/*.sum"
-          go-version-file: "${{ env.GO_MOD_FILE }}"
+          cache-dependency-path: ${{ matrix.module.dir }}/go.sum
+          go-version-file: ${{ matrix.module.dir }}/go.mod
 
       - name: Install envtest
         if: inputs.install-envtest == true
-        working-directory: ${{ env.GO_MOD_DIR }}
+        working-directory: ${{ matrix.module.dir }}
         env:
           ENVTEST_VERSION: ${{ inputs.envtest-version }}
           KUBE_VERSION: ${{ inputs.kube-version }}
@@ -207,39 +268,95 @@ jobs:
           fi
 
       - name: Test with coverage
-        working-directory: ${{ env.GO_MOD_DIR }}
+        working-directory: ${{ matrix.module.dir }}
         run: |
           echo "::info:: Running tests with coverage..."
           go test -v ./... -coverpkg="${{ inputs.cover-packages }}" -coverprofile coverage.out
 
-      - name: Upload coverage report to SonarCloud
+      - name: Prepare coverage artifact
         if: inputs.sonar-project-key != ''
-        working-directory: ${{ env.GO_MOD_DIR }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .sonar
+          cp "${{ matrix.module.dir }}/coverage.out" ".sonar/${{ matrix.module.name }}.coverage.out"
+
+      - name: Upload coverage artifact
+        if: inputs.sonar-project-key != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.module.name }}
+          path: .sonar/${{ matrix.module.name }}.coverage.out
+          if-no-files-found: error
+
+  sonar:
+    name: Sonar analysis
+    if: inputs.sonar-project-key != ''
+    needs: [discover, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: .sonar-artifacts
+          pattern: coverage-*
+          merge-multiple: true
+
+      - name: Upload coverage report to SonarCloud
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        shell: bash
         run: |
+          set -euo pipefail
+
           echo "::info:: Installing sonar-scanner..."
           npm install -g sonar-scanner@3.1.0 --ignore-scripts
 
-          echo "::info:: Validating sonar-project.properties exists"
-          if [ ! -f "sonar-project.properties" ]; then
-            echo "::error:: sonar-project.properties not found in ${GO_MOD_DIR}"
+          COVERAGE_PATHS=$(find .sonar-artifacts -name '*.coverage.out' | sort | paste -sd, -)
+          if [ -z "$COVERAGE_PATHS" ]; then
+            echo "::error:: No coverage artifacts found for Sonar analysis"
             exit 1
           fi
 
-          echo "::info:: Running sonar-scanner..."
+          if [ -f "sonar-project.properties" ]; then
+            SONAR_SETTINGS_PATH="sonar-project.properties"
+            SONAR_BASE_DIR="."
+            echo "::info:: Using repository-level sonar-project.properties"
+          elif [ "${{ needs.discover.outputs.module-count }}" = "1" ]; then
+            MODULE_DIR="${{ needs.discover.outputs.first-module-dir }}"
+            if [ -f "${MODULE_DIR}/sonar-project.properties" ]; then
+              SONAR_SETTINGS_PATH="${MODULE_DIR}/sonar-project.properties"
+              SONAR_BASE_DIR="${MODULE_DIR}"
+              echo "::info:: Using module-level sonar-project.properties from ${MODULE_DIR}"
+            else
+              echo "::error:: sonar-project.properties not found in repository root or in single module ${MODULE_DIR}"
+              exit 1
+            fi
+          else
+            echo "::error:: For multi-module repositories sonar-project.properties must be placed in the repository root"
+            exit 1
+          fi
+
+          echo "::info:: Running sonar-scanner with coverage files: ${COVERAGE_PATHS}"
           sonar-scanner \
-            -Dproject.settings=sonar-project.properties \
+            -Dproject.settings="${SONAR_SETTINGS_PATH}" \
+            -Dsonar.projectBaseDir="${SONAR_BASE_DIR}" \
             -Dsonar.projectKey=${{ inputs.sonar-project-key }} \
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }} \
             -Dsonar.host.url=${{ vars.SONAR_HOST_URL }} \
-            -Dsonar.go.coverage.reportPaths=coverage.out
+            -Dsonar.go.coverage.reportPaths="${COVERAGE_PATHS}"
 
   docker-build:
     name: Build Docker image
-    needs: [test]
+    needs: [test, sonar]
     # Skip docker build for PRs coming from forks or if skip-docker is true
-    if: ${{ !inputs.skip-docker && !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
+    if: ${{ !inputs.skip-docker && !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) && (inputs.sonar-project-key == '' || needs.sonar.result == 'success') }}
     uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@v2.4.1
     with:
       ref: ${{ inputs.ref }}
