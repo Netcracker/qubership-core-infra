@@ -35,12 +35,8 @@ on:
         description: 'Optional directory containing go.mod file. If not specified, will search for go.mod files in the repository.'
         required: false
         type: string
-      go-module-dirs:
-        description: 'Optional newline-separated list of directories containing go.mod files. Takes precedence over automatic discovery.'
-        required: false
-        type: string
       go-module-configs:
-        description: 'Optional JSON array of module configs, for example [{"dir":".","cover-packages":"./controllers/...,./api/..."},{"dir":"cmd/etcd-certs-to-secret","cover-packages":"./..."}]. Takes precedence over go-module-dirs.'
+        description: 'Optional JSON array of module configs, for example [{"dir":".","cover-packages":"./controllers/...,./api/..."},{"dir":"cmd/etcd-certs-to-secret","cover-packages":"./..."}]. Takes precedence over go-module-dir and automatic discovery. The cover-packages is optional and defaults to "./...".'
         required: false
         type: string
 
@@ -197,15 +193,6 @@ jobs:
                 end
               ' <<< '${{ inputs.go-module-configs }}'
             )
-          elif [ -n "${{ inputs.go-module-dirs }}" ]; then
-            echo "::info:: Using go-module-dirs input..."
-            while IFS= read -r module_dir; do
-              module_dir="$(printf '%s' "$module_dir" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-              [ -z "$module_dir" ] && continue
-              add_module "$module_dir"
-            done <<'EOF'
-          ${{ inputs.go-module-dirs }}
-          EOF
           elif [ -n "${{ inputs.go-module-dir }}" ]; then
             echo "::info:: Using go-module-dir input..."
             add_module "${{ inputs.go-module-dir }}"
