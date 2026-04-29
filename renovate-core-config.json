@@ -85,6 +85,11 @@
     "matchManagers" : [ "github-actions" ],
     "groupName" : "github-actions"
   }, {
+    "matchPackageNames" : [ "/^com\\.netcracker\\./" ],
+    "groupName" : "netcracker",
+    "groupSlug" : "netcracker",
+    "addLabels" : [ "group:netcracker" ]
+  }, {
     "matchPackageNames" : [ "org.assertj:assertj-core" ],
     "groupName" : "maven",
     "allowedVersions" : "/^3.27.7$/"
@@ -155,7 +160,7 @@
   }, {
     "matchPackageNames" : [ "org.springframework:spring-aop", "org.springframework:spring-beans", "org.springframework:spring-context", "org.springframework:spring-core", "org.springframework:spring-expression", "org.springframework:spring-jdbc", "org.springframework:spring-test", "org.springframework:spring-tx", "org.springframework:spring-web", "org.springframework:spring-webflux", "org.springframework:spring-webmvc" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^7.0.6$/"
+    "allowedVersions" : "/^7.0.7$/"
   }, {
     "matchPackageNames" : [ "org.apache.kafka:kafka-clients", "org.apache.kafka:kafka-streams" ],
     "groupName" : "maven",
@@ -215,7 +220,7 @@
   }, {
     "matchPackageNames" : [ "org.testcontainers:testcontainers", "org.testcontainers:testcontainers-bom", "org.testcontainers:testcontainers-consul", "org.testcontainers:testcontainers-junit-jupiter" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^2.0.4$/"
+    "allowedVersions" : "/^2.0.5$/"
   }, {
     "matchPackageNames" : [ "jakarta.validation:jakarta.validation-api" ],
     "groupName" : "maven",
@@ -223,7 +228,7 @@
   }, {
     "matchPackageNames" : [ "org.springframework.security:spring-security-core", "org.springframework.security:spring-security-oauth2-client", "org.springframework.security:spring-security-test" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^7.0.4$/"
+    "allowedVersions" : "/^7.0.5$/"
   }, {
     "matchPackageNames" : [ "org.apache.httpcomponents.core5:httpcore5" ],
     "groupName" : "maven",
@@ -235,7 +240,7 @@
   }, {
     "matchPackageNames" : [ "org.hibernate.orm:hibernate-core", "org.hibernate.orm:hibernate-processor" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^7.2.7.Final$/"
+    "allowedVersions" : "/^7.2.12.Final$/"
   }, {
     "matchPackageNames" : [ "org.jboss.resteasy:resteasy-core" ],
     "groupName" : "maven",
@@ -259,15 +264,15 @@
   }, {
     "matchPackageNames" : [ "io.projectreactor.netty:reactor-netty" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^1.3.4$/"
+    "allowedVersions" : "/^1.3.5$/"
   }, {
     "matchPackageNames" : [ "org.springframework.data:spring-data-cassandra", "org.springframework.data:spring-data-mongodb" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^5.0.4$/"
+    "allowedVersions" : "/^5.0.5$/"
   }, {
     "matchPackageNames" : [ "org.springframework.data:spring-data-commons", "org.springframework.data:spring-data-jpa", "org.springframework.data:spring-data-redis" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^4.0.4$/"
+    "allowedVersions" : "/^4.0.5$/"
   }, {
     "matchPackageNames" : [ "jakarta.inject:jakarta.inject-api" ],
     "groupName" : "maven",
@@ -279,7 +284,7 @@
   }, {
     "matchPackageNames" : [ "org.projectlombok:lombok" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^1.18.44$/"
+    "allowedVersions" : "/^1.18.46$/"
   }, {
     "matchPackageNames" : [ "io.vertx:vertx-core", "io.vertx:vertx-stomp" ],
     "groupName" : "maven",
@@ -311,7 +316,7 @@
   }, {
     "matchPackageNames" : [ "org.apache.logging.log4j:log4j-core", "org.apache.logging.log4j:log4j-slf4j-impl" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^2.25.3$/"
+    "allowedVersions" : "/^2.25.4$/"
   }, {
     "matchPackageNames" : [ "commons-codec:commons-codec" ],
     "groupName" : "maven",
@@ -335,7 +340,7 @@
   }, {
     "matchPackageNames" : [ "org.springframework.amqp:spring-amqp", "org.springframework.amqp:spring-rabbit" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^4.0.2$/"
+    "allowedVersions" : "/^4.0.3$/"
   }, {
     "matchPackageNames" : [ "org.jetbrains:annotations" ],
     "groupName" : "maven",
@@ -351,7 +356,7 @@
   }, {
     "matchPackageNames" : [ "io.projectreactor:reactor-core", "io.projectreactor:reactor-test" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^3.8.4$/"
+    "allowedVersions" : "/^3.8.5$/"
   }, {
     "matchPackageNames" : [ "junit:junit" ],
     "groupName" : "maven",
@@ -359,7 +364,7 @@
   }, {
     "matchPackageNames" : [ "org.mongodb:mongodb-driver-core", "org.mongodb:mongodb-driver-sync" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^5.6.4$/"
+    "allowedVersions" : "/^5.6.5$/"
   }, {
     "matchPackageNames" : [ "jakarta.xml.bind:jakarta.xml.bind-api" ],
     "groupName" : "maven",
@@ -367,7 +372,7 @@
   }, {
     "matchPackageNames" : [ "org.springframework.kafka:spring-kafka", "org.springframework.kafka:spring-kafka-test" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^4.0.4$/"
+    "allowedVersions" : "/^4.0.5$/"
   }, {
     "matchPackageNames" : [ "jakarta.el:jakarta.el-api" ],
     "groupName" : "maven",
@@ -375,7 +380,7 @@
   }, {
     "matchPackageNames" : [ "io.micrometer:micrometer-core", "io.micrometer:micrometer-registry-prometheus" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^1.16.4$/"
+    "allowedVersions" : "/^1.16.5$/"
   }, {
     "matchPackageNames" : [ "org.eclipse.jgit:org.eclipse.jgit" ],
     "groupName" : "maven",
@@ -387,7 +392,7 @@
   }, {
     "matchPackageNames" : [ "org.springframework.boot:spring-boot", "org.springframework.boot:spring-boot-autoconfigure", "org.springframework.boot:spring-boot-dependencies", "org.springframework.boot:spring-boot-restclient", "org.springframework.boot:spring-boot-resttestclient", "org.springframework.boot:spring-boot-starter-actuator", "org.springframework.boot:spring-boot-starter-data-cassandra", "org.springframework.boot:spring-boot-starter-data-elasticsearch", "org.springframework.boot:spring-boot-starter-data-mongodb", "org.springframework.boot:spring-boot-starter-data-redis", "org.springframework.boot:spring-boot-starter-jdbc", "org.springframework.boot:spring-boot-starter-parent", "org.springframework.boot:spring-boot-starter-restclient-test", "org.springframework.boot:spring-boot-starter-security", "org.springframework.boot:spring-boot-starter-test", "org.springframework.boot:spring-boot-starter-web", "org.springframework.boot:spring-boot-starter-webflux", "org.springframework.boot:spring-boot-test", "org.springframework.boot:spring-boot-test-autoconfigure", "org.springframework.boot:spring-boot-webmvc-test" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^4.0.5$/"
+    "allowedVersions" : "/^4.0.6$/"
   }, {
     "matchPackageNames" : [ "org.junit.jupiter:junit-jupiter", "org.junit.jupiter:junit-jupiter-api", "org.junit.jupiter:junit-jupiter-engine", "org.junit.jupiter:junit-jupiter-params" ],
     "groupName" : "maven",
