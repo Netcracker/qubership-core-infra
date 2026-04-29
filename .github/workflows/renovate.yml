@@ -169,7 +169,7 @@ jobs:
           # bump go version because there is bug in go when it switches from 1.23.x (from go directive) to 1.25.1 (from toolchain directive)
           args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchDepNames':['go'],'matchDepTypes':['golang'],'rangeStrategy':'bump','addLabels':['group:go-version']}]}")
           args+=("--fromJson={'packageRules':[{'matchManagers':['github-actions'],'groupName':'github-actions'}]}")
-          args+=("--fromJson={'packageRules':[{'matchPackageNames':['/^com\\.netcracker\\./'],'groupName':'netcracker','groupSlug':'netcracker','addLabels':['group:netcracker']}]}")
+          args+=("--fromJson={'packageRules':[{'matchPackageNames':['/^com\\\\.netcracker\\\\./'],'groupName':'netcracker','groupSlug':'netcracker','addLabels':['group:netcracker']}]}")
           args+=("--groupNameMapping={'maven':'.*'}")
           if [ "${TYPE}" = "configuration" ]; then
             args+=("--patchGavsFile=implicit-gavs.txt")
