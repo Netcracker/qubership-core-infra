@@ -1,11 +1,15 @@
 # $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-workflow.json
 
 name: "Maven bulk release of core services"
-run-name: Maven bulk release of core-services [${{ inputs.repositoryToRelease }}] [dry-run:${{ inputs.dryRun }}] by @${{ github.actor }}'
+run-name: Maven bulk release of core-services [${{ inputs.branch }}] [${{ inputs.repositoryToRelease }}] [dry-run:${{ inputs.dryRun }}] by @${{ github.actor }}'
 
 on:
   workflow_dispatch:
     inputs:
+      branch:
+        type: string
+        description: "branch"
+        default: "main"
       repositoryToRelease:
         type: choice
         description: "Repository to bulk release from. Select 'all' to release all repositories"
@@ -39,7 +43,7 @@ on:
         default: false
 
 concurrency:
-  group: "core-libs"
+  group: "core-services-${{ inputs.branch }}"
   cancel-in-progress: false
 
 permissions:
@@ -112,10 +116,12 @@ jobs:
       - name: "Read repositories"
         id: read-repositories
         shell: bash
+        env:
+          BRANCH: ${{ inputs.branch }}
         # language="shell script"
         run: |
-          repositories="https://github.com/Netcracker/qubership-core-config-server[branch=main]
-          https://github.com/Netcracker/qubership-core-core-operator[branch=main]"
+          repositories="https://github.com/Netcracker/qubership-core-config-server[branch=${BRANCH}]
+          https://github.com/Netcracker/qubership-core-core-operator[branch=${BRANCH}]"
           echo "repositories=\n${repositories}"
           repositories=$(echo "${repositories}" | tr '\n' ',')
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
