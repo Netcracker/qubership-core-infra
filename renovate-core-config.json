@@ -70,6 +70,34 @@
     "addLabels" : [ "group:go" ]
   }, {
     "matchManagers" : [ "gomod" ],
+    "matchPackageNames" : [ "/(.*netcracker.*)/" ],
+    "matchUpdateTypes" : [ "major" ],
+    "groupName" : "go-netcracker-major",
+    "groupSlug" : "go-netcracker-major",
+    "addLabels" : [ "group:go-netcracker" ]
+  }, {
+    "matchManagers" : [ "gomod" ],
+    "matchPackageNames" : [ "/(.*netcracker.*)/" ],
+    "matchUpdateTypes" : [ "minor" ],
+    "groupName" : "go-netcracker-minor",
+    "groupSlug" : "go-netcracker-minor",
+    "addLabels" : [ "group:go-netcracker" ]
+  }, {
+    "matchManagers" : [ "gomod" ],
+    "matchPackageNames" : [ "/(.*netcracker.*)/" ],
+    "matchUpdateTypes" : [ "patch" ],
+    "groupName" : "go-netcracker-patch",
+    "groupSlug" : "go-netcracker-patch",
+    "addLabels" : [ "group:go-netcracker" ]
+  }, {
+    "matchManagers" : [ "gomod" ],
+    "matchPackageNames" : [ "/(.*netcracker.*)/" ],
+    "matchUpdateTypes" : [ "digest" ],
+    "groupName" : "go-netcracker-digest",
+    "groupSlug" : "go-netcracker-digest",
+    "addLabels" : [ "group:go-netcracker" ]
+  }, {
+    "matchManagers" : [ "gomod" ],
     "matchPackageNames" : [ "github.com/valyala/fasthttp" ],
     "matchNewValue" : [ "v1.70.0" ],
     "groupName" : "go-fasthttp",
@@ -202,7 +230,7 @@
     "groupName" : "maven",
     "allowedVersions" : "/^3.0.2$/"
   }, {
-    "matchPackageNames" : [ "org.springframework.cloud:spring-cloud-config-client", "org.springframework.cloud:spring-cloud-starter", "org.springframework.cloud:spring-cloud-starter-consul-config" ],
+    "matchPackageNames" : [ "org.springframework.cloud:spring-cloud-config-client", "org.springframework.cloud:spring-cloud-config-server", "org.springframework.cloud:spring-cloud-starter", "org.springframework.cloud:spring-cloud-starter-consul-config" ],
     "groupName" : "maven",
     "allowedVersions" : "/^5.0.1$/"
   }, {
