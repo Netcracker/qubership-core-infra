@@ -113,4 +113,5 @@ jobs:
     uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@feat/consistent-snapshots
     with:
       ref: ${{ inputs.branch }}
+      dry-run: false
       config-filename: ${{ inputs.docker-config-file }}
