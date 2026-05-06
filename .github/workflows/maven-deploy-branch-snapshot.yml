@@ -126,7 +126,7 @@ jobs:
           # "Uploaded to <id>: <url> (<size>)" — past tense means upload succeeded.
           # Only .pom files: one per artifact, no need to deduplicate jars/sources separately.
           # Note: --batch-mode omits transfer speed, so format is "(<size>)" not "(<size> at <speed>)".
-          upload_re = re.compile(r'^Uploaded to [^:]+: (\S+\.pom) \(')
+          upload_re = re.compile(r'^\[INFO\] Uploaded to [^:]+: (\S+\.pom) \(')
 
           artifacts = set()
           try:
