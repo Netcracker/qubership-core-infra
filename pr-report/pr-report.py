@@ -23,6 +23,7 @@ API_BASE = "https://api.github.com"
 
 FAIL_CONCLUSIONS = {"failure", "cancelled", "timed_out", "action_required"}
 BOTS = {"renovate[bot]", "renovate-bot", "NetcrackerCLPLCI"}
+NO_CHECKS = {"status": "none", "passed": 0, "failed": 0, "pending": 0, "total": 0, "failed_runs": []}
 
 
 def classify_lang(topics):
@@ -145,6 +146,7 @@ def parse_pr(repo, pr, checks):
         "author_url": pr["user"]["html_url"],
         "draft": pr.get("draft", False),
         "state": pr["state"],
+        "merged": pr.get("merged_at") is not None,
         "labels": [label["name"] for label in pr.get("labels", [])],
         "created_at": pr["created_at"][:10],
         "updated_at": pr["updated_at"][:10],
@@ -194,22 +196,24 @@ def main():
     # Fetch PRs for all repos in parallel
     repo_prs = []
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
-        futures = {pool.submit(fetch_repo_prs, args.token, repo, "open"): repo for repo in repos}
+        futures = {pool.submit(fetch_repo_prs, args.token, repo, "all"): repo for repo in repos}
         for future in as_completed(futures):
             repo, prs = future.result()
             if prs:
                 repo_prs.append((repo, prs))
 
     total_prs = sum(len(prs) for _, prs in repo_prs)
-    print(f"Total PRs to process: {total_prs}, fetching checks...")
+    print(f"Total PRs to process: {total_prs}, fetching checks for open PRs...")
 
-    # Fetch checks for all PRs in parallel
-    rows_unordered = []
+    open_pr_pairs = [(repo, pr) for repo, prs in repo_prs for pr in prs if pr["state"] == "open"]
+    closed_pr_pairs = [(repo, pr) for repo, prs in repo_prs for pr in prs if pr["state"] != "open"]
+
+    rows_unordered = [parse_pr(repo, pr, NO_CHECKS) for repo, pr in closed_pr_pairs]
+
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         futures = {
             pool.submit(fetch_pr_checks, args.token, repo, pr): (repo, pr)
-            for repo, prs in repo_prs
-            for pr in prs
+            for repo, pr in open_pr_pairs
         }
         for future in as_completed(futures):
             repo, pr, checks = future.result()

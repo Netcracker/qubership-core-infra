@@ -61,6 +61,7 @@
     .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
     .badge-draft { background: #f6f8fa; color: #57606a; border: 1px solid #d0d7de; }
     .badge-open { background: #dafbe1; color: #1a7f37; border: 1px solid #aceebb; }
+    .badge-merged { background: #fbefff; color: #8250df; border: 1px solid #d8b4fe; }
     .badge-closed { background: #ffebe9; color: #cf222e; border: 1px solid #ffc1c0; }
 
     .label { display: inline-block; padding: 2px 7px; border-radius: 12px; font-size: 11px;
@@ -104,8 +105,9 @@
   </select>
   <select id="state-filter" onchange="applyFilters()">
     <option value="">All states</option>
-    <option value="open">Open</option>
+    <option value="open" selected>Open</option>
     <option value="draft">Draft</option>
+    <option value="merged">Merged</option>
     <option value="closed">Closed</option>
   </select>
   <select id="author-filter" onchange="applyFilters()">
@@ -153,7 +155,7 @@
       {% for row in rows %}
       <tr
         data-repo="{{ row.repo }}"
-        data-state="{{ 'draft' if row.draft else row.state }}"
+        data-state="{{ 'draft' if row.draft else ('merged' if row.merged else row.state) }}"
         data-author="{{ row.author }}"
         data-bot="{{ 'true' if row.is_bot else 'false' }}"
         data-lang="{{ row.lang }}"
@@ -171,6 +173,8 @@
             <span class="badge badge-draft">Draft</span>
           {% elif row.state == 'open' %}
             <span class="badge badge-open">Open</span>
+          {% elif row.merged %}
+            <span class="badge badge-merged">Merged</span>
           {% else %}
             <span class="badge badge-closed">Closed</span>
           {% endif %}
@@ -252,6 +256,8 @@
     });
     document.getElementById('count').textContent = visible + ' PRs';
   }
+
+  document.addEventListener('DOMContentLoaded', applyFilters);
 
   function sortTable(col) {
     const table = document.getElementById('pr-table');
