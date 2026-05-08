@@ -1,4 +1,4 @@
-name: PR Report
+name: Generate PR Report
 
 on:
   schedule:

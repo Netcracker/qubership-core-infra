@@ -127,6 +127,8 @@
     <option value="service">Service</option>
     <option value="other">Other</option>
   </select>
+  <input type="date" id="date-from" onchange="applyFilters()" title="Updated from">
+  <input type="date" id="date-to" onchange="applyFilters()" title="Updated to">
   <button class="btn-show-all" onclick="showAll()">Show All</button>
   <div class="toolbar-right">
     <span class="count" id="count">{{ rows | length }} PRs</span>
@@ -160,6 +162,7 @@
         data-bot="{{ 'true' if row.is_bot else 'false' }}"
         data-lang="{{ row.lang }}"
         data-type="{{ row.repo_type }}"
+        data-updated="{{ row.updated_at }}"
         data-text="{{ row.repo }} {{ row.title }} {{ row.author }} {{ row.labels | join(' ') }}"
       >
         <td><a class="repo-link" href="{{ row.repo_url }}" target="_blank">{{ row.repo }}</a></td>
@@ -212,6 +215,8 @@
       document.getElementById(id).value = '';
     });
     document.getElementById('search').value = '';
+    document.getElementById('date-from').value = '';
+    document.getElementById('date-to').value = '';
     applyFilters();
   }
 
@@ -240,17 +245,22 @@
     const authorFilter = document.getElementById('author-filter').value;
     const langFilter = document.getElementById('lang-filter').value;
     const typeFilter = document.getElementById('type-filter').value;
+    const dateFrom = document.getElementById('date-from').value;
+    const dateTo = document.getElementById('date-to').value;
     const rows = document.querySelectorAll('#pr-table tbody tr');
     let visible = 0;
     rows.forEach(tr => {
       const text = tr.dataset.text.toLowerCase();
       const matchSearch = include.every(t => text.includes(t)) && exclude.every(t => !text.includes(t));
+      const updated = tr.dataset.updated;
       const show = matchSearch
         && (!repoFilter || tr.dataset.repo === repoFilter)
         && (!stateFilter || tr.dataset.state === stateFilter)
         && (!authorFilter || (authorFilter === 'bot' ? tr.dataset.bot === 'true' : tr.dataset.bot === 'false'))
         && (!langFilter || tr.dataset.lang === langFilter)
-        && (!typeFilter || tr.dataset.type === typeFilter);
+        && (!typeFilter || tr.dataset.type === typeFilter)
+        && (!dateFrom || updated >= dateFrom)
+        && (!dateTo || updated <= dateTo);
       tr.classList.toggle('hidden', !show);
       if (show) visible++;
     });
