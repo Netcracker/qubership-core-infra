@@ -60,7 +60,7 @@ com.netcracker.cloud:mongo-evolution:8.0.8
 com.netcracker.cloud:mongo-evolution-aggregator:8.0.8
 com.netcracker.cloud:mongo-evolution-report-aggregate:8.0.8
 com.netcracker.cloud:mongo-evolution-spring:8.0.8
-com.netcracker.core:process-engine:1.4.10
+com.netcracker.core:process-engine:1.4.11
 com.netcracker.cloud.quarkus:build-parent:9.1.4
 com.netcracker.cloud.quarkus:cloud-core-quarkus:9.1.4
 com.netcracker.cloud.quarkus:cloud-core-quarkus-bom:9.1.4
