@@ -38,6 +38,10 @@ com.netcracker.cloud:core-error-handling:4.2.0-SNAPSHOT
 com.netcracker.cloud:core-error-handling-report-aggregate:4.2.0-SNAPSHOT
 com.netcracker.cloud:core-error-handling-rest:4.2.0-SNAPSHOT
 com.netcracker.cloud:core-error-handling-runtime:4.2.0-SNAPSHOT
+com.netcracker.cloud:core-internal-bom:1.0.0-SNAPSHOT
+com.netcracker.cloud:core-internal-boms:1.0.0-SNAPSHOT
+com.netcracker.cloud:core-quarkus-internal-bom:1.0.0-SNAPSHOT
+com.netcracker.cloud:core-spring-internal-bom:1.0.0-SNAPSHOT
 com.netcracker.cloud.junit.cloudcore:cloud-core-extension:8.9.0-SNAPSHOT
 com.netcracker.cloud.junit.cloudcore:cloud-core-extension-bom:8.9.0-SNAPSHOT
 com.netcracker.cloud.junit.cloudcore:cloud-core-parent:8.9.0-SNAPSHOT
