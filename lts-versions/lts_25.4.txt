@@ -153,6 +153,7 @@ com.netcracker.cloud:route-registration-webclient:6.2.10
 com.netcracker.cloud:webclient:6.2.10
 com.netcracker.cloud:microservice-restclient-aggregator:6.2.6
 com.netcracker.cloud:microservice-restclient-api:6.2.6
+com.netcracker.cloud:microservice-restclient-okhttp:6.2.6
 com.netcracker.cloud:microservice-restclient-parent:6.2.6
 com.netcracker.cloud:microservice-restclient-report-aggregate:6.2.6
 com.netcracker.cloud:microservice-restclient-resttemplate:6.2.6
