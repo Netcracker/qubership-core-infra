@@ -39,6 +39,10 @@ on:
         description: "dry run"
         type: boolean
         default: false
+      branch:
+        description: "Branch to check out all repositories from. Leave empty to use main. When set, only patch version bumps are allowed."
+        type: string
+        default: ""
 
 concurrency:
   group: "core-libs-go"
@@ -134,6 +138,7 @@ jobs:
           REPOSITORY_TO_RELEASE: ${{ inputs.repositoryToRelease }}
           SKIP_TEST: ${{ inputs.skipTest }}
           DRY_RUN: ${{ inputs.dryRun }}
+          BRANCH: ${{ inputs.branch }}
         # language="shell script"
         run: |
           mkdir /tmp/GOPROXY
@@ -168,6 +173,9 @@ jobs:
           args="${args} --summaryFile=${GITHUB_STEP_SUMMARY}"
           args="${args} --gavsResultFile=/tmp/gavs.txt"
           args="${args} --dependencyGraphFile=/tmp/graph.dot"
+          if [ -n "${BRANCH}" ]; then
+            args="${args} --branch=${BRANCH}"
+          fi
           args="${args} ${options}"
           cmd="java -jar go-bulk-release-cli.jar ${args}"
           echo "running cmd: ${cmd}"
