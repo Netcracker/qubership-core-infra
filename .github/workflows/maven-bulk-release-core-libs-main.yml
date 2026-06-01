@@ -85,7 +85,7 @@ jobs:
 
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           ref: "main"
           token: '${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}'
@@ -178,14 +178,14 @@ jobs:
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
 
       - name: "Cache Maven dependencies"
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ github.run_id }}
           restore-keys: ${{ runner.os }}-maven-
 
       - name: "Set up java"
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
         with:
           java-version: |
             17
@@ -264,20 +264,20 @@ jobs:
           eval "${cmd}"
 
       - name: "Upload gavs artifact"
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: gavs.txt
           path: /tmp/gavs.txt
 
       - name: "Upload graph artifact"
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: graph.dot
           path: /tmp/graph.dot
 
       - name: "Upload logs artifact"
         if: ${{ always() }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: logs
           path: /tmp/logs/
