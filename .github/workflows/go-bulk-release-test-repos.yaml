@@ -25,6 +25,14 @@ on:
         description: "Branch to check out all repositories from. Leave empty to use main. When set, only patch version bumps are allowed."
         type: string
         default: ""
+      ltsRelease:
+        description: "Enable LTS release mode: create LTS branches and add technical commit to main. Requires repositoryToRelease=all."
+        type: boolean
+        default: false
+      ltsBranchName:
+        description: "LTS branch name to create, e.g. lts/26.2 (required when ltsRelease=true)"
+        type: string
+        default: ""
 
 concurrency:
   group: "test-repos-go"
@@ -103,6 +111,8 @@ jobs:
           SKIP_TEST: ${{ inputs.skipTest }}
           DRY_RUN: ${{ inputs.dryRun }}
           BRANCH: ${{ inputs.branch }}
+          LTS_RELEASE: ${{ inputs.ltsRelease }}
+          LTS_BRANCH_NAME: ${{ inputs.ltsBranchName }}
         # language="shell script"
         run: |
           mkdir /tmp/GOPROXY
@@ -139,6 +149,10 @@ jobs:
           args="${args} --dependencyGraphFile=/tmp/graph.dot"
           if [ -n "${BRANCH}" ]; then
             args="${args} --branch=${BRANCH}"
+          fi
+          if [ "${LTS_RELEASE}" = "true" ]; then
+            args="${args} --ltsRelease"
+            args="${args} --ltsBranchName=${LTS_BRANCH_NAME}"
           fi
           args="${args} ${options}"
           cmd="java -jar go-bulk-release-cli.jar ${args}"
