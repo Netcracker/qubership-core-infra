@@ -66,7 +66,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       #      - name: "Cache maven dependencies"
       #        uses: actions/cache@v4
@@ -76,7 +76,7 @@ jobs:
       #          restore-keys: ${{ runner.os }}-maven-
 
       - name: "Set up java"
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
         with:
           java-version: "21"
           architecture: 'x64'
@@ -117,19 +117,19 @@ jobs:
           eval "${cmd}"
 
       - name: "Upload implicit-gavs.txt artifact"
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: implicit-gavs
           path: implicit-gavs.txt
 
       - name: "Upload effective-gavs.txt artifact"
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: effective-gavs
           path: effective-gavs.txt
 
       - name: "Upload diff.yaml artifact"
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: diff.yaml
           path: diff.yaml
@@ -195,7 +195,7 @@ jobs:
           git push
 
       - name: "Upload renovate-core-config.json artifact"
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: renovate-core-config
           path: renovate-core-config.json
