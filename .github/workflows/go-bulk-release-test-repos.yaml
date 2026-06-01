@@ -1,7 +1,7 @@
 # $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-workflow.json
 
-name: "Go bulk release core lib"
-run-name: Go bulk release of core-libs [${{ inputs.repositoryToRelease }}] by @${{ github.actor }}'
+name: "Go bulk release test repos"
+run-name: Go bulk release of test-repos [${{ inputs.repositoryToRelease }}] by @${{ github.actor }}'
 
 on:
   workflow_dispatch:
@@ -11,26 +11,8 @@ on:
         description: "Repository to bulk release from. Select 'all' to release all repositories"
         options:
           - all
-          - qubership-core-lib-go
-          - qubership-core-lib-go-actuator-common
-          - qubership-core-lib-go-bg-kafka
-          - qubership-core-lib-go-bg-state-monitor
-          - qubership-core-lib-go-dbaas-arangodb-client
-          - qubership-core-lib-go-dbaas-base-client
-          - qubership-core-lib-go-dbaas-cassandra-client
-          - qubership-core-lib-go-dbaas-clickhouse-client
-          - qubership-core-lib-go-dbaas-mongo-client
-          - qubership-core-lib-go-dbaas-opensearch-client
-          - qubership-core-lib-go-dbaas-postgres-client
-          - qubership-core-lib-go-error-handling
-          - qubership-core-lib-go-fiber-server-utils
-          - qubership-core-lib-go-maas-bg-segmentio
-          - qubership-core-lib-go-maas-client
-          - qubership-core-lib-go-maas-core
-          - qubership-core-lib-go-maas-segmentio
-          - qubership-core-lib-go-paas-mediation-client
-          - qubership-core-lib-go-rest-utils
-          - qubership-core-lib-go-stomp-websocket
+          - test-go-repo-A
+          - test-go-repo-B
       skipTest:
         description: "skip tests"
         type: boolean
@@ -45,7 +27,7 @@ on:
         default: ""
 
 concurrency:
-  group: "core-libs-go"
+  group: "test-repos-go"
   cancel-in-progress: false
 
 permissions:
@@ -61,7 +43,7 @@ jobs:
       MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
     outputs:
-      result: ${{ steps.run-maven-bulk-release-cli.outputs.result }}
+      result: ${{ steps.run-go-bulk-release-cli.outputs.result }}
 
     steps:
       - name: "Checkout"
@@ -74,26 +56,8 @@ jobs:
         shell: bash
         # language="shell script"
         run: |
-          repositories="https://github.com/netcracker/qubership-core-lib-go
-          https://github.com/netcracker/qubership-core-lib-go-actuator-common
-          https://github.com/netcracker/qubership-core-lib-go-bg-kafka
-          https://github.com/netcracker/qubership-core-lib-go-bg-state-monitor
-          https://github.com/netcracker/qubership-core-lib-go-dbaas-arangodb-client
-          https://github.com/netcracker/qubership-core-lib-go-dbaas-base-client
-          https://github.com/netcracker/qubership-core-lib-go-dbaas-cassandra-client
-          https://github.com/netcracker/qubership-core-lib-go-dbaas-clickhouse-client
-          https://github.com/netcracker/qubership-core-lib-go-dbaas-mongo-client
-          https://github.com/netcracker/qubership-core-lib-go-dbaas-opensearch-client
-          https://github.com/netcracker/qubership-core-lib-go-dbaas-postgres-client
-          https://github.com/netcracker/qubership-core-lib-go-error-handling
-          https://github.com/netcracker/qubership-core-lib-go-fiber-server-utils
-          https://github.com/netcracker/qubership-core-lib-go-maas-bg-segmentio
-          https://github.com/netcracker/qubership-core-lib-go-maas-client
-          https://github.com/netcracker/qubership-core-lib-go-maas-core
-          https://github.com/netcracker/qubership-core-lib-go-maas-segmentio
-          https://github.com/netcracker/qubership-core-lib-go-paas-mediation-client
-          https://github.com/netcracker/qubership-core-lib-go-rest-utils
-          https://github.com/netcracker/qubership-core-lib-go-stomp-websocket"
+          repositories="https://github.com/TaurMorchant/test-go-repo-A
+          https://github.com/TaurMorchant/test-go-repo-B"
           echo "repositories=\n${repositories}"
           repositories=$(echo "${repositories}" | tr '\n' ',')
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
@@ -142,12 +106,12 @@ jobs:
         # language="shell script"
         run: |
           mkdir /tmp/GOPROXY
-          
-          snapshotVersion="1.8.2-20260408.075114-6"
-          
+
+          snapshotVersion="1.8.2-20260601.064537-12"
+
           url="https://maven.pkg.github.com/netcracker/qubership-core-bulk-release/org/qubership/cloud/go-bulk-release-cli/1.8.2-SNAPSHOT/go-bulk-release-cli-${snapshotVersion}-jar-with-dependencies.jar"
           curl --fail -L -o "go-bulk-release-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
-          
+
           options=""
           if [ "${SKIP_TEST}" = "true" ]; then
             options="${options} --skipTests"
@@ -158,8 +122,8 @@ jobs:
           repositoryToRelease=""
           if [ "${REPOSITORY_TO_RELEASE}" = "all" ]; then
             repositoryToRelease=""
-          else 
-            repositoryToRelease="https://github.com/netcracker/${REPOSITORY_TO_RELEASE}"
+          else
+            repositoryToRelease="https://github.com/TaurMorchant/${REPOSITORY_TO_RELEASE}"
           fi
           args="--baseDir=/tmp"
           args="${args} --goProxyDir=/tmp/GOPROXY"
