@@ -6,6 +6,10 @@ run-name: Go bulk release of core-services [${{ inputs.repositoryToRelease }}] b
 on:
   workflow_dispatch:
     inputs:
+      branch:
+        description: "Branch"
+        type: string
+        default: "main"
       repositoryToRelease:
         type: choice
         description: "Repository to bulk release from. Select 'all' to release all repositories"
@@ -17,6 +21,14 @@ on:
           - qubership-core-maas-agent
           - qubership-core-paas-mediation
           - qubership-core-site-management
+      ltsRelease:
+        description: "LTS release"
+        type: boolean
+        default: false
+      ltsBranchName:
+        description: "LTS branch name to create"
+        type: string
+        default: ""
       skipTest:
         description: "skip tests"
         type: boolean
