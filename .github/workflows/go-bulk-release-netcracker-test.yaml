@@ -6,6 +6,10 @@ run-name: Go bulk release of netcracker-test [${{ inputs.repositoryToRelease }}]
 on:
   workflow_dispatch:
     inputs:
+      branch:
+        description: "Branch"
+        type: string
+        default: "main"
       repositoryToRelease:
         type: choice
         description: "Repository to bulk release from. Select 'all' to release all repositories"
@@ -13,6 +17,14 @@ on:
           - all
           - qubership-core-lib-go-actuator-common
           - qubership-core-lib-go-fiber-server-utils
+      ltsRelease:
+        description: "LTS release"
+        type: boolean
+        default: false
+      ltsBranchName:
+        description: "LTS branch name to create"
+        type: string
+        default: ""
       skipTest:
         description: "skip tests"
         type: boolean
@@ -21,18 +33,6 @@ on:
         description: "dry run"
         type: boolean
         default: false
-      branch:
-        description: "Branch to check out all repositories from. Leave empty to use main. When set, only patch version bumps are allowed."
-        type: string
-        default: ""
-      ltsRelease:
-        description: "Enable LTS release mode: create LTS branches and add technical commit to main. Requires repositoryToRelease=all."
-        type: boolean
-        default: false
-      ltsBranchName:
-        description: "LTS branch name to create, e.g. lts/26.2 (required when ltsRelease=true)"
-        type: string
-        default: ""
 
 concurrency:
   group: "netcracker-test-go"
@@ -147,7 +147,7 @@ jobs:
           args="${args} --summaryFile=${GITHUB_STEP_SUMMARY}"
           args="${args} --gavsResultFile=/tmp/gavs.txt"
           args="${args} --dependencyGraphFile=/tmp/graph.dot"
-          if [ -n "${BRANCH}" ]; then
+          if [ -n "${BRANCH}" ] && [ "${BRANCH}" != "main" ]; then
             args="${args} --branch=${BRANCH}"
           fi
           if [ "${LTS_RELEASE}" = "true" ]; then
