@@ -11,8 +11,8 @@ on:
         description: "Repository to bulk release from. Select 'all' to release all repositories"
         options:
           - all
-          - qubership-core-lib-go
           - qubership-core-lib-go-actuator-common
+          - qubership-core-lib-go-fiber-server-utils
       skipTest:
         description: "skip tests"
         type: boolean
@@ -64,8 +64,8 @@ jobs:
         shell: bash
         # language="shell script"
         run: |
-          repositories="https://github.com/netcracker/qubership-core-lib-go
-          https://github.com/netcracker/qubership-core-lib-go-actuator-common"
+          repositories="https://github.com/netcracker/qubership-core-lib-go-actuator-common
+          https://github.com/netcracker/qubership-core-lib-go-fiber-server-utils"
           echo "repositories=\n${repositories}"
           repositories=$(echo "${repositories}" | tr '\n' ',')
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
