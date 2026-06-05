@@ -146,21 +146,31 @@ jobs:
           REPOSITORY_TO_RELEASE: ${{ inputs.repositoryToRelease }}
           SKIP_TEST: ${{ inputs.skipTest }}
           DRY_RUN: ${{ inputs.dryRun }}
+          LTS_RELEASE: ${{ inputs.ltsRelease }}
+          LTS_BRANCH_NAME: ${{ inputs.ltsBranchName }}
+          BRANCH: ${{ inputs.branch }}
         # language="shell script"
         run: |
           mkdir /tmp/GOPROXY
-          
-          snapshotVersion="1.8.2-20260408.075114-6"
-          
+
+          snapshotVersion="1.8.2-20260605.134848-18"
+
           url="https://maven.pkg.github.com/netcracker/qubership-core-bulk-release/org/qubership/cloud/go-bulk-release-cli/1.8.2-SNAPSHOT/go-bulk-release-cli-${snapshotVersion}-jar-with-dependencies.jar"
           curl --fail -L -o "go-bulk-release-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
-          
+
           options=""
           if [ "${SKIP_TEST}" = "true" ]; then
             options="${options} --skipTests"
           fi
           if [ "${DRY_RUN}" = "true" ]; then
             options="${options} --dryRun"
+          fi
+          if [ "${LTS_RELEASE}" = "true" ]; then
+            options="${options} --ltsRelease"
+            options="${options} --ltsBranchName=${LTS_BRANCH_NAME}"
+          fi
+          if [ "${BRANCH}" != "main" ]; then
+            options="${options} --branch=${BRANCH}"
           fi
           repositoryToRelease=""
           if [ "${REPOSITORY_TO_RELEASE}" = "all" ]; then
