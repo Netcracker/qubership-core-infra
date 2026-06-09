@@ -1,0 +1,41 @@
+<div class="container">
+  <table>
+    <thead>
+      <tr>
+        <th>Repository</th>
+        <th>Module path</th>
+        {% for branch in go.branches %}
+        <th class="ver">{{ branch }}<br><a class="dl" href="go_{{ branch.replace('/', '_') }}.txt" download>&#8595; export</a></th>
+        {% endfor %}
+        <th class="ver snap-th">main<br><a class="dl" href="go_main.txt" download>&#8595; export</a></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for repo in go.repos %}
+      {% set repo_mods = go.repo_modules[repo] %}
+      {% for mod_path in repo_mods %}
+      <tr{% if loop.first %} class="ms"{% endif %}>
+        {% if loop.first %}
+        <td class="mod" rowspan="{{ repo_mods | length }}">{{ repo }}</td>
+        {% endif %}
+        <td class="art">{{ mod_path }}</td>
+        {% for branch in go.branches %}
+        {% set ver = go.versions.get(branch, {}).get(mod_path) %}
+        {% if ver %}
+        <td class="ver"><span>{{ ver }}</span></td>
+        {% else %}
+        <td class="miss">—</td>
+        {% endif %}
+        {% endfor %}
+        {% set snap = go.main_versions.get(mod_path) %}
+        {% if snap %}
+        <td class="ver snap"><span>{{ snap }}</span></td>
+        {% else %}
+        <td class="miss">—</td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

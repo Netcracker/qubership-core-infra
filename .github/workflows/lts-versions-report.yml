@@ -18,49 +18,30 @@ jobs:
         with:
           path: infra
 
-      - name: Checkout java-libs (full history, all branches)
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          repository: Netcracker/qubership-core-java-libs
-          token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
-          fetch-depth: 0
-          fetch-tags: false
-          path: java-libs
-
-      - name: Checkout core-operator (full history, all branches)
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          repository: Netcracker/qubership-core-core-operator
-          token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
-          fetch-depth: 0
-          fetch-tags: false
-          path: qubership-core-core-operator
-
-      - name: Checkout config-server (full history, all branches)
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          repository: Netcracker/qubership-core-config-server
-          token: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
-          fetch-depth: 0
-          fetch-tags: false
-          path: qubership-core-config-server
-
-      - name: Fetch all remote branches
+      - name: Clone Java repos
+        env:
+          TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
         run: |
-          git -C java-libs fetch --all --prune
-          git -C qubership-core-core-operator fetch --all --prune
-          git -C qubership-core-config-server fetch --all --prune
+          while IFS= read -r repo || [ -n "$repo" ]; do
+            [[ "$repo" =~ ^#|^[[:space:]]*$ ]] && continue
+            name="${repo##*/}"
+            git clone --quiet --filter=blob:none \
+              "https://x-token-auth:$TOKEN@github.com/$repo.git" "$name"
+            git -C "$name" fetch --all --prune --quiet
+          done < infra/lts-versions-script/java-repos.txt
 
       - name: Install dependencies
         run: pip install jinja2
 
       - name: Generate HTML report
+        env:
+          GH_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
         run: |
           mkdir -p _site
           python3 infra/lts-versions-script/lts-versions.py _site/index.html \
-            --repo "$GITHUB_WORKSPACE/java-libs" \
-            --repo "$GITHUB_WORKSPACE/qubership-core-core-operator" \
-            --repo "$GITHUB_WORKSPACE/qubership-core-config-server"
+            --java-repos infra/lts-versions-script/java-repos.txt \
+            --java-workspace "$GITHUB_WORKSPACE" \
+            --go-repos infra/lts-versions-script/go-repos.txt
 
       - name: Deploy to gh-pages (versions/ subpath, keep existing content)
         uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4

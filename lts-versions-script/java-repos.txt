@@ -1,0 +1,3 @@
+Netcracker/qubership-core-java-libs
+Netcracker/qubership-core-core-operator
+Netcracker/qubership-core-config-server

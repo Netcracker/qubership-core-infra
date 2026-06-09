@@ -1,0 +1,41 @@
+<div class="container">
+  <table>
+    <thead>
+      <tr>
+        <th>Module</th>
+        <th>Artifact</th>
+        {% for branch in java.branches %}
+        <th class="ver">{{ branch }}<br><a class="dl" href="{{ branch.replace('/', '_') }}.txt" download>&#8595; export</a></th>
+        {% endfor %}
+        <th class="ver snap-th">main<br><a class="dl" href="main_snapshot.txt" download>&#8595; export</a></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for module in java.modules %}
+      {% set module_artifacts = java.artifacts[module] %}
+      {% for artifact in module_artifacts %}
+      <tr{% if loop.first %} class="ms"{% endif %}>
+        {% if loop.first %}
+        <td class="mod" rowspan="{{ module_artifacts | length }}">{{ module }}</td>
+        {% endif %}
+        <td class="art">{{ artifact }}</td>
+        {% for branch in java.branches %}
+        {% set ver = java.versions.get(branch, {}).get(module) %}
+        {% if ver %}
+        <td class="ver"><span>{{ ver }}</span></td>
+        {% else %}
+        <td class="miss">—</td>
+        {% endif %}
+        {% endfor %}
+        {% set snap = java.main_versions.get(module) %}
+        {% if snap %}
+        <td class="ver snap"><span>{{ snap }}</span></td>
+        {% else %}
+        <td class="miss">—</td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
