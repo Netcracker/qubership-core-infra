@@ -3,9 +3,11 @@
 Generate HTML report with LTS and main versions for Java and Go repositories.
 
     lts-versions.py [output.html]
-      --java-repos <file>       text file with Netcracker/repo lines
-      --java-workspace <path>   directory where Java repos are checked out
-      --go-repos <file>         text file with Netcracker/repo lines
+      --java-libs-repos <file>      text file with Netcracker/repo lines (Java libs)
+      --java-services-repos <file>  text file with Netcracker/repo lines (Java services)
+      --java-workspace <path>       directory where Java repos are checked out
+      --go-libs-repos <file>        text file with Netcracker/repo lines (Go libs)
+      --go-services-repos <file>    text file with Netcracker/repo lines (Go services)
 """
 import argparse
 import concurrent.futures
@@ -59,7 +61,7 @@ def read_repos_file(path):
 
 # ── Java ─────────────────────────────────────────────────────────────────────
 
-def get_java_branches(repo):
+def get_lts_branches(repo):
     lines = git_text(repo, 'branch', '-a', '--list', '*lts/*').splitlines()
     seen = set()
     for line in lines:
@@ -203,7 +205,7 @@ def collect_java(repos_file, workspace):
         print('No repos found in Java repos file.', file=sys.stderr)
         return None
 
-    all_branch_sets = [set(get_java_branches(r)) for r in repos]
+    all_branch_sets = [set(get_lts_branches(r)) for r in repos]
     branches = sorted(set.union(*all_branch_sets))
     if not branches:
         print('No lts/* branches found in Java repos.', file=sys.stderr)
@@ -302,8 +304,8 @@ def _latest_semver_tag(repo, ref, subdir=''):
     for tag in tags:
         tag = tag.strip()
         if subdir:
-            prefix = subdir + '/v'
-            if tag.startswith(prefix) and tag[len(prefix):len(prefix) + 1].isdigit():
+            tag_prefix = subdir + '/v'
+            if tag.startswith(tag_prefix) and tag[len(tag_prefix):len(tag_prefix) + 1].isdigit():
                 return tag[len(subdir) + 1:]
         else:
             if tag and tag[0] == 'v' and len(tag) > 1 and tag[1].isdigit():
@@ -320,8 +322,7 @@ def _collect_one_go_repo(org_repo, token, tmpdir):
         return []
 
     try:
-        repo_name = org_repo.split('/')[-1]
-        branches  = get_java_branches(repo)
+        branches  = get_lts_branches(repo)
         main_ref  = next(
             (r for r in ('origin/main', 'origin/master') if ref_exists(repo, r)),
             None,
@@ -350,7 +351,7 @@ def collect_go(repos_file, token):
     org_repos = read_repos_file(repos_file)
     print(f'Go: cloning {len(org_repos)} repositories...')
 
-    # results: {repo_name: [(module_path, branches, branch_versions, main_version), ...]}
+    # results: {repo_name: [(module_path, branch_versions, main_version), ...]}
     raw: dict[str, list] = {}
     with tempfile.TemporaryDirectory(prefix='go-repos-') as tmpdir:
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
@@ -385,9 +386,6 @@ def collect_go(repos_file, token):
     if not repos_sorted:
         return None
 
-    # repo_modules: {repo_name: [module_path, ...]}
-    # versions:     {branch: {module_path: version}}
-    # main_versions:{module_path: version}
     repo_modules  = {r: [mod for mod, _, _ in raw[r]] for r in repos_sorted}
     versions      = defaultdict(dict)
     main_versions = {}
@@ -409,11 +407,11 @@ def export_filename(branch):
     return branch.replace('/', '_') + '.txt'
 
 
-def write_java_export_files(java_data, output_dir):
-    branches     = java_data['branches']
-    modules      = java_data['modules']
-    artifacts    = java_data['artifacts']
-    versions     = java_data['versions']
+def write_java_export_files(java_data, output_dir, prefix):
+    branches      = java_data['branches']
+    modules       = java_data['modules']
+    artifacts     = java_data['artifacts']
+    versions      = java_data['versions']
     main_versions = java_data['main_versions']
 
     def write(filename, ver_map):
@@ -425,14 +423,15 @@ def write_java_export_files(java_data, output_dir):
         (output_dir / filename).write_text('\n'.join(lines), encoding='utf-8')
 
     for branch in branches:
-        write(export_filename(branch), versions.get(branch, {}))
-    write('main_snapshot.txt', main_versions)
+        write(prefix + export_filename(branch), versions.get(branch, {}))
+    write(prefix + 'main_snapshot.txt', main_versions)
 
 
-def write_go_export_files(go_data, output_dir):
-    repos        = go_data['repos']
-    repo_modules = go_data['repo_modules']
-    versions     = go_data['versions']
+def write_go_export_files(go_data, output_dir, prefix):
+    branches      = go_data['branches']
+    repos         = go_data['repos']
+    repo_modules  = go_data['repo_modules']
+    versions      = go_data['versions']
     main_versions = go_data['main_versions']
 
     def write(filename, ver_map):
@@ -444,14 +443,14 @@ def write_go_export_files(go_data, output_dir):
                     lines.append(f'{mod_path}@{ver}')
         (output_dir / filename).write_text('\n'.join(lines), encoding='utf-8')
 
-    for branch in go_data['branches']:
-        write('go_' + export_filename(branch), versions.get(branch, {}))
-    write('go_main.txt', main_versions)
+    for branch in branches:
+        write(prefix + export_filename(branch), versions.get(branch, {}))
+    write(prefix + 'main.txt', main_versions)
 
 
 # ── HTML ─────────────────────────────────────────────────────────────────────
 
-def generate_html(java_data, go_data, output_path):
+def generate_html(java_libs_data, java_services_data, go_libs_data, go_services_data, output_path):
     env = Environment(
         loader=FileSystemLoader(_SCRIPT_DIR),
         trim_blocks=True,
@@ -459,8 +458,10 @@ def generate_html(java_data, go_data, output_path):
     )
     html = env.get_template('report.html.j2').render(
         ts=datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC'),
-        java=java_data,
-        go=go_data,
+        java_libs=java_libs_data,
+        java_services=java_services_data,
+        go_libs=go_libs_data,
+        go_services=go_services_data,
     )
     output_path.write_text(html, encoding='utf-8')
 
@@ -473,42 +474,58 @@ def main():
         'output', nargs='?', default='versions-report.html',
         help='output HTML file (default: versions-report.html)',
     )
-    parser.add_argument('--java-repos', metavar='FILE',
-                        help='text file with Netcracker/repo lines for Java repos')
-    parser.add_argument('--java-workspace', metavar='PATH', default='.',
+    parser.add_argument('--java-libs-repos',     metavar='FILE')
+    parser.add_argument('--java-services-repos',  metavar='FILE')
+    parser.add_argument('--java-workspace',       metavar='PATH', default='.',
                         help='directory where Java repos are checked out (default: .)')
-    parser.add_argument('--go-repos', metavar='FILE',
-                        help='text file with Netcracker/repo lines for Go repos')
+    parser.add_argument('--go-libs-repos',        metavar='FILE')
+    parser.add_argument('--go-services-repos',    metavar='FILE')
     args = parser.parse_args()
 
-    if not args.java_repos and not args.go_repos:
-        parser.error('specify at least one of --java-repos or --go-repos')
+    if not any([args.java_libs_repos, args.java_services_repos,
+                args.go_libs_repos, args.go_services_repos]):
+        parser.error('specify at least one of --java-libs-repos, --java-services-repos, '
+                     '--go-libs-repos, --go-services-repos')
 
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
 
-    java_data = None
-    if args.java_repos:
-        java_data = collect_java(args.java_repos, args.java_workspace)
+    java_libs_data = java_services_data = None
+    if args.java_libs_repos:
+        java_libs_data = collect_java(args.java_libs_repos, args.java_workspace)
+        if java_libs_data:
+            java_libs_data['export_prefix'] = 'java_libs_'
+    if args.java_services_repos:
+        java_services_data = collect_java(args.java_services_repos, args.java_workspace)
+        if java_services_data:
+            java_services_data['export_prefix'] = 'java_services_'
 
-    go_data = None
-    if args.go_repos:
-        token = os.environ.get('GH_TOKEN', '')
+    token = os.environ.get('GH_TOKEN', '')
+    go_libs_data = go_services_data = None
+    if args.go_libs_repos or args.go_services_repos:
         if not token:
             print('WARNING: GH_TOKEN not set; Go repo cloning may fail', file=sys.stderr)
-        go_data = collect_go(args.go_repos, token)
+    if args.go_libs_repos:
+        go_libs_data = collect_go(args.go_libs_repos, token)
+        if go_libs_data:
+            go_libs_data['export_prefix'] = 'go_libs_'
+    if args.go_services_repos:
+        go_services_data = collect_go(args.go_services_repos, token)
+        if go_services_data:
+            go_services_data['export_prefix'] = 'go_services_'
 
-    if not java_data and not go_data:
+    if not any([java_libs_data, java_services_data, go_libs_data, go_services_data]):
         print('ERROR: no data collected from any repository.', file=sys.stderr)
         sys.exit(1)
 
-    if java_data:
-        write_java_export_files(java_data, output.parent)
+    for data in (java_libs_data, java_services_data):
+        if data:
+            write_java_export_files(data, output.parent, data['export_prefix'])
+    for data in (go_libs_data, go_services_data):
+        if data:
+            write_go_export_files(data, output.parent, data['export_prefix'])
 
-    if go_data:
-        write_go_export_files(go_data, output.parent)
-
-    generate_html(java_data, go_data, output)
+    generate_html(java_libs_data, java_services_data, go_libs_data, go_services_data, output)
     print(f'Report written to: {output}')
 
 

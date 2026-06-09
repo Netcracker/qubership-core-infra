@@ -22,13 +22,15 @@ jobs:
         env:
           TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
         run: |
-          while IFS= read -r repo || [ -n "$repo" ]; do
-            [[ "$repo" =~ ^#|^[[:space:]]*$ ]] && continue
-            name="${repo##*/}"
-            git clone --quiet --filter=blob:none \
-              "https://x-token-auth:$TOKEN@github.com/$repo.git" "$name"
-            git -C "$name" fetch --all --prune --quiet
-          done < infra/lts-versions-script/java-repos.txt
+          for list in infra/lts-versions-script/java-libs-repos.txt infra/lts-versions-script/java-services-repos.txt; do
+            while IFS= read -r repo || [ -n "$repo" ]; do
+              [[ "$repo" =~ ^#|^[[:space:]]*$ ]] && continue
+              name="${repo##*/}"
+              git clone --quiet --filter=blob:none \
+                "https://x-token-auth:$TOKEN@github.com/$repo.git" "$name"
+              git -C "$name" fetch --all --prune --quiet
+            done < "$list"
+          done
 
       - name: Install dependencies
         run: pip install jinja2
@@ -39,9 +41,11 @@ jobs:
         run: |
           mkdir -p _site
           python3 infra/lts-versions-script/lts-versions.py _site/index.html \
-            --java-repos infra/lts-versions-script/java-repos.txt \
-            --java-workspace "$GITHUB_WORKSPACE" \
-            --go-repos infra/lts-versions-script/go-repos.txt
+            --java-libs-repos     infra/lts-versions-script/java-libs-repos.txt \
+            --java-services-repos infra/lts-versions-script/java-services-repos.txt \
+            --java-workspace      "$GITHUB_WORKSPACE" \
+            --go-libs-repos       infra/lts-versions-script/go-libs-repos.txt \
+            --go-services-repos   infra/lts-versions-script/go-services-repos.txt
 
       - name: Deploy to gh-pages (versions/ subpath, keep existing content)
         uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4

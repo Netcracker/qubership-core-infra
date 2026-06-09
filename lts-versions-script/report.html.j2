@@ -22,12 +22,16 @@
                      border-bottom: 3px solid transparent; margin-bottom: -1px;
                      color: #57606a; transition: color .15s, border-color .15s; }
     .tab-bar label:hover { color: #24292f; }
-    #tab-java:checked ~ .tab-bar label[for="tab-java"],
-    #tab-go:checked   ~ .tab-bar label[for="tab-go"]   {
+    #tab-java-libs:checked     ~ .tab-bar label[for="tab-java-libs"],
+    #tab-java-services:checked ~ .tab-bar label[for="tab-java-services"],
+    #tab-go-libs:checked       ~ .tab-bar label[for="tab-go-libs"],
+    #tab-go-services:checked   ~ .tab-bar label[for="tab-go-services"] {
       color: #0969da; border-bottom-color: #0969da; }
     .tab-pane { display: none; }
-    #tab-java:checked ~ .tab-pane-java,
-    #tab-go:checked   ~ .tab-pane-go   { display: block; }
+    #tab-java-libs:checked     ~ .tab-pane-java-libs     { display: block; }
+    #tab-java-services:checked ~ .tab-pane-java-services { display: block; }
+    #tab-go-libs:checked       ~ .tab-pane-go-libs       { display: block; }
+    #tab-go-services:checked   ~ .tab-pane-go-services   { display: block; }
 
     /* ── Table ── */
     .container { padding: 24px; overflow-x: auto; }
@@ -61,25 +65,45 @@
   <span>Generated: {{ ts }}</span>
 </header>
 
-{% if java and go %}
+{% set tab_count = (java_libs is not none) | int + (java_services is not none) | int + (go_libs is not none) | int + (go_services is not none) | int %}
+{% if tab_count > 1 %}
 <div class="tabs-root">
-  <input type="radio" id="tab-java" name="tab" checked>
-  <input type="radio" id="tab-go"   name="tab">
+  {% if java_libs     %}<input type="radio" id="tab-java-libs"     name="tab" checked>{% endif %}
+  {% if java_services %}<input type="radio" id="tab-java-services" name="tab"{% if not java_libs %} checked{% endif %}>{% endif %}
+  {% if go_libs       %}<input type="radio" id="tab-go-libs"       name="tab"{% if not java_libs and not java_services %} checked{% endif %}>{% endif %}
+  {% if go_services   %}<input type="radio" id="tab-go-services"   name="tab"{% if not java_libs and not java_services and not go_libs %} checked{% endif %}>{% endif %}
   <nav class="tab-bar">
-    <label for="tab-java">Java</label>
-    <label for="tab-go">Go</label>
+    {% if java_libs     %}<label for="tab-java-libs">Java Libs</label>{% endif %}
+    {% if java_services %}<label for="tab-java-services">Java Services</label>{% endif %}
+    {% if go_libs       %}<label for="tab-go-libs">Go Libs</label>{% endif %}
+    {% if go_services   %}<label for="tab-go-services">Go Services</label>{% endif %}
   </nav>
-  <div class="tab-pane tab-pane-java">
-    {% include 'java-table.html.j2' %}
+  {% if java_libs %}
+  <div class="tab-pane tab-pane-java-libs">
+    {% with java = java_libs %}{% include 'java-table.html.j2' %}{% endwith %}
   </div>
-  <div class="tab-pane tab-pane-go">
-    {% include 'go-table.html.j2' %}
+  {% endif %}
+  {% if java_services %}
+  <div class="tab-pane tab-pane-java-services">
+    {% with java = java_services %}{% include 'java-table.html.j2' %}{% endwith %}
   </div>
+  {% endif %}
+  {% if go_libs %}
+  <div class="tab-pane tab-pane-go-libs">
+    {% with go = go_libs %}{% include 'go-table.html.j2' %}{% endwith %}
+  </div>
+  {% endif %}
+  {% if go_services %}
+  <div class="tab-pane tab-pane-go-services">
+    {% with go = go_services %}{% include 'go-table.html.j2' %}{% endwith %}
+  </div>
+  {% endif %}
 </div>
-{% elif java %}
-  {% include 'java-table.html.j2' %}
-{% elif go %}
-  {% include 'go-table.html.j2' %}
+{% else %}
+  {% if java_libs     %}{% with java = java_libs     %}{% include 'java-table.html.j2' %}{% endwith %}{% endif %}
+  {% if java_services %}{% with java = java_services %}{% include 'java-table.html.j2' %}{% endwith %}{% endif %}
+  {% if go_libs       %}{% with go = go_libs         %}{% include 'go-table.html.j2'   %}{% endwith %}{% endif %}
+  {% if go_services   %}{% with go = go_services     %}{% include 'go-table.html.j2'   %}{% endwith %}{% endif %}
 {% endif %}
 
 </body>

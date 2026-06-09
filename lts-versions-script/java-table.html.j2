@@ -5,9 +5,9 @@
         <th>Module</th>
         <th>Artifact</th>
         {% for branch in java.branches %}
-        <th class="ver">{{ branch }}<br><a class="dl" href="{{ branch.replace('/', '_') }}.txt" download>&#8595; export</a></th>
+        <th class="ver">{{ branch }}<br><a class="dl" href="{{ java.export_prefix }}{{ branch.replace('/', '_') }}.txt" download>&#8595; export</a></th>
         {% endfor %}
-        <th class="ver snap-th">main<br><a class="dl" href="main_snapshot.txt" download>&#8595; export</a></th>
+        <th class="ver snap-th">main<br><a class="dl" href="{{ java.export_prefix }}main_snapshot.txt" download>&#8595; export</a></th>
       </tr>
     </thead>
     <tbody>
