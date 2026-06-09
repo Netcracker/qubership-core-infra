@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Generate HTML report with LTS and main SNAPSHOT versions for qubership-core-java-libs.
+Generate HTML report with LTS and main SNAPSHOT versions for one or more repositories.
 
-    lts-versions.py [output.html] [--repo <monorepo-path>]
+    lts-versions.py [output.html] [--repo <path>] [--repo <path> ...]
 """
 import argparse
 import io
@@ -11,29 +11,31 @@ import sys
 import tarfile
 from collections import defaultdict
 from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
 
-REPO_ROOT = Path(__file__).resolve().parent.parent  # overridden by --repo
+_SCRIPT_DIR = Path(__file__).resolve().parent
+DEFAULT_REPO = _SCRIPT_DIR.parent  # fallback when no --repo given
 
 
-def git_text(*args):
+def git_text(repo, *args):
     return subprocess.run(
-        ['git', '-C', str(REPO_ROOT), *args],
+        ['git', '-C', str(repo), *args],
         capture_output=True, text=True, check=True,
     ).stdout
 
 
-def git_bytes(*args):
+def git_bytes(repo, *args):
     return subprocess.run(
-        ['git', '-C', str(REPO_ROOT), *args],
+        ['git', '-C', str(repo), *args],
         capture_output=True, check=True,
     ).stdout
 
 
-def get_branches():
-    lines = git_text('branch', '-a', '--list', '*lts/*').splitlines()
+def get_branches(repo):
+    lines = git_text(repo, 'branch', '-a', '--list', '*lts/*').splitlines()
     seen = set()
     for line in lines:
         name = line.strip().lstrip('* ').replace('remotes/origin/', '')
@@ -42,10 +44,10 @@ def get_branches():
     return sorted(seen)
 
 
-def get_ref(branch):
+def get_ref(repo, branch):
     for ref in (f'origin/{branch}', branch):
         try:
-            return git_text('rev-parse', ref).strip()
+            return git_text(repo, 'rev-parse', ref).strip()
         except subprocess.CalledProcessError:
             pass
     raise RuntimeError(f'Cannot resolve ref for branch: {branch}')
@@ -83,16 +85,51 @@ def released_version(snapshot):
     return f'{prefix}.{int(patch) - 1}'
 
 
-def collect_branch(branch, raw_version=False):
-    """Return {module: {'version': str | None, 'artifacts': set[str]}}"""
-    ref = get_ref(branch)
+def _has_own_version(pom_text):
+    """True if pom.xml declares its own <version> (not inside <parent> or <dependencies>)."""
+    in_parent = False
+    for line in pom_text.splitlines():
+        if '<parent>' in line:
+            in_parent = True
+        elif '</parent>' in line:
+            in_parent = False
+        elif in_parent:
+            continue
+        elif any(t in line for t in ('<dependencies>', '<dependencyManagement>', '<build>', '<profiles>', '<reporting>')):
+            return False
+        elif '<version>' in line and '</version>' in line:
+            return True
+    return False
 
-    all_paths = git_text('ls-tree', '-r', '--name-only', ref).splitlines()
+
+@lru_cache(maxsize=None)
+def is_monorepo(repo):
+    """True if top-level subdirectory pom.xml files each carry their own <version>."""
+    for p in Path(repo).glob('*/pom.xml'):
+        content = p.read_text(encoding='utf-8', errors='replace')
+        if _has_own_version(content):
+            return True
+    return False
+
+
+def collect_branch(repo, branch, raw_version=False):
+    """Return {module: {'version': str | None, 'artifacts': set[str]}}"""
+    ref = get_ref(repo, branch)
+    all_paths = git_text(repo, 'ls-tree', '-r', '--name-only', ref).splitlines()
+
+    if is_monorepo(repo):
+        return _collect_monorepo(repo, ref, all_paths, raw_version)
+    else:
+        return _collect_product(repo, ref, all_paths, raw_version)
+
+
+def _collect_monorepo(repo, ref, all_paths, raw_version):
+    """Each top-level subdirectory is an independent module with its own version."""
     pom_paths = [p for p in all_paths if p.endswith('pom.xml') and '/' in p]
     if not pom_paths:
         return {}
 
-    archive = git_bytes('archive', ref, *pom_paths)
+    archive = git_bytes(repo, 'archive', ref, *pom_paths)
     data = {}
 
     with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
@@ -122,6 +159,40 @@ def collect_branch(branch, raw_version=False):
                     data[module]['version'] = version if raw_version else released_version(version)
 
     return data
+
+
+def _collect_product(repo, ref, all_paths, raw_version):
+    """Single-product repo: version from root pom.xml, artifacts from all first-level sub-modules."""
+    pom_paths = [p for p in all_paths if p == 'pom.xml' or
+                 (p.endswith('pom.xml') and p.count('/') == 1)]
+    if not pom_paths:
+        return {}
+
+    archive = git_bytes(repo, 'archive', ref, *pom_paths)
+    module_name = Path(repo).name
+    version = None
+    artifacts = set()
+
+    with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
+        for member in tar.getmembers():
+            f = tar.extractfile(member)
+            if f is None:
+                continue
+            content = f.read().decode('utf-8', errors='replace')
+
+            artifact_id = extract_field(content, 'artifactId')
+            group_id    = extract_field(content, 'groupId', parent_fallback=True)
+            if not artifact_id:
+                continue
+
+            artifacts.add(f'{group_id}:{artifact_id}' if group_id else artifact_id)
+
+            if member.name == 'pom.xml':
+                ver = extract_field(content, 'version')
+                if ver and '-SNAPSHOT' in ver:
+                    version = ver if raw_version else released_version(ver)
+
+    return {module_name: {'version': version, 'artifacts': artifacts}}
 
 
 def export_filename(branch):
@@ -166,16 +237,15 @@ def main():
         help='output HTML file (default: versions-report.html)',
     )
     parser.add_argument(
-        '--repo', default=None,
-        help='path to the monorepo root (default: two directories above this script)',
+        '--repo', action='append', dest='repos', metavar='PATH',
+        help='path to a repository root; repeat for multiple repos (default: parent of script dir)',
     )
     args = parser.parse_args()
 
-    if args.repo:
-        global REPO_ROOT
-        REPO_ROOT = Path(args.repo).resolve()
+    repos = [Path(r).resolve() for r in (args.repos or [DEFAULT_REPO])]
 
-    branches = get_branches()
+    all_branch_sets = [set(get_branches(r)) for r in repos]
+    branches = sorted(set.union(*all_branch_sets))
     if not branches:
         print('No lts/* branches found.', file=sys.stderr)
         sys.exit(1)
@@ -184,13 +254,21 @@ def main():
     all_artifacts = defaultdict(set)
     versions = {}
     for branch in branches:
-        data = collect_branch(branch)
-        versions[branch] = {m: d['version'] for m, d in data.items()}
-        for module, d in data.items():
+        branch_data = {}
+        for repo in repos:
+            try:
+                data = collect_branch(repo, branch)
+                branch_data.update(data)
+            except (subprocess.CalledProcessError, RuntimeError):
+                pass
+        versions[branch] = {m: d['version'] for m, d in branch_data.items()}
+        for module, d in branch_data.items():
             all_artifacts[module].update(d['artifacts'])
 
     print('Collecting SNAPSHOT versions from main...')
-    main_data = collect_branch('main', raw_version=True)
+    main_data = {}
+    for repo in repos:
+        main_data.update(collect_branch(repo, 'main', raw_version=True))
     main_versions = {m: d['version'] for m, d in main_data.items()}
     for module, d in main_data.items():
         all_artifacts[module].update(d['artifacts'])
