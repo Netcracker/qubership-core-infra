@@ -22,12 +22,16 @@
                      border-bottom: 3px solid transparent; margin-bottom: -1px;
                      color: #57606a; transition: color .15s, border-color .15s; }
     .tab-bar label:hover { color: #24292f; }
-    #tab-java:checked ~ .tab-bar label[for="tab-java"],
-    #tab-go:checked   ~ .tab-bar label[for="tab-go"]   {
+    #tab-java-libs:checked     ~ .tab-bar label[for="tab-java-libs"],
+    #tab-java-services:checked ~ .tab-bar label[for="tab-java-services"],
+    #tab-go-libs:checked       ~ .tab-bar label[for="tab-go-libs"],
+    #tab-go-services:checked   ~ .tab-bar label[for="tab-go-services"] {
       color: #0969da; border-bottom-color: #0969da; }
     .tab-pane { display: none; }
-    #tab-java:checked ~ .tab-pane-java,
-    #tab-go:checked   ~ .tab-pane-go   { display: block; }
+    #tab-java-libs:checked     ~ .tab-pane-java-libs     { display: block; }
+    #tab-java-services:checked ~ .tab-pane-java-services { display: block; }
+    #tab-go-libs:checked       ~ .tab-pane-go-libs       { display: block; }
+    #tab-go-services:checked   ~ .tab-pane-go-services   { display: block; }
 
     /* ── Table ── */
     .container { padding: 24px; overflow-x: auto; }
@@ -58,81 +62,27 @@
 <body>
 <header>
   <h1>Qubership Core — LTS Versions</h1>
-  <span>Generated: 2026-06-09 11:15 UTC</span>
+  <span>Generated: 2026-06-09 14:04 UTC</span>
 </header>
 
 <div class="tabs-root">
-  <input type="radio" id="tab-java" name="tab" checked>
-  <input type="radio" id="tab-go"   name="tab">
-  <nav class="tab-bar">
-    <label for="tab-java">Java</label>
-    <label for="tab-go">Go</label>
-  </nav>
-  <div class="tab-pane tab-pane-java">
+<input type="radio" id="tab-java-libs"     name="tab" checked><input type="radio" id="tab-java-services" name="tab"><input type="radio" id="tab-go-libs"       name="tab"><input type="radio" id="tab-go-services"   name="tab">  <nav class="tab-bar">
+<label for="tab-java-libs">Java Libs</label><label for="tab-java-services">Java Services</label><label for="tab-go-libs">Go Libs</label><label for="tab-go-services">Go Services</label>  </nav>
+  <div class="tab-pane tab-pane-java-libs">
 <div class="container">
   <table>
     <thead>
       <tr>
         <th>Module</th>
         <th>Artifact</th>
-        <th class="ver">lts/25.3<br><a class="dl" href="lts_25.3.txt" download>&#8595; export</a></th>
-        <th class="ver">lts/25.4<br><a class="dl" href="lts_25.4.txt" download>&#8595; export</a></th>
-        <th class="ver">lts/26.1<br><a class="dl" href="lts_26.1.txt" download>&#8595; export</a></th>
-        <th class="ver">lts/26.2<br><a class="dl" href="lts_26.2.txt" download>&#8595; export</a></th>
-        <th class="ver snap-th">main<br><a class="dl" href="main_snapshot.txt" download>&#8595; export</a></th>
+        <th class="ver">lts/25.3<br><a class="dl" href="java_libs_lts_25.3.txt" download>&#8595; export</a></th>
+        <th class="ver">lts/25.4<br><a class="dl" href="java_libs_lts_25.4.txt" download>&#8595; export</a></th>
+        <th class="ver">lts/26.1<br><a class="dl" href="java_libs_lts_26.1.txt" download>&#8595; export</a></th>
+        <th class="ver">lts/26.2<br><a class="dl" href="java_libs_lts_26.2.txt" download>&#8595; export</a></th>
+        <th class="ver snap-th">main<br><a class="dl" href="java_libs_main_snapshot.txt" download>&#8595; export</a></th>
       </tr>
     </thead>
     <tbody>
-      <tr class="ms">
-        <td class="mod" rowspan="2">qubership-core-core-operator</td>
-        <td class="art">com.netcracker.core:core-operator</td>
-        <td class="ver"><span>2.1.4</span></td>
-        <td class="ver"><span>2.2.5</span></td>
-        <td class="ver"><span>2.4.3</span></td>
-        <td class="ver"><span>3.1.4</span></td>
-        <td class="ver snap"><span>3.2.1-SNAPSHOT</span></td>
-      </tr>
-      <tr>
-        <td class="art">com.netcracker.core:core-operator-parent</td>
-        <td class="ver"><span>2.1.4</span></td>
-        <td class="ver"><span>2.2.5</span></td>
-        <td class="ver"><span>2.4.3</span></td>
-        <td class="ver"><span>3.1.4</span></td>
-        <td class="ver snap"><span>3.2.1-SNAPSHOT</span></td>
-      </tr>
-      <tr class="ms">
-        <td class="mod" rowspan="4">qubership-core-config-server</td>
-        <td class="art">com.netcracker.cloud:config-server-aggregator</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="ver"><span>3.2.2</span></td>
-        <td class="ver"><span>4.0.5</span></td>
-        <td class="ver snap"><span>4.1.1-SNAPSHOT</span></td>
-      </tr>
-      <tr>
-        <td class="art">com.netcracker.cloud:config-server-app</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="ver"><span>3.2.2</span></td>
-        <td class="ver"><span>4.0.5</span></td>
-        <td class="ver snap"><span>4.1.1-SNAPSHOT</span></td>
-      </tr>
-      <tr>
-        <td class="art">com.netcracker.cloud:config-server-core</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="ver"><span>3.2.2</span></td>
-        <td class="ver"><span>4.0.5</span></td>
-        <td class="ver snap"><span>4.1.1-SNAPSHOT</span></td>
-      </tr>
-      <tr>
-        <td class="art">com.netcracker.cloud:config-server-report-aggregate</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="ver"><span>3.2.2</span></td>
-        <td class="ver"><span>4.0.5</span></td>
-        <td class="ver snap"><span>4.1.1-SNAPSHOT</span></td>
-      </tr>
       <tr class="ms">
         <td class="mod" rowspan="4">core-blue-green-state-monitor-quarkus</td>
         <td class="art">com.netcracker.cloud.quarkus:aggregator-for-jacoco</td>
@@ -2112,201 +2062,224 @@
     </tbody>
   </table>
 </div>  </div>
-  <div class="tab-pane tab-pane-go">
+  <div class="tab-pane tab-pane-java-services">
+<div class="container">
+  <table>
+    <thead>
+      <tr>
+        <th>Module</th>
+        <th>Artifact</th>
+        <th class="ver">lts/25.3<br><a class="dl" href="java_services_lts_25.3.txt" download>&#8595; export</a></th>
+        <th class="ver">lts/25.4<br><a class="dl" href="java_services_lts_25.4.txt" download>&#8595; export</a></th>
+        <th class="ver">lts/26.1<br><a class="dl" href="java_services_lts_26.1.txt" download>&#8595; export</a></th>
+        <th class="ver">lts/26.2<br><a class="dl" href="java_services_lts_26.2.txt" download>&#8595; export</a></th>
+        <th class="ver snap-th">main<br><a class="dl" href="java_services_main_snapshot.txt" download>&#8595; export</a></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="ms">
+        <td class="mod" rowspan="2">qubership-core-core-operator</td>
+        <td class="art">com.netcracker.core:core-operator</td>
+        <td class="ver"><span>2.1.4</span></td>
+        <td class="ver"><span>2.2.5</span></td>
+        <td class="ver"><span>2.4.3</span></td>
+        <td class="ver"><span>3.1.4</span></td>
+        <td class="ver snap"><span>3.2.1-SNAPSHOT</span></td>
+      </tr>
+      <tr>
+        <td class="art">com.netcracker.core:core-operator-parent</td>
+        <td class="ver"><span>2.1.4</span></td>
+        <td class="ver"><span>2.2.5</span></td>
+        <td class="ver"><span>2.4.3</span></td>
+        <td class="ver"><span>3.1.4</span></td>
+        <td class="ver snap"><span>3.2.1-SNAPSHOT</span></td>
+      </tr>
+      <tr class="ms">
+        <td class="mod" rowspan="4">qubership-core-config-server</td>
+        <td class="art">com.netcracker.cloud:config-server-aggregator</td>
+        <td class="miss">—</td>
+        <td class="miss">—</td>
+        <td class="ver"><span>3.2.2</span></td>
+        <td class="ver"><span>4.0.5</span></td>
+        <td class="ver snap"><span>4.1.1-SNAPSHOT</span></td>
+      </tr>
+      <tr>
+        <td class="art">com.netcracker.cloud:config-server-app</td>
+        <td class="miss">—</td>
+        <td class="miss">—</td>
+        <td class="ver"><span>3.2.2</span></td>
+        <td class="ver"><span>4.0.5</span></td>
+        <td class="ver snap"><span>4.1.1-SNAPSHOT</span></td>
+      </tr>
+      <tr>
+        <td class="art">com.netcracker.cloud:config-server-core</td>
+        <td class="miss">—</td>
+        <td class="miss">—</td>
+        <td class="ver"><span>3.2.2</span></td>
+        <td class="ver"><span>4.0.5</span></td>
+        <td class="ver snap"><span>4.1.1-SNAPSHOT</span></td>
+      </tr>
+      <tr>
+        <td class="art">com.netcracker.cloud:config-server-report-aggregate</td>
+        <td class="miss">—</td>
+        <td class="miss">—</td>
+        <td class="ver"><span>3.2.2</span></td>
+        <td class="ver"><span>4.0.5</span></td>
+        <td class="ver snap"><span>4.1.1-SNAPSHOT</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>  </div>
+  <div class="tab-pane tab-pane-go-libs">
 <div class="container">
   <table>
     <thead>
       <tr>
         <th>Repository</th>
         <th>Module path</th>
-        <th class="ver">lts/25.3<br><a class="dl" href="go_lts_25.3.txt" download>&#8595; export</a></th>
-        <th class="ver">lts/25.4<br><a class="dl" href="go_lts_25.4.txt" download>&#8595; export</a></th>
-        <th class="ver">lts/26.1<br><a class="dl" href="go_lts_26.1.txt" download>&#8595; export</a></th>
-        <th class="ver">lts/26.2<br><a class="dl" href="go_lts_26.2.txt" download>&#8595; export</a></th>
-        <th class="ver snap-th">main<br><a class="dl" href="go_main.txt" download>&#8595; export</a></th>
+        <th class="ver">lts/26.2<br><a class="dl" href="go_libs_lts_26.2.txt" download>&#8595; export</a></th>
+        <th class="ver snap-th">main<br><a class="dl" href="go_libs_main.txt" download>&#8595; export</a></th>
       </tr>
     </thead>
     <tbody>
       <tr class="ms">
         <td class="mod" rowspan="1">qubership-core-lib-go</td>
         <td class="art">github.com/netcracker/qubership-core-lib-go/v3</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
         <td class="ver"><span>v3.10.0</span></td>
         <td class="ver snap"><span>v3.11.0</span></td>
       </tr>
       <tr class="ms">
         <td class="mod" rowspan="1">qubership-core-lib-go-error-handling</td>
         <td class="art">github.com/netcracker/qubership-core-lib-go-error-handling/v3</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
         <td class="ver"><span>v3.5.3</span></td>
         <td class="ver snap"><span>v3.6.0</span></td>
       </tr>
       <tr class="ms">
         <td class="mod" rowspan="1">qubership-core-lib-go-actuator-common</td>
         <td class="art">github.com/netcracker/qubership-core-lib-go-actuator-common/v2</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
         <td class="ver"><span>v2.6.4</span></td>
         <td class="ver snap"><span>v2.7.0</span></td>
       </tr>
       <tr class="ms">
         <td class="mod" rowspan="1">qubership-core-lib-go-dbaas-base-client</td>
         <td class="art">github.com/netcracker/qubership-core-lib-go-dbaas-base-client/v3</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
         <td class="ver"><span>v3.4.4</span></td>
         <td class="ver snap"><span>v3.5.0</span></td>
       </tr>
       <tr class="ms">
         <td class="mod" rowspan="1">qubership-core-lib-go-rest-utils</td>
         <td class="art">github.com/netcracker/qubership-core-lib-go-rest-utils/v2</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
         <td class="ver"><span>v2.5.4</span></td>
         <td class="ver snap"><span>v2.6.0</span></td>
       </tr>
       <tr class="ms">
         <td class="mod" rowspan="1">qubership-core-lib-go-bg-state-monitor</td>
         <td class="art">github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
         <td class="ver"><span>v2.5.9</span></td>
         <td class="ver snap"><span>v2.6.0</span></td>
       </tr>
       <tr class="ms">
         <td class="mod" rowspan="1">qubership-core-lib-go-stomp-websocket</td>
         <td class="art">github.com/netcracker/qubership-core-lib-go-stomp-websocket/v3</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
         <td class="ver"><span>v3.4.9</span></td>
         <td class="ver snap"><span>v3.5.0</span></td>
       </tr>
       <tr class="ms">
         <td class="mod" rowspan="1">qubership-core-lib-go-bg-kafka</td>
         <td class="art">github.com/netcracker/qubership-core-lib-go-bg-kafka/v3</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
         <td class="ver"><span>v3.4.9</span></td>
         <td class="ver snap"><span>v3.5.0</span></td>
       </tr>
       <tr class="ms">
         <td class="mod" rowspan="1">qubership-core-lib-go-dbaas-clickhouse-client</td>
         <td class="art">github.com/netcracker/qubership-core-lib-go-dbaas-clickhouse-client/v2</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
         <td class="ver"><span>v2.3.9</span></td>
         <td class="ver snap"><span>v2.4.0</span></td>
       </tr>
       <tr class="ms">
         <td class="mod" rowspan="1">qubership-core-lib-go-dbaas-postgres-client</td>
         <td class="art">github.com/netcracker/qubership-core-lib-go-dbaas-postgres-client/v4</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
         <td class="ver"><span>v4.3.9</span></td>
         <td class="ver snap"><span>v4.4.0</span></td>
       </tr>
       <tr class="ms">
         <td class="mod" rowspan="1">qubership-core-lib-go-dbaas-mongo-client</td>
         <td class="art">github.com/netcracker/qubership-core-lib-go-dbaas-mongo-client/v3</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
         <td class="ver"><span>v3.3.9</span></td>
         <td class="ver snap"><span>v3.4.0</span></td>
       </tr>
       <tr class="ms">
         <td class="mod" rowspan="1">qubership-core-lib-go-dbaas-cassandra-client</td>
         <td class="art">github.com/netcracker/qubership-core-lib-go-dbaas-cassandra-client/v3</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
         <td class="ver"><span>v3.3.9</span></td>
         <td class="ver snap"><span>v3.4.0</span></td>
       </tr>
       <tr class="ms">
         <td class="mod" rowspan="1">qubership-core-lib-go-maas-client</td>
         <td class="art">github.com/netcracker/qubership-core-lib-go-maas-client/v3</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
         <td class="ver"><span>v3.4.9</span></td>
         <td class="ver snap"><span>v3.5.0</span></td>
       </tr>
       <tr class="ms">
         <td class="mod" rowspan="1">qubership-core-lib-go-dbaas-arangodb-client</td>
         <td class="art">github.com/netcracker/qubership-core-lib-go-dbaas-arangodb-client/v4</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
         <td class="ver"><span>v4.3.9</span></td>
         <td class="ver snap"><span>v4.4.0</span></td>
       </tr>
       <tr class="ms">
         <td class="mod" rowspan="1">qubership-core-lib-go-fiber-server-utils</td>
         <td class="art">github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
         <td class="ver"><span>v2.5.9</span></td>
         <td class="ver snap"><span>v2.6.0</span></td>
       </tr>
       <tr class="ms">
         <td class="mod" rowspan="1">qubership-core-lib-go-paas-mediation-client</td>
         <td class="art">github.com/netcracker/qubership-core-lib-go-paas-mediation-client/v8</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
         <td class="ver"><span>v8.7.0</span></td>
         <td class="ver snap"><span>v8.8.0</span></td>
       </tr>
       <tr class="ms">
         <td class="mod" rowspan="1">qubership-core-lib-go-dbaas-opensearch-client</td>
         <td class="art">github.com/netcracker/qubership-core-lib-go-dbaas-opensearch-client/v5</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
         <td class="ver"><span>v5.3.9</span></td>
         <td class="ver snap"><span>v5.4.0</span></td>
       </tr>
       <tr class="ms">
         <td class="mod" rowspan="1">qubership-core-lib-go-maas-core</td>
         <td class="art">github.com/netcracker/qubership-core-lib-go-maas-core/v3</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
         <td class="ver"><span>v3.4.9</span></td>
         <td class="ver snap"><span>v3.5.0</span></td>
       </tr>
       <tr class="ms">
         <td class="mod" rowspan="1">qubership-core-lib-go-maas-segmentio</td>
         <td class="art">github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
         <td class="ver"><span>v3.4.9</span></td>
         <td class="ver snap"><span>v3.5.0</span></td>
       </tr>
       <tr class="ms">
         <td class="mod" rowspan="1">qubership-core-lib-go-maas-bg-segmentio</td>
         <td class="art">github.com/netcracker/qubership-core-lib-go-maas-bg-segmentio/v3</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
-        <td class="miss">—</td>
         <td class="ver"><span>v3.4.9</span></td>
         <td class="ver snap"><span>v3.5.0</span></td>
       </tr>
+    </tbody>
+  </table>
+</div>  </div>
+  <div class="tab-pane tab-pane-go-services">
+<div class="container">
+  <table>
+    <thead>
+      <tr>
+        <th>Repository</th>
+        <th>Module path</th>
+        <th class="ver">lts/25.3<br><a class="dl" href="go_services_lts_25.3.txt" download>&#8595; export</a></th>
+        <th class="ver">lts/25.4<br><a class="dl" href="go_services_lts_25.4.txt" download>&#8595; export</a></th>
+        <th class="ver">lts/26.1<br><a class="dl" href="go_services_lts_26.1.txt" download>&#8595; export</a></th>
+        <th class="ver">lts/26.2<br><a class="dl" href="go_services_lts_26.2.txt" download>&#8595; export</a></th>
+        <th class="ver snap-th">main<br><a class="dl" href="go_services_main.txt" download>&#8595; export</a></th>
+      </tr>
+    </thead>
+    <tbody>
       <tr class="ms">
         <td class="mod" rowspan="2">qubership-core-control-plane</td>
         <td class="art">trace-service/trace-service</td>

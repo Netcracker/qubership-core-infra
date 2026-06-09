@@ -1,0 +1,2 @@
+com.netcracker.core:core-operator:2.1.4
+com.netcracker.core:core-operator-parent:2.1.4

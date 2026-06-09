@@ -1,0 +1,1 @@
+github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2@v2.0.4

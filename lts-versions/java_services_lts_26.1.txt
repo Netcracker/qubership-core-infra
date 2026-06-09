@@ -1,0 +1,6 @@
+com.netcracker.core:core-operator:2.4.3
+com.netcracker.core:core-operator-parent:2.4.3
+com.netcracker.cloud:config-server-aggregator:3.2.2
+com.netcracker.cloud:config-server-app:3.2.2
+com.netcracker.cloud:config-server-core:3.2.2
+com.netcracker.cloud:config-server-report-aggregate:3.2.2
