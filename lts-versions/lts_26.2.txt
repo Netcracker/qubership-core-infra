@@ -238,3 +238,9 @@ com.netcracker.cloud.maas.declarative:maas-declarative-kafka-client-quarkus-pare
 com.netcracker.cloud.maas.declarative:maas-kafka-quarkus-client-report-aggregate:8.0.10
 com.netcracker.cloud.maas.declarative:maas-declarative-kafka-client-spring:7.0.12
 com.netcracker.cloud.maas.declarative:maas-declarative-kafka-client-spring-bom:7.0.12
+com.netcracker.cloud:config-server-aggregator:4.0.5
+com.netcracker.cloud:config-server-app:4.0.5
+com.netcracker.cloud:config-server-core:4.0.5
+com.netcracker.cloud:config-server-report-aggregate:4.0.5
+com.netcracker.core:core-operator:3.1.4
+com.netcracker.core:core-operator-parent:3.1.4
