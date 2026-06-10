@@ -204,11 +204,11 @@
   }, {
     "matchPackageNames" : [ "io.quarkus.platform:quarkus-bom", "io.quarkus.platform:quarkus-maven-plugin", "io.quarkus.platform:quarkus-operator-sdk-bom" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^3.33.1$/"
+    "allowedVersions" : "/^3.33.3$/"
   }, {
     "matchPackageNames" : [ "io.quarkus:quarkus-bom", "io.quarkus:quarkus-core", "io.quarkus:quarkus-core-deployment", "io.quarkus:quarkus-devtools-common", "io.quarkus:quarkus-extension-maven-plugin", "io.quarkus:quarkus-extension-processor", "io.quarkus:quarkus-maven-plugin", "io.quarkus:quarkus-rest-client", "io.quarkus:quarkus-universe-bom" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^3.33.1$/"
+    "allowedVersions" : "/^3.33.3$/"
   }, {
     "matchPackageNames" : [ "io.opentelemetry.instrumentation:opentelemetry-kafka-clients-2.6" ],
     "groupName" : "maven",
@@ -236,7 +236,7 @@
   }, {
     "matchPackageNames" : [ "org.springframework.cloud:spring-cloud-dependencies" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^2025.1.1$/"
+    "allowedVersions" : "/^2025.1.2$/"
   }, {
     "matchPackageNames" : [ "org.mockito:mockito-core", "org.mockito:mockito-junit-jupiter" ],
     "groupName" : "maven",
@@ -420,7 +420,7 @@
   }, {
     "matchPackageNames" : [ "org.springframework.boot:spring-boot", "org.springframework.boot:spring-boot-autoconfigure", "org.springframework.boot:spring-boot-dependencies", "org.springframework.boot:spring-boot-restclient", "org.springframework.boot:spring-boot-resttestclient", "org.springframework.boot:spring-boot-starter-actuator", "org.springframework.boot:spring-boot-starter-data-cassandra", "org.springframework.boot:spring-boot-starter-data-elasticsearch", "org.springframework.boot:spring-boot-starter-data-mongodb", "org.springframework.boot:spring-boot-starter-data-redis", "org.springframework.boot:spring-boot-starter-jdbc", "org.springframework.boot:spring-boot-starter-parent", "org.springframework.boot:spring-boot-starter-restclient-test", "org.springframework.boot:spring-boot-starter-security", "org.springframework.boot:spring-boot-starter-test", "org.springframework.boot:spring-boot-starter-web", "org.springframework.boot:spring-boot-starter-webflux", "org.springframework.boot:spring-boot-test", "org.springframework.boot:spring-boot-test-autoconfigure", "org.springframework.boot:spring-boot-webmvc-test" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^4.0.6$/"
+    "allowedVersions" : "/^4.0.7$/"
   }, {
     "matchPackageNames" : [ "org.junit.jupiter:junit-jupiter", "org.junit.jupiter:junit-jupiter-api", "org.junit.jupiter:junit-jupiter-engine", "org.junit.jupiter:junit-jupiter-params" ],
     "groupName" : "maven",
