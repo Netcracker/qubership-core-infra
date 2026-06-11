@@ -94,6 +94,9 @@ on:
         required: false
         type: string
         default: 'docker-dev-config.json'
+    secrets:
+      SONAR_TOKEN:
+        required: true
 
 permissions:
   contents: read
