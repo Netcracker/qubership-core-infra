@@ -38,6 +38,7 @@ on:
           - maas-declarative-client-commons
           - maas-declarative-client-quarkus
           - maas-declarative-client-spring
+          - core-maven-plugins
       gavs:
         type: string
         description: "Comma separated list of GAV(s)"
@@ -222,7 +223,8 @@ jobs:
           https://github.com/Netcracker/qubership-core-java-libs[branch=${BRANCH},pomFolder=maas-client]
           https://github.com/Netcracker/qubership-core-java-libs[branch=${BRANCH},pomFolder=maas-declarative-client-commons]
           https://github.com/Netcracker/qubership-core-java-libs[branch=${BRANCH},pomFolder=maas-declarative-client-quarkus]
-          https://github.com/Netcracker/qubership-core-java-libs[branch=${BRANCH},pomFolder=maas-declarative-client-spring]"
+          https://github.com/Netcracker/qubership-core-java-libs[branch=${BRANCH},pomFolder=maas-declarative-client-spring]
+          https://github.com/Netcracker/qubership-core-java-libs[branch=${BRANCH},pomFolder=core-maven-plugins]"
           
           # set module to release from
           if [ "${MODULE_TO_RELEASE}" != "all" ]; then
