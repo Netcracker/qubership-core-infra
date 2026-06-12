@@ -242,3 +242,5 @@ com.netcracker.cloud:core-internal-bom:1.0.0-SNAPSHOT
 com.netcracker.cloud:core-internal-boms:1.0.0-SNAPSHOT
 com.netcracker.cloud:core-quarkus-internal-bom:1.0.0-SNAPSHOT
 com.netcracker.cloud:core-spring-internal-bom:1.0.0-SNAPSHOT
+com.netcracker.cloud.plugins:core-maven-plugins:1.0.3-SNAPSHOT
+com.netcracker.cloud.plugins:httproutes-generator-maven-plugin:1.0.3-SNAPSHOT
