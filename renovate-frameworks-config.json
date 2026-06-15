@@ -3,6 +3,7 @@
     "renovate:core",
     "branch:main"
   ],
+  "minimumReleaseAge": "1 days",
   "separateMinorPatch": true,
   "separateMajorMinor": true,
   "packageRules": [

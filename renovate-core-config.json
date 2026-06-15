@@ -13,6 +13,7 @@
     "token" : "{{ secrets.renovation_bot_private_packages_read }}"
   } ],
   "labels" : [ "renovate:core", "branch:main" ],
+  "minimumReleaseAge": "1 days",
   "packageRules" : [ {
     "matchManagers" : [ "maven" ],
     "matchPackageNames" : [ "/.*/" ],
