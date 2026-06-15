@@ -1,7 +1,7 @@
 trace-service/trace-service@v2.9.0
 github.com/netcracker/qubership-core-control-plane/control-plane/v2@v2.9.0
 github.com/netcracker/qubership-core-dbaas-agent/dbaas-agent-service/v2@v2.6.0
-github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2@v2.7.0
+github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2@v2.8.0
 github.com/netcracker/qubership-core-maas-agent/maas-agent-service/v2@v2.6.0
 github.com/netcracker/qubership-core-paas-mediation/paas-mediation-service/v2@v2.10.0
 github.com/netcracker/qubership-core-site-management/site-management-service/v2@v2.7.0
