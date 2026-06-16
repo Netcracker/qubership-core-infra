@@ -91,3 +91,67 @@ defer watcher.Stop()
 | `POD_SECRETS_DIR` | `/etc/secrets/pod-secrets` | Secrets directory |
 
 Key normalisation: file names are lowercased and `_` is replaced with `.` (`db_password` → `db.password`).
+
+---
+
+
+## Migrating from environment variables to pod-secrets
+
+If your application previously read credentials from environment variables (e.g. `FOO_USERNAME`, `FOO_PASSWORD`, `BAR_USERNAME`, `BAR_PASSWORD`) and those values came from separate Kubernetes Secrets, you can switch to pod-secrets with no code changes.
+
+**Single secret**
+
+If all credentials live in one Kubernetes Secret, mount it directly with `items` to control file names:
+
+```yaml
+volumes:
+  - name: app-credentials
+    secret:
+      secretName: secret
+      items:
+        - key: username
+          path: FOO_USERNAME
+        - key: password
+          path: FOO_PASSWORD
+
+volumeMounts:
+  - name: app-credentials
+    mountPath: /etc/secrets/pod-secrets
+    readOnly: true
+```
+
+**Multiple secrets: the problem with naively mounting two secrets to the same directory**
+
+Mounting two volumes to the same `mountPath` causes the second to shadow the first — only the files from the second secret will be visible at runtime.
+
+**Solution: use a `projected` volume**
+
+A `projected` volume merges multiple secrets into a single directory. Combined with `items`, you can map each secret key to a file whose name matches the original environment variable — so `configloader.GetOrDefaultString("foo.username", "")` continues to work without any changes in the application code.
+
+```yaml
+volumes:
+  - name: app-credentials
+    projected:
+      sources:
+        - secret:
+            name: first-secret
+            items:
+              - key: username
+                path: FOO_USERNAME
+              - key: password
+                path: FOO_PASSWORD
+        - secret:
+            name: second-secret
+            items:
+              - key: username
+                path: BAR_USERNAME
+              - key: password
+                path: BAR_PASSWORD
+
+volumeMounts:
+  - name: app-credentials
+    mountPath: /etc/secrets/pod-secrets
+    readOnly: true
+```
+
+At runtime the directory contains four files (`FOO_USERNAME`, `FOO_PASSWORD`, `BAR_USERNAME`, `BAR_PASSWORD`), and the property source exposes them as `foo.username`, `foo.password`, `bar.username`, `bar.password` — exactly the keys the application already uses.
