@@ -2,7 +2,7 @@
 
 ## Overview
 
-A new component that automatically reads Kubernetes secrets mounted as files and exposes them as configuration properties — no changes to application code required.
+A new component that reads Kubernetes secrets mounted as files and exposes them as configuration properties.
 
 Each file in the mounted directory (default `/etc/secrets/pod-secrets`) becomes a configuration property:
 
