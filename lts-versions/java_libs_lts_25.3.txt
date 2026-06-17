@@ -103,6 +103,9 @@ com.netcracker.cloud.quarkus:maas-client-quarkus-deployment:7.1.4
 com.netcracker.cloud.quarkus:messaging-context:7.1.4
 com.netcracker.cloud.quarkus:messaging-context-deployment:7.1.4
 com.netcracker.cloud.quarkus:messaging-context-parent:7.1.4
+com.netcracker.cloud.quarkus:pod-secrets-config-source:7.1.4
+com.netcracker.cloud.quarkus:pod-secrets-config-source-deployment:7.1.4
+com.netcracker.cloud.quarkus:pod-secrets-config-source-parent:7.1.4
 com.netcracker.cloud.quarkus:report-aggregate:7.1.4
 com.netcracker.cloud.quarkus:rest-api-deprecation-switcher-parent:7.1.4
 com.netcracker.cloud.quarkus:rest-api-deprecation-switcher-quarkus:7.1.4
@@ -132,6 +135,9 @@ com.netcracker.cloud:core-rest-libraries-report-aggregate:6.1.4
 com.netcracker.cloud:log-manager:6.1.4
 com.netcracker.cloud:log-manager-common:6.1.4
 com.netcracker.cloud:logger-manager-spring:6.1.4
+com.netcracker.cloud:pod-secrets-provider:6.1.4
+com.netcracker.cloud:pod-secrets-provider-common:6.1.4
+com.netcracker.cloud:pod-secrets-provider-spring:6.1.4
 com.netcracker.cloud:rest-api-deprecation-switcher-common:6.1.4
 com.netcracker.cloud:rest-api-deprecation-switcher-parent:6.1.4
 com.netcracker.cloud:rest-api-deprecation-switcher-spring:6.1.4
