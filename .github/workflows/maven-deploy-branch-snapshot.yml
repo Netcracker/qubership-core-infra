@@ -1,0 +1,180 @@
+# Maven Deploy Branch Snapshot Workflow (experimental)
+#
+# Reusable workflow. Implements branch-isolated SNAPSHOT versioning: before deploy,
+# replaces all X.Y.Z-SNAPSHOT occurrences in every pom.xml with
+# X.Y.Z-<branch>-SNAPSHOT, then runs mvn deploy. Changes are NOT committed —
+# they exist only for the duration of the workflow run.
+#
+# This prevents branch artifacts from overwriting main or other branch artifacts
+# in the repository.
+#
+# Prerequisites:
+#   - All inter-module dependencies in main must use SNAPSHOT versions
+#   - No 3rd-party dependencies may use SNAPSHOT versions
+#
+# Usage:
+#   jobs:
+#     deploy:
+#       uses: Netcracker/qubership-core-infra/.github/workflows/maven-deploy-branch-snapshot.yml@main
+#       with:
+#         branch: 'feature/my-feature'
+#       secrets: inherit
+
+name: Maven deploy (branch snapshot)
+
+run-name: Deploy branch snapshot [${{ inputs.branch }}]
+
+on:
+  workflow_call:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        type: string
+      docker-config-file:
+        description: 'Path to docker config file inside .github folder'
+        required: false
+        type: string
+        default: 'docker-dev-config.json'
+      skip-docker:
+        description: 'Skip Docker image build'
+        required: false
+        type: boolean
+        default: true
+    secrets:
+      MAVEN_GPG_PRIVATE_KEY:
+        description: 'GPG private key'
+        required: false
+      MAVEN_GPG_PASSPHRASE:
+        description: 'GPG passphrase'
+        required: false
+
+concurrency:
+  group: maven-branch-snapshot-${{ inputs.branch }}
+  cancel-in-progress: true
+
+jobs:
+  maven-deploy:
+    name: Maven deploy (branch snapshot)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Prevent deploy from main
+        if: ${{ inputs.branch == 'main' }}
+        run: |
+          echo "::error::This workflow is for feature branches only. Use the 'Maven deploy' workflow for main."
+          exit 1
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+          fetch-depth: 0
+
+      - name: Compute version suffix from branch name
+        id: version
+        run: |
+          RAW="${{ inputs.branch }}"
+          # Replace non-alphanumeric characters with dashes, collapse runs, trim ends, cap length
+          SUFFIX=$(echo "$RAW" | sed 's/[^a-zA-Z0-9]/-/g; s/-\+/-/g; s/^-//; s/-$//' | cut -c1-50)
+          echo "suffix=$SUFFIX" >> $GITHUB_OUTPUT
+          echo "Branch '${RAW}' → version suffix '${SUFFIX}'"
+
+      - name: Patch SNAPSHOT versions in pom.xml files
+        run: |
+          SUFFIX="${{ steps.version.outputs.suffix }}"
+          find . -name "pom.xml" \
+            -exec sed -i "s/\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\)-SNAPSHOT/\1-${SUFFIX}-SNAPSHOT/g" {} +
+          echo "Patched versions:"
+          git diff --unified=0 -- '*/pom.xml' pom.xml \
+            | grep '^[+-][^+-]' \
+            | grep -o '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*[^<"]*SNAPSHOT[^<"]*' \
+            | sort -u
+
+      - name: Maven build
+        id: maven-build
+        uses: netcracker/qubership-workflow-hub/actions/maven-snapshot-deploy@v2.0.11
+        with:
+          java-version: "21"
+          target-store: 'github'
+          maven-command: 'deploy'
+          upload-artifact: 'false'
+          maven-username: ${{ github.actor }}
+          maven-token: ${{ github.token }}
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+          additional-mvn-args: '-l /tmp/maven-deploy.log'
+
+      - name: Show Maven log
+        if: steps.maven-build.outcome != 'skipped'
+        run: cat /tmp/maven-deploy.log 2>/dev/null || echo "Maven log not found"
+
+      - name: Print deployed artifacts
+        if: success()
+        env:
+          SUFFIX: ${{ steps.version.outputs.suffix }}
+        run: |
+          COORDS=$(python3 << 'PYEOF'
+          import re, os, sys
+
+          suffix = os.environ['SUFFIX']
+          log_path = '/tmp/maven-deploy.log'
+
+          # "Uploaded to <id>: <url> (<size>)" — past tense means upload succeeded.
+          # Only .pom files: one per artifact, no need to deduplicate jars/sources separately.
+          upload_re = re.compile(r'^\[INFO\] Uploaded to [^:]+: (\S+\.pom) \(')
+
+          artifacts = set()
+          try:
+              with open(log_path) as f:
+                  for line in f:
+                      m = upload_re.match(line.strip())
+                      if not m:
+                          continue
+                      url = m.group(1)
+                      parts = url.split('/')
+                      # URL: https://maven.pkg.github.com/owner/repo/group/path/artifactId/version/file.pom
+                      # parts: ['https:', '', 'host', 'owner', 'repo', ...groupId..., artifactId, version, filename]
+                      if len(parts) < 8:
+                          continue
+                      version = parts[-2]
+                      if f'-{suffix}-SNAPSHOT' not in version:
+                          continue
+                      artifact_id = parts[-3]
+                      group_id = '.'.join(parts[5:-3])
+                      artifacts.add(f'{group_id}:{artifact_id}:{version}')
+          except FileNotFoundError:
+              print(f'Maven log not found: {log_path}', file=sys.stderr)
+              sys.exit(1)
+
+          for a in sorted(artifacts):
+              print(a)
+          PYEOF
+          )
+
+          if [ -z "$COORDS" ]; then
+            echo "::error::Build succeeded but no deployed artifacts found in Maven log. The log format may have changed."
+            exit 1
+          fi
+
+          echo "Deployed artifacts:"
+          echo "$COORDS"
+          {
+            echo "## Deployed artifacts"
+            echo '```'
+            echo "$COORDS"
+            echo '```'
+          } >> $GITHUB_STEP_SUMMARY
+
+  docker-build:
+    name: Build Docker image
+    needs: [maven-deploy]
+    if: ${{ !inputs.skip-docker }}
+    uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@feat/consistent-snapshots
+    with:
+      ref: ${{ inputs.branch }}
+      dry-run: false
+      config-filename: ${{ inputs.docker-config-file }}
