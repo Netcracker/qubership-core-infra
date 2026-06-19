@@ -4,12 +4,7 @@
 
 A new component that reads Kubernetes secrets mounted as files and exposes them as configuration properties.
 
-Each file in the mounted directory (default `/etc/secrets/pod-secrets`) becomes a configuration property:
-
-| File          | Exposed as                                        |
-|---------------|---------------------------------------------------|
-| `db_password` | `db.password` · `db_password` · `DB_PASSWORD`    |
-| `API_TOKEN`   | `api.token` · `api_token` · `API_TOKEN`           |
+Each file in the mounted directory (default `/etc/secrets/pod-secrets`) becomes a configuration property
 
 If the directory does not exist (no secrets mounted), the source contributes no properties and the application continues to resolve configuration from other sources as usual.
 
@@ -27,6 +22,13 @@ If the directory does not exist (no secrets mounted), the source contributes no 
 **Secret rotation**
 
 New values are picked up without a restart via a TTL cache (default 60 s).
+
+**Properties names**
+
+| File          | Exposed as                                        |
+|---------------|---------------------------------------------------|
+| `db_password` | `db.password` · `db_password` · `DB_PASSWORD`    |
+| `API_TOKEN`   | `api.token` · `api_token` · `API_TOKEN`           |
 
 **Configuration**
 
@@ -84,13 +86,19 @@ watcher, err := podsecrets.StartWatcher()
 defer watcher.Stop()
 ```
 
+**Properties names**
+
+| File          | Exposed as                                        |
+|---------------|---------------------------------------------------|
+| `db_password` | `db.password`    |
+| `API_TOKEN`   | `api.token`      |
+
 **Configuration**
 
 | Env var           | Default                    | Description       |
 |-------------------|----------------------------|-------------------|
 | `POD_SECRETS_DIR` | `/etc/secrets/pod-secrets` | Secrets directory |
 
-Key normalisation: file names are lowercased and `_` is replaced with `.` (`db_password` → `db.password`).
 
 ---
 
