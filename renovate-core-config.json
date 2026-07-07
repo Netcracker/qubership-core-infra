@@ -200,11 +200,11 @@
   }, {
     "matchPackageNames" : [ "io.quarkus.platform:quarkus-bom", "io.quarkus.platform:quarkus-maven-plugin", "io.quarkus.platform:quarkus-operator-sdk-bom" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^3.33.2$/"
+    "allowedVersions" : "/^3.33.2.1$/"
   }, {
     "matchPackageNames" : [ "io.quarkus:quarkus-core", "io.quarkus:quarkus-core-deployment", "io.quarkus:quarkus-extension-maven-plugin", "io.quarkus:quarkus-maven-plugin", "io.quarkus:quarkus-universe-bom" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^3.33.2$/"
+    "allowedVersions" : "/^3.33.2.1$/"
   }, {
     "matchPackageNames" : [ "io.opentelemetry.instrumentation:opentelemetry-kafka-clients-2.6" ],
     "groupName" : "maven",
