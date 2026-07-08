@@ -1,5 +1,5 @@
-trace-service/trace-service@v2.8.1
-github.com/netcracker/qubership-core-control-plane/control-plane/v2@v2.8.1
+trace-service/trace-service@v2.8.2
+github.com/netcracker/qubership-core-control-plane/control-plane/v2@v2.8.2
 github.com/netcracker/qubership-core-dbaas-agent/dbaas-agent-service/v2@v2.5.0
 github.com/netcracker/qubership-core-facade-operator/facade-operator-service/v2@v2.6.0
 github.com/netcracker/qubership-core-maas-agent/maas-agent-service/v2@v2.5.0
