@@ -202,7 +202,7 @@
     "groupName" : "maven",
     "allowedVersions" : "/^3.33.2.1$/"
   }, {
-    "matchPackageNames" : [ "io.quarkus:quarkus-core", "io.quarkus:quarkus-core-deployment", "io.quarkus:quarkus-extension-maven-plugin", "io.quarkus:quarkus-maven-plugin", "io.quarkus:quarkus-universe-bom" ],
+    "matchPackageNames" : [ "io.quarkus:quarkus-core", "io.quarkus:quarkus-core-deployment", "io.quarkus:quarkus-extension-maven-plugin", "io.quarkus:quarkus-maven-plugin", "io.quarkus:quarkus-universe-bom", "io.quarkus:quarkus-extension-processor" ],
     "groupName" : "maven",
     "allowedVersions" : "/^3.33.2.1$/"
   }, {
