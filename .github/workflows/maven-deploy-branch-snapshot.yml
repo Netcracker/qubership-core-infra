@@ -114,7 +114,7 @@ jobs:
           additional-mvn-args: '-l /tmp/maven-deploy.log'
 
       - name: Show Maven log
-        if: steps.maven-build.outcome != 'skipped'
+        if: ${{ always() && steps.maven-build.outcome != 'skipped' }}
         run: cat /tmp/maven-deploy.log 2>/dev/null || echo "Maven log not found"
 
       - name: Print deployed artifacts
