@@ -41,6 +41,11 @@ on:
         required: false
         type: boolean
         default: true
+      skip-tests:
+        description: 'Skip Maven tests during deploy'
+        required: false
+        type: boolean
+        default: false
     secrets:
       MAVEN_GPG_PRIVATE_KEY:
         description: 'GPG private key'
@@ -100,7 +105,7 @@ jobs:
         with:
           java-version: "21"
           target-store: 'github'
-          maven-command: 'deploy'
+          maven-command: ${{ inputs.skip-tests && 'deploy -Dmaven.test.skip=true' || 'deploy' }}
           upload-artifact: 'false'
           maven-username: ${{ github.actor }}
           maven-token: ${{ github.token }}
