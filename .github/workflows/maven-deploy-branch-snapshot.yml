@@ -105,7 +105,7 @@ jobs:
         with:
           java-version: "21"
           target-store: 'github'
-          maven-command: ${{ inputs.skip-tests && 'deploy -Dmaven.test.skip=true' || 'deploy' }}
+          maven-command: ${{ inputs.skip-tests && 'deploy -T 1C -Dmaven.test.skip=true' || 'deploy -T 1C' }}
           upload-artifact: 'false'
           maven-username: ${{ github.actor }}
           maven-token: ${{ github.token }}
