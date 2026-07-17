@@ -26,6 +26,9 @@ on:
         type: boolean
         default: false
 
+permissions:
+  packages: write
+
 jobs:
   maven-deploy:
     uses: Netcracker/qubership-core-infra/.github/workflows/maven-deploy-branch-snapshot.yml@feat/consistent-snapshots
