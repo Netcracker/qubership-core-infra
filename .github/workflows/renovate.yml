@@ -94,7 +94,7 @@ jobs:
         run: |
           cli_name="maven-effective-dependencies-cli"
           cliVersion="1.8.2-SNAPSHOT"
-          cliVersionSpecific="1.8.2-20260718.132521-25"
+          cliVersionSpecific="1.8.2-20260721.084123-26"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${cli_name}/${cliVersion}/${cli_name}-${cliVersionSpecific}-jar-with-dependencies.jar"
           curl -L -v -o "${cli_name}.jar" -H "Authorization: Bearer ${GH_ACCESS_TOKEN}" "${url}"
           
