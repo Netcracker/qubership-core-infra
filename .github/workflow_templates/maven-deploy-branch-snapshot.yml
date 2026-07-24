@@ -1,0 +1,38 @@
+# Maven Deploy Branch Snapshot Workflow (experimental)
+#
+# Deploys Maven artifacts from a feature branch using branch-isolated SNAPSHOT
+# versioning: X.Y.Z-SNAPSHOT → X.Y.Z-<branch>-SNAPSHOT. This prevents branch
+# artifacts from overwriting main or other branch artifacts in the repository.
+#
+# Triggers:
+#   - Manual dispatch with explicit branch selection
+#
+# See maven-deploy-branch-snapshot.yml in qubership-core-infra for full documentation.
+
+name: Maven deploy (branch snapshot)
+
+run-name: Deploy branch snapshot [${{ inputs.branch }}]
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        type: string
+      skip-tests:
+        description: 'Skip Maven tests during deploy'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  packages: write
+
+jobs:
+  maven-deploy:
+    uses: Netcracker/qubership-core-infra/.github/workflows/maven-deploy-branch-snapshot.yml@feat/consistent-snapshots
+    with:
+      branch: ${{ inputs.branch }}
+      skip-tests: ${{ inputs.skip-tests}}
+    secrets: inherit
