@@ -1,0 +1,4 @@
+com.netcracker.cloud:config-server-aggregator:4.1.4
+com.netcracker.cloud:config-server-app:4.1.4
+com.netcracker.cloud:config-server-core:4.1.4
+com.netcracker.cloud:config-server-report-aggregate:4.1.4
