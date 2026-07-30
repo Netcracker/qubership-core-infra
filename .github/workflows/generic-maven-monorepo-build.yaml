@@ -1,0 +1,156 @@
+# Generic Maven Monorepo Build Workflow
+#
+# A reusable workflow for repositories analyzed as a SonarCloud monorepo: one project per
+# top-level module. It builds the Maven reactor once, then runs a per-module Sonar analysis
+# that reuses that build.
+#
+# Why a dedicated workflow: naively composing "deploy the whole reactor" with a per-module
+# `verify sonar:sonar` runs every module's tests twice. Here the reactor build (step 1) runs
+# the test suite once and leaves a populated `target/` on disk. The Sonar loop (step 2) then
+# invokes the `sonar:sonar` goal directly for each module — a goal-only call runs no lifecycle
+# phase, so it compiles nothing and re-runs no tests. It reads the compiled classes and the
+# JaCoCo report already in `target/`.
+#
+# Usage:
+#   jobs:
+#     build:
+#       uses: Netcracker/qubership-core-infra/.github/workflows/generic-maven-monorepo-build.yaml@v2.x.x
+#       with:
+#         maven-command: 'deploy'
+#         modules: >-
+#           [
+#             { "dir": "module-a", "projectKey": "org_repo_module-a" },
+#             { "dir": "module-b", "projectKey": "org_repo_module-b" }
+#           ]
+#         ref: ${{ github.ref }}
+#       secrets: inherit
+#
+# Required secrets (inherited):
+#   - MAVEN_GPG_PRIVATE_KEY, MAVEN_GPG_PASSPHRASE — for artifact signing
+#   - SONAR_TOKEN — for SonarCloud analysis
+#
+# Required vars:
+#   - SONAR_ORGANIZATION, SONAR_HOST_URL, SONAR_PLUGIN_VERSION
+
+name: Generic maven monorepo build
+
+on:
+  workflow_call:
+    inputs:
+      modules:
+        description: >-
+          JSON array of top-level modules to analyze, each { "dir": "...", "projectKey": "..." }.
+        required: true
+        type: string
+      maven-command:
+        description: 'Maven command for the reactor build step'
+        required: false
+        type: string
+        default: 'deploy'
+      java-version:
+        description: 'Java version to use for the build'
+        required: false
+        type: string
+        default: '21'
+      ref:
+        description: 'Git reference (branch, tag, or SHA) to checkout and build'
+        required: false
+        type: string
+      maven-username:
+        description: 'Maven repository username'
+        required: false
+        type: string
+
+    secrets:
+      MAVEN_TOKEN:
+        description: 'Maven repository token'
+        required: false
+      MAVEN_GPG_PRIVATE_KEY:
+        description: 'GPG private key'
+        required: false
+      MAVEN_GPG_PASSPHRASE:
+        description: 'GPG passphrase'
+        required: false
+      SONAR_TOKEN:
+        description: 'SonarCloud token'
+        required: false
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: maven-monorepo-${{ github.workflow_ref }}-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  maven:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+
+      # Build the reactor once. No Sonar here (empty additional-mvn-args) and no artifact upload:
+      # the goal is a populated `target/` on disk for the Sonar loop to reuse. This step runs the
+      # full test suite exactly once. The composite also writes the `github` server to
+      # ~/.m2/settings.xml, which the next step inherits for dependency resolution.
+      - name: Build reactor
+        uses: netcracker/qubership-workflow-hub/actions/maven-snapshot-deploy@v2.0.11
+        with:
+          java-version: ${{ inputs.java-version }}
+          target-store: 'github'
+          maven-command: ${{ inputs.maven-command }}
+          additional-mvn-args: ''
+          upload-artifact: 'false'
+          maven-username: ${{ inputs.maven-username || github.actor }}
+          maven-token: ${{ secrets.MAVEN_TOKEN || github.token }}
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
+
+      # Analyze each top-level module as its own SonarCloud project, reusing the reactor's
+      # `target/`. This is a bash loop in one job, not a job-level matrix: a matrix would re-run
+      # the whole workflow — including the reactor build — for every module.
+      #
+      # `sonar:sonar` is goal-only, so it runs no lifecycle phase and re-runs no tests. SONAR_TOKEN
+      # is read directly by the plugin (no -Dsonar.token needed). GITHUB_ACTOR / GITHUB_TOKEN back
+      # the `github` server in ~/.m2/settings.xml so the scanner can resolve dependencies.
+      #
+      # Failure semantics: try every module, then fail if any failed, so one bad module does not
+      # hide the others. This step runs only if the reactor build succeeded (steps are sequential).
+      - name: Analyze modules with Sonar
+        env:
+          MODULES: ${{ inputs.modules }}
+          SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+          SONAR_PLUGIN_VERSION: ${{ vars.SONAR_PLUGIN_VERSION }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_ACTOR: ${{ inputs.maven-username || github.actor }}
+          GITHUB_TOKEN: ${{ secrets.MAVEN_TOKEN || github.token }}
+        run: |
+          set -uo pipefail
+          failed=''
+          while read -r module; do
+            dir=$(echo "$module" | jq -r '.dir')
+            project_key=$(echo "$module" | jq -r '.projectKey')
+            echo "::group::Sonar — $dir ($project_key)"
+            if mvn -B -ntp -f "${dir}/pom.xml" \
+              "org.sonarsource.scanner.maven:sonar-maven-plugin:${SONAR_PLUGIN_VERSION}:sonar" \
+              -Dsonar.projectKey="${project_key}" \
+              -Dsonar.organization="${SONAR_ORGANIZATION}" \
+              -Dsonar.host.url="${SONAR_HOST_URL}"; then
+              echo "$dir: analysis succeeded"
+            else
+              echo "::error::Sonar analysis failed for $dir"
+              failed="${failed} ${dir}"
+            fi
+            echo "::endgroup::"
+          done < <(echo "$MODULES" | jq -c '.[]')
+
+          if [ -n "$failed" ]; then
+            echo "Sonar analysis failed for:${failed}"
+            exit 1
+          fi
