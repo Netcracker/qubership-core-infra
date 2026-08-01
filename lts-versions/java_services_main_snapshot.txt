@@ -1,5 +1,5 @@
-com.netcracker.core:core-operator:3.2.3-SNAPSHOT
-com.netcracker.core:core-operator-parent:3.2.3-SNAPSHOT
+com.netcracker.core:core-operator:3.3.0-SNAPSHOT
+com.netcracker.core:core-operator-parent:3.3.0-SNAPSHOT
 com.netcracker.cloud:config-server-aggregator:4.2.0-SNAPSHOT
 com.netcracker.cloud:config-server-app:4.2.0-SNAPSHOT
 com.netcracker.cloud:config-server-core:4.2.0-SNAPSHOT
