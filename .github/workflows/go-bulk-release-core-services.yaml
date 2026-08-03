@@ -68,7 +68,7 @@ jobs:
         shell: bash
         # language="shell script"
         run: |
-          repositories="https://github.com/Netcracker/qubership-core-control-plane
+          repositories="https://github.com/Netcracker/qubership-core-control-plane"
           echo "repositories=\n${repositories}"
           repositories=$(echo "${repositories}" | tr '\n' ',')
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
