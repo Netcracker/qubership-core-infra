@@ -69,11 +69,6 @@ jobs:
         # language="shell script"
         run: |
           repositories="https://github.com/Netcracker/qubership-core-control-plane
-          https://github.com/Netcracker/qubership-core-dbaas-agent
-          https://github.com/Netcracker/qubership-core-facade-operator
-          https://github.com/Netcracker/qubership-core-maas-agent
-          https://github.com/Netcracker/qubership-core-paas-mediation
-          https://github.com/Netcracker/qubership-core-site-management"
           echo "repositories=\n${repositories}"
           repositories=$(echo "${repositories}" | tr '\n' ',')
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
