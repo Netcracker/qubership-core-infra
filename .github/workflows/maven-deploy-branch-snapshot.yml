@@ -11,6 +11,10 @@
 # Prerequisites:
 #   - All inter-module dependencies in main must use SNAPSHOT versions
 #   - No 3rd-party dependencies may use SNAPSHOT versions
+#   - MAVEN_TOKEN must grant write:packages on every repository referenced by
+#     distributionManagement. Without it the workflow falls back to the built-in
+#     GITHUB_TOKEN, which only covers the calling repository, and cross-repository
+#     modules fail with 403 Forbidden.
 #
 # Usage:
 #   jobs:
@@ -18,7 +22,11 @@
 #       uses: Netcracker/qubership-core-infra/.github/workflows/maven-deploy-branch-snapshot.yml@main
 #       with:
 #         branch: 'feature/my-feature'
-#       secrets: inherit
+#         maven-username: 'NetcrackerCLPLCI'
+#       secrets:
+#         MAVEN_TOKEN: ${{ secrets.GH_RWD_PACKAGE_TOKEN }}
+#         MAVEN_GPG_PRIVATE_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+#         MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
 name: Maven deploy (branch snapshot)
 
@@ -46,7 +54,16 @@ on:
         required: false
         type: boolean
         default: false
+
+      # Maven credentials configuration
+      maven-username:
+        description: 'Maven repository username'
+        required: false
+        type: string
     secrets:
+      MAVEN_TOKEN:
+        description: 'Maven repository token'
+        required: false
       MAVEN_GPG_PRIVATE_KEY:
         description: 'GPG private key'
         required: false
@@ -107,8 +124,8 @@ jobs:
           target-store: 'github'
           maven-command: ${{ inputs.skip-tests && 'deploy -T 2C -Dmaven.test.skip=true -Dmaven.source.skip=true' || 'deploy -T 2C -Dmaven.source.skip=true' }}
           upload-artifact: 'false'
-          maven-username: ${{ github.actor }}
-          maven-token: ${{ github.token }}
+          maven-username: ${{ inputs.maven-username || github.actor }}
+          maven-token: ${{ secrets.MAVEN_TOKEN || github.token }}
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
           additional-mvn-args: '-l /tmp/maven-deploy.log'
