@@ -7,7 +7,7 @@ github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2@v2.5.9
 github.com/netcracker/qubership-core-lib-go-stomp-websocket/v3@v3.4.9
 github.com/netcracker/qubership-core-lib-go-bg-kafka/v3@v3.4.9
 github.com/netcracker/qubership-core-lib-go-dbaas-clickhouse-client/v2@v2.3.9
-github.com/netcracker/qubership-core-lib-go-dbaas-postgres-client/v4@v4.3.9
+github.com/netcracker/qubership-core-lib-go-dbaas-postgres-client/v4@v4.3.10
 github.com/netcracker/qubership-core-lib-go-dbaas-mongo-client/v3@v3.3.9
 github.com/netcracker/qubership-core-lib-go-dbaas-cassandra-client/v3@v3.3.9
 github.com/netcracker/qubership-core-lib-go-maas-client/v3@v3.4.9
