@@ -13,7 +13,6 @@
     "token" : "{{ secrets.renovation_bot_private_packages_read }}"
   } ],
   "labels" : [ "renovate:core", "branch:main" ],
-  "minimumReleaseAge": "0 days",
   "packageRules" : [ {
     "matchManagers" : [ "maven" ],
     "matchPackageNames" : [ "/.*/" ],
@@ -165,7 +164,7 @@
   }, {
     "matchPackageNames" : [ "com.fasterxml.jackson.module:jackson-module-parameter-names" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^2.21.4$/"
+    "allowedVersions" : "/^2.21.5$/"
   }, {
     "matchPackageNames" : [ "com.fasterxml.jackson.core:jackson-annotations" ],
     "groupName" : "maven",
@@ -173,11 +172,11 @@
   }, {
     "matchPackageNames" : [ "com.fasterxml.jackson.core:jackson-core", "com.fasterxml.jackson.core:jackson-databind" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^2.21.4$/"
+    "allowedVersions" : "/^2.21.5$/"
   }, {
     "matchPackageNames" : [ "org.postgresql:postgresql" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^42.7.11$/"
+    "allowedVersions" : "/^42.7.13$/"
   }, {
     "matchPackageNames" : [ "org.checkerframework:checker-qual" ],
     "groupName" : "maven",
@@ -189,7 +188,7 @@
   }, {
     "matchPackageNames" : [ "com.fasterxml.jackson.dataformat:jackson-dataformat-xml", "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^2.21.4$/"
+    "allowedVersions" : "/^2.21.5$/"
   }, {
     "matchPackageNames" : [ "org.apache.httpcomponents.client5:httpclient5" ],
     "groupName" : "maven",
@@ -225,11 +224,11 @@
   }, {
     "matchPackageNames" : [ "io.quarkus.platform:quarkus-bom", "io.quarkus.platform:quarkus-maven-plugin", "io.quarkus.platform:quarkus-operator-sdk-bom" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^3.33.2.1$/"
+    "allowedVersions" : "/^3.33.3$/"
   }, {
-    "matchPackageNames" : [ "io.quarkus:quarkus-arc", "io.quarkus:quarkus-arc-deployment", "io.quarkus:quarkus-config-yaml", "io.quarkus:quarkus-core", "io.quarkus:quarkus-core-deployment", "io.quarkus:quarkus-elytron-security-jdbc", "io.quarkus:quarkus-extension-maven-plugin", "io.quarkus:quarkus-flyway", "io.quarkus:quarkus-flyway-deployment", "io.quarkus:quarkus-hibernate-orm-panache", "io.quarkus:quarkus-hibernate-validator", "io.quarkus:quarkus-jackson-deployment", "io.quarkus:quarkus-jacoco", "io.quarkus:quarkus-jdbc-h2", "io.quarkus:quarkus-jdbc-postgresql", "io.quarkus:quarkus-jdbc-postgresql-deployment", "io.quarkus:quarkus-jsonb", "io.quarkus:quarkus-junit", "io.quarkus:quarkus-junit-internal", "io.quarkus:quarkus-junit-mockito", "io.quarkus:quarkus-junit5", "io.quarkus:quarkus-kubernetes-client", "io.quarkus:quarkus-maven-plugin", "io.quarkus:quarkus-messaging-kafka", "io.quarkus:quarkus-messaging-rabbitmq", "io.quarkus:quarkus-micrometer", "io.quarkus:quarkus-micrometer-deployment", "io.quarkus:quarkus-micrometer-registry-prometheus", "io.quarkus:quarkus-mongodb-client", "io.quarkus:quarkus-mongodb-client-deployment", "io.quarkus:quarkus-narayana-jta", "io.quarkus:quarkus-opentelemetry", "io.quarkus:quarkus-reactive-routes", "io.quarkus:quarkus-reactive-routes-deployment", "io.quarkus:quarkus-rest", "io.quarkus:quarkus-rest-client", "io.quarkus:quarkus-rest-client-jackson", "io.quarkus:quarkus-rest-client-jsonb", "io.quarkus:quarkus-rest-jackson", "io.quarkus:quarkus-rest-jsonb", "io.quarkus:quarkus-rest-spi-deployment", "io.quarkus:quarkus-resteasy-client", "io.quarkus:quarkus-resteasy-client-jackson", "io.quarkus:quarkus-resteasy-common-spi", "io.quarkus:quarkus-resteasy-deployment", "io.quarkus:quarkus-resteasy-jackson", "io.quarkus:quarkus-resteasy-jackson-deployment", "io.quarkus:quarkus-scheduler", "io.quarkus:quarkus-security", "io.quarkus:quarkus-security-spi", "io.quarkus:quarkus-smallrye-context-propagation", "io.quarkus:quarkus-smallrye-context-propagation-deployment", "io.quarkus:quarkus-smallrye-fault-tolerance", "io.quarkus:quarkus-smallrye-health", "io.quarkus:quarkus-smallrye-jwt", "io.quarkus:quarkus-smallrye-jwt-build", "io.quarkus:quarkus-smallrye-openapi", "io.quarkus:quarkus-test-common", "io.quarkus:quarkus-test-oidc-server", "io.quarkus:quarkus-undertow", "io.quarkus:quarkus-universe-bom", "io.quarkus:quarkus-vertx", "io.quarkus:quarkus-vertx-deployment", "io.quarkus:quarkus-vertx-http", "io.quarkus:quarkus-vertx-http-deployment", "io.quarkus:quarkus-websockets-client", "io.quarkus:quarkus-extension-processor" ],
+    "matchPackageNames" : [ "io.quarkus:quarkus-arc", "io.quarkus:quarkus-arc-deployment", "io.quarkus:quarkus-config-yaml", "io.quarkus:quarkus-core", "io.quarkus:quarkus-core-deployment", "io.quarkus:quarkus-elytron-security-jdbc", "io.quarkus:quarkus-extension-maven-plugin", "io.quarkus:quarkus-extension-processor", "io.quarkus:quarkus-flyway", "io.quarkus:quarkus-flyway-deployment", "io.quarkus:quarkus-hibernate-orm-panache", "io.quarkus:quarkus-hibernate-validator", "io.quarkus:quarkus-jackson-deployment", "io.quarkus:quarkus-jacoco", "io.quarkus:quarkus-jdbc-h2", "io.quarkus:quarkus-jdbc-postgresql", "io.quarkus:quarkus-jdbc-postgresql-deployment", "io.quarkus:quarkus-jsonb", "io.quarkus:quarkus-junit", "io.quarkus:quarkus-junit-internal", "io.quarkus:quarkus-junit-mockito", "io.quarkus:quarkus-junit5", "io.quarkus:quarkus-kubernetes-client", "io.quarkus:quarkus-maven-plugin", "io.quarkus:quarkus-messaging-kafka", "io.quarkus:quarkus-messaging-rabbitmq", "io.quarkus:quarkus-micrometer", "io.quarkus:quarkus-micrometer-deployment", "io.quarkus:quarkus-micrometer-registry-prometheus", "io.quarkus:quarkus-mongodb-client", "io.quarkus:quarkus-mongodb-client-deployment", "io.quarkus:quarkus-narayana-jta", "io.quarkus:quarkus-opentelemetry", "io.quarkus:quarkus-reactive-routes", "io.quarkus:quarkus-reactive-routes-deployment", "io.quarkus:quarkus-rest", "io.quarkus:quarkus-rest-client", "io.quarkus:quarkus-rest-client-jackson", "io.quarkus:quarkus-rest-client-jsonb", "io.quarkus:quarkus-rest-jackson", "io.quarkus:quarkus-rest-jsonb", "io.quarkus:quarkus-rest-spi-deployment", "io.quarkus:quarkus-resteasy-client", "io.quarkus:quarkus-resteasy-client-jackson", "io.quarkus:quarkus-resteasy-common-spi", "io.quarkus:quarkus-resteasy-deployment", "io.quarkus:quarkus-resteasy-jackson", "io.quarkus:quarkus-resteasy-jackson-deployment", "io.quarkus:quarkus-scheduler", "io.quarkus:quarkus-security", "io.quarkus:quarkus-security-spi", "io.quarkus:quarkus-smallrye-context-propagation", "io.quarkus:quarkus-smallrye-context-propagation-deployment", "io.quarkus:quarkus-smallrye-fault-tolerance", "io.quarkus:quarkus-smallrye-health", "io.quarkus:quarkus-smallrye-jwt", "io.quarkus:quarkus-smallrye-jwt-build", "io.quarkus:quarkus-smallrye-openapi", "io.quarkus:quarkus-test-common", "io.quarkus:quarkus-test-oidc-server", "io.quarkus:quarkus-undertow", "io.quarkus:quarkus-universe-bom", "io.quarkus:quarkus-vertx", "io.quarkus:quarkus-vertx-deployment", "io.quarkus:quarkus-vertx-http", "io.quarkus:quarkus-vertx-http-deployment", "io.quarkus:quarkus-websockets-client" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^3.33.2.1$/"
+    "allowedVersions" : "/^3.33.3$/"
   }, {
     "matchPackageNames" : [ "io.opentelemetry.instrumentation:opentelemetry-kafka-clients-2.6", "io.opentelemetry.instrumentation:opentelemetry-kafka-clients-common-0.11" ],
     "groupName" : "maven",
@@ -353,11 +352,11 @@
   }, {
     "matchPackageNames" : [ "io.vertx:vertx-consul-client", "io.vertx:vertx-core", "io.vertx:vertx-stomp" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^4.5.28$/"
+    "allowedVersions" : "/^4.5.31$/"
   }, {
     "matchPackageNames" : [ "io.quarkus.arc:arc-processor" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^3.33.2.1$/"
+    "allowedVersions" : "/^3.33.3$/"
   }, {
     "matchPackageNames" : [ "com.google.guava:guava" ],
     "groupName" : "maven",
@@ -385,7 +384,7 @@
   }, {
     "matchPackageNames" : [ "io.quarkiverse.operatorsdk:quarkus-operator-sdk" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^7.7.4$/"
+    "allowedVersions" : "/^7.7.5$/"
   }, {
     "matchPackageNames" : [ "org.apache.logging.log4j:log4j-api", "org.apache.logging.log4j:log4j-core", "org.apache.logging.log4j:log4j-slf4j-impl" ],
     "groupName" : "maven",
@@ -401,7 +400,7 @@
   }, {
     "matchPackageNames" : [ "com.fasterxml.jackson.datatype:jackson-datatype-jdk8", "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^2.21.4$/"
+    "allowedVersions" : "/^2.21.5$/"
   }, {
     "matchPackageNames" : [ "com.github.docker-java:docker-java", "com.github.docker-java:docker-java-api", "com.github.docker-java:docker-java-core", "com.github.docker-java:docker-java-transport", "com.github.docker-java:docker-java-transport-httpclient5", "com.github.docker-java:docker-java-transport-jersey", "com.github.docker-java:docker-java-transport-netty", "com.github.docker-java:docker-java-transport-okhttp", "com.github.docker-java:docker-java-transport-zerodep" ],
     "groupName" : "maven",
@@ -505,7 +504,7 @@
   }, {
     "matchPackageNames" : [ "io.grpc:grpc-netty-shaded", "io.grpc:grpc-protobuf", "io.grpc:grpc-stub" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^1.79.0$/"
+    "allowedVersions" : "/^1.81.0$/"
   }, {
     "matchPackageNames" : [ "io.fabric8:kubernetes-client", "io.fabric8:mockwebserver" ],
     "groupName" : "maven",
