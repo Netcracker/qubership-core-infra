@@ -19,6 +19,7 @@
 #   - Artifact upload to GitHub Packages
 #   - Automatic Docker image build (skipped for fork PRs)
 #   - GPG signing support
+#   - Optional branch-isolated SNAPSHOT versioning (see the version-suffix input)
 #
 # Required secrets (inherited):
 #   - MAVEN_GPG_PRIVATE_KEY, MAVEN_GPG_PASSPHRASE — for artifact signing
@@ -72,6 +73,19 @@ on:
         description: 'Git reference (branch, tag, or SHA) to checkout and build'
         required: false
         type: string
+
+      # Branch-isolated snapshot versioning
+      version-suffix:
+        description: >-
+          When set, every X.Y.Z-SNAPSHOT version in every pom.xml becomes
+          X.Y.Z-<suffix>-SNAPSHOT before the build, so a branch build does not overwrite
+          the artifacts published by main. Pass a raw branch name; the value is sanitized
+          here. The edits are never committed. Two constraints apply: inter-module
+          dependencies must use SNAPSHOT versions, and no third-party dependency may use
+          one, because the replacement matches a version pattern rather than a module list.
+        required: false
+        type: string
+        default: ''
 
       # Docker build configuration
       dry-run:
@@ -129,6 +143,29 @@ jobs:
           ref: ${{ inputs.ref }}
           fetch-depth: 0
 
+      - name: Isolate SNAPSHOT versions
+        id: version-suffix
+        if: ${{ success() && inputs.version-suffix != '' }}
+        env:
+          RAW_SUFFIX: ${{ inputs.version-suffix }}
+        run: |
+          SUFFIX=$(printf '%s' "$RAW_SUFFIX" \
+            | sed 's/[^a-zA-Z0-9]/-/g; s/-\+/-/g; s/^-//; s/-$//' \
+            | cut -c1-50)
+
+          if [ -z "$SUFFIX" ]; then
+            echo "::error::version-suffix '${RAW_SUFFIX}' holds no alphanumeric characters. Pass a branch name."
+            exit 1
+          fi
+
+          echo "suffix=$SUFFIX" >> "$GITHUB_OUTPUT"
+          echo "Version suffix: $SUFFIX"
+
+          find . -name pom.xml \
+            -exec sed -i "s/\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\)-SNAPSHOT/\1-${SUFFIX}-SNAPSHOT/g" {} +
+
+          git diff --stat
+
       - name: Maven build
         uses: netcracker/qubership-workflow-hub/actions/maven-snapshot-deploy@6b356d28e46b2d4683cccb1d91f92643d7f0c513 # v2.0.11
         with:
@@ -144,6 +181,36 @@ jobs:
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
+
+      # The deploy phase installs every built artifact locally, and the path under the
+      # local repository is the artifact's groupId/artifactId/version. Filtering by the
+      # suffix leaves exactly what this run produced: no downloaded dependency can carry it.
+      - name: Report deployed artifacts
+        if: ${{ success() && inputs.version-suffix != '' }}
+        env:
+          SUFFIX: ${{ steps.version-suffix.outputs.suffix }}
+        run: |
+          COORDS=$(find ~/.m2/repository -name "*-${SUFFIX}-SNAPSHOT.pom" -printf '%h\n' \
+            | sort -u \
+            | sed "s|^$HOME/.m2/repository/||" \
+            | awk -F/ '{
+                group = $1
+                for (i = 2; i <= NF - 2; i++) group = group "." $i
+                print group ":" $(NF - 1) ":" $NF
+              }')
+
+          if [ -z "$COORDS" ]; then
+            echo "::warning::No artifact matches suffix '${SUFFIX}' in the local Maven repository."
+            exit 0
+          fi
+
+          echo "$COORDS"
+          {
+            echo "## Deployed artifacts"
+            echo '```'
+            echo "$COORDS"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   docker-build:
     name: Build Docker image
