@@ -1,6 +1,6 @@
 # $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-workflow.json
 
-name: "Maven bulk release of monorepo core libs"
+name: "Maven bulk release of monorepo core libs - 26.1"
 run-name: Maven bulk release of monorepo core-libs [${{ inputs.branch }}] [module:${{ inputs.moduleToRelease }}] [dry-run:${{ inputs.dryRun }}] by @${{ github.actor }}'
 
 on:
