@@ -449,7 +449,8 @@ jobs:
     if: ${{ !inputs.skip-docker && inputs.dry-run == true && github.event_name != 'pull_request' && github.event_name != 'pull_request_target' }}
     permissions:
       contents: read
-    uses: $/.github/workflows/docker-build-trusted-dry-run.yaml
+    uses: $/.github/workflows/docker-build.yaml
     with:
       ref: ${{ inputs.ref }}
+      dry-run: true
       config-filename: ${{ inputs.docker-config-file }}

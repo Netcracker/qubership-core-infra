@@ -10,7 +10,6 @@ jobs = workflow.fetch("jobs")
 docker_dry_run_workflow_path = File.expand_path("../.github/workflows/docker-build-dry-run.yaml", __dir__)
 docker_dry_run_workflow = File.exist?(docker_dry_run_workflow_path) ? YAML.safe_load_file(docker_dry_run_workflow_path) : {}
 docker_trusted_dry_run_workflow_path = File.expand_path("../.github/workflows/docker-build-trusted-dry-run.yaml", __dir__)
-docker_trusted_dry_run_workflow = File.exist?(docker_trusted_dry_run_workflow_path) ? YAML.safe_load_file(docker_trusted_dry_run_workflow_path) : {}
 docker_publish_workflow_path = File.expand_path("../.github/workflows/docker-build.yaml", __dir__)
 docker_publish_workflow = YAML.safe_load_file(docker_publish_workflow_path)
 docker_core_workflow_path = File.expand_path("../.github/workflows/docker-build-core.yaml", __dir__)
@@ -110,10 +109,11 @@ check.call(
   pull_request_docker && pull_request_docker["permissions"] == { "contents" => "read" }
 )
 check.call(
-  "trusted explicit dry runs must use a read-only wrapper around the publication core",
+  "trusted explicit dry runs must use the public Docker workflow without package write permission",
   trusted_dry_run_docker &&
     trusted_dry_run_docker["permissions"] == { "contents" => "read" } &&
-    trusted_dry_run_docker["uses"] == "$/.github/workflows/docker-build-trusted-dry-run.yaml"
+    trusted_dry_run_docker["uses"] == "$/.github/workflows/docker-build.yaml" &&
+    trusted_dry_run_docker.dig("with", "dry-run") == true
 )
 check.call(
   "Docker publication must run only for trusted non-dry-run events",
@@ -130,11 +130,14 @@ check.call(
   publish_docker && publish_docker["uses"] == "$/.github/workflows/docker-build.yaml"
 )
 docker_dry_run_jobs = docker_dry_run_workflow.fetch("jobs", {})
-docker_trusted_dry_run_jobs = docker_trusted_dry_run_workflow.fetch("jobs", {})
 docker_publish_jobs = docker_publish_workflow.fetch("jobs", {})
 docker_core_jobs = docker_core_workflow.fetch("jobs", {})
-docker_publish_job = docker_publish_jobs.values.first || {}
-docker_trusted_dry_run_job = docker_trusted_dry_run_jobs.values.first || {}
+docker_publish_dry_run_job = docker_publish_jobs.values.find do |job|
+  normalize_expression.call(job.fetch("if", "")) == "inputs.dry-run == true"
+end || {}
+docker_publish_job = docker_publish_jobs.values.find do |job|
+  normalize_expression.call(job.fetch("if", "")) == "inputs.dry-run == false"
+end || {}
 docker_dry_run_action_steps = docker_dry_run_jobs.values
   .flat_map { |job| job.fetch("steps", []) }
   .select { |step| step.fetch("uses", "").include?("/actions/docker-action@") }
@@ -147,12 +150,12 @@ check.call(
     docker_dry_run_action_steps.all? { |step| step.dig("with", "dry-run") == true }
 )
 check.call(
-  "the trusted Docker dry-run wrapper must call the shared core with read-only permissions",
-  docker_trusted_dry_run_jobs.size == 1 &&
-    docker_trusted_dry_run_workflow["permissions"] == {} &&
-    docker_trusted_dry_run_job["permissions"] == { "contents" => "read" } &&
-    docker_trusted_dry_run_job["uses"] == "$/.github/workflows/docker-build-core.yaml" &&
-    docker_trusted_dry_run_job["with"] == {
+  "the public Docker workflow must isolate direct dry runs from package write permission",
+  docker_publish_jobs.size == 2 &&
+    docker_publish_workflow["permissions"] == {} &&
+    docker_publish_dry_run_job["permissions"] == { "contents" => "read" } &&
+    docker_publish_dry_run_job["uses"] == "$/.github/workflows/docker-build-core.yaml" &&
+    docker_publish_dry_run_job["with"] == {
       "tags" => "${{ inputs.tags }}",
       "dry-run" => true,
       "config-filename" => "${{ inputs.config-filename }}",
@@ -161,18 +164,20 @@ check.call(
     }
 )
 check.call(
-  "the Docker publication wrapper must call the shared core with package write permission",
-  docker_publish_jobs.size == 1 &&
-    docker_publish_workflow["permissions"] == {} &&
-    docker_publish_job["permissions"] == { "contents" => "read", "packages" => "write" } &&
+  "the public Docker workflow must grant package write permission only to publication",
+  docker_publish_job["permissions"] == { "contents" => "read", "packages" => "write" } &&
     docker_publish_job["uses"] == "$/.github/workflows/docker-build-core.yaml" &&
     docker_publish_job["with"] == {
       "tags" => "${{ inputs.tags }}",
-      "dry-run" => "${{ inputs.dry-run }}",
+      "dry-run" => false,
       "config-filename" => "${{ inputs.config-filename }}",
       "ref" => "${{ inputs.ref }}",
       "build-args" => "${{ inputs.build-args }}"
     }
+)
+check.call(
+  "the obsolete trusted dry-run wrapper must not remain as a divergent public path",
+  !File.exist?(docker_trusted_dry_run_workflow_path)
 )
 expected_publish_input_contract = {
   "tags" => { "required" => false, "type" => "string", "default" => "" },
@@ -202,7 +207,6 @@ check.call(
   "the shared Docker core must contain the only metadata and Docker action implementations",
   docker_core_steps.count { |step| step.fetch("uses", "").include?("/actions/metadata-action@") } == 1 &&
     docker_core_steps.count { |step| step.fetch("uses", "").include?("/actions/docker-action@") } == 1 &&
-    docker_trusted_dry_run_jobs.values.all? { |job| !job.key?("steps") } &&
     docker_publish_jobs.values.all? { |job| !job.key?("steps") }
 )
 check.call(
@@ -215,8 +219,7 @@ contract_triggers = contract_workflow.fetch(true)
 docker_contract_paths = [
   ".github/workflows/docker-build.yaml",
   ".github/workflows/docker-build-core.yaml",
-  ".github/workflows/docker-build-dry-run.yaml",
-  ".github/workflows/docker-build-trusted-dry-run.yaml"
+  ".github/workflows/docker-build-dry-run.yaml"
 ]
 check.call(
   "the contract workflow must run when any Docker workflow changes",
@@ -227,8 +230,7 @@ check.call(
 )
 shared_revision_workflows = [
   ".github/workflows/generic-go-build.yaml",
-  ".github/workflows/docker-build.yaml",
-  ".github/workflows/docker-build-trusted-dry-run.yaml"
+  ".github/workflows/docker-build.yaml"
 ]
 check.call(
   "actionlint must recognize every workflow that uses shared-revision nested calls",

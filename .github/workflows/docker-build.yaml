@@ -30,15 +30,29 @@ on:
 permissions: {}
 
 jobs:
-  build:
+  dry-run:
+    name: Build Docker images without publishing
+    if: ${{ inputs.dry-run == true }}
+    permissions:
+      contents: read
+    uses: $/.github/workflows/docker-build-core.yaml
+    with:
+      tags: ${{ inputs.tags }}
+      dry-run: true
+      config-filename: ${{ inputs.config-filename }}
+      ref: ${{ inputs.ref }}
+      build-args: ${{ inputs.build-args }}
+
+  publish:
     name: Build Docker images
+    if: ${{ inputs.dry-run == false }}
     permissions:
       contents: read
       packages: write
     uses: $/.github/workflows/docker-build-core.yaml
     with:
       tags: ${{ inputs.tags }}
-      dry-run: ${{ inputs.dry-run }}
+      dry-run: false
       config-filename: ${{ inputs.config-filename }}
       ref: ${{ inputs.ref }}
       build-args: ${{ inputs.build-args }}
