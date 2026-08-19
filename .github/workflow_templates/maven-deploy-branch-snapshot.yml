@@ -7,6 +7,12 @@
 # Pick the branch in the "Use workflow from" dropdown. The workflow file has to exist on the
 # selected branch, so a branch cut before this file landed on main needs main merged in first.
 #
+# MAVEN_TOKEN has to grant write:packages on every repository named in distributionManagement.
+# The built-in GITHUB_TOKEN covers the calling repository alone, so a monorepo whose modules
+# publish to per-module registries fails with 403 Forbidden on every other repository. Map the
+# secret explicitly, as below — `secrets: inherit` matches secrets by name and leaves
+# MAVEN_TOKEN empty whenever the organization stores the token under a different name.
+#
 # Triggers:
 #   - Manual dispatch
 #
@@ -34,5 +40,9 @@ jobs:
       version-suffix: ${{ github.ref_name }}
       # -T 2C only pairs with skipped tests: parallel execution breaks the test suites.
       maven-command: ${{ inputs.skip-tests && 'deploy -T 2C -Dmaven.test.skip=true' || 'deploy' }}
+      maven-username: 'NetcrackerCLPLCI'
       skip-docker: true
-    secrets: inherit
+    secrets:
+      MAVEN_TOKEN: ${{ secrets.GH_RWD_PACKAGE_TOKEN }}
+      MAVEN_GPG_PRIVATE_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+      MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
