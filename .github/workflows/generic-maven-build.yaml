@@ -77,12 +77,11 @@ on:
       # Branch-isolated snapshot versioning
       version-suffix:
         description: >-
-          When set, every X.Y.Z-SNAPSHOT version in every pom.xml becomes
-          X.Y.Z-<suffix>-SNAPSHOT before the build, so a branch build does not overwrite
-          the artifacts published by main. Pass a raw branch name; the value is sanitized
-          here. The edits are never committed. Two constraints apply: inter-module
-          dependencies must use SNAPSHOT versions, and no third-party dependency may use
-          one, because the replacement matches a version pattern rather than a module list.
+          Rewrites every X.Y.Z-SNAPSHOT version in every pom.xml to X.Y.Z-<suffix>-SNAPSHOT
+          before the build, so a branch build does not overwrite the artifacts published by
+          main. Pass a raw branch name; the value is sanitized here. The edits are never
+          committed. Requires inter-module dependencies on SNAPSHOT versions and no
+          third-party SNAPSHOT dependencies. Empty disables the rewrite.
         required: false
         type: string
         default: ''
@@ -182,9 +181,6 @@ jobs:
           gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
 
-      # The deploy phase installs every built artifact locally, and the path under the
-      # local repository is the artifact's groupId/artifactId/version. Filtering by the
-      # suffix leaves exactly what this run produced: no downloaded dependency can carry it.
       - name: Report deployed artifacts
         if: ${{ success() && inputs.version-suffix != '' }}
         env:

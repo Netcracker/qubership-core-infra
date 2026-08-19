@@ -7,17 +7,13 @@
 # Pick the branch in the "Use workflow from" dropdown. The workflow file has to exist on the
 # selected branch, so a branch cut before this file landed on main needs main merged in first.
 #
-# MAVEN_TOKEN has to grant write:packages on every repository named in distributionManagement.
-# The built-in GITHUB_TOKEN covers the calling repository alone, so a monorepo whose modules
-# publish to per-module registries fails with 403 Forbidden on every other repository. Map the
-# secret explicitly, as below — `secrets: inherit` matches secrets by name and leaves
-# MAVEN_TOKEN empty whenever the organization stores the token under a different name.
+# MAVEN_TOKEN must grant write:packages on every repository named in distributionManagement,
+# and has to be mapped explicitly: `secrets: inherit` will not supply it under another name.
 #
 # Triggers:
 #   - Manual dispatch
 #
-# See generic-maven-build.yaml in qubership-core-infra for the version-suffix input and its
-# two constraints on SNAPSHOT dependencies.
+# See generic-maven-build.yaml in qubership-core-infra for the version-suffix input.
 
 name: Maven deploy (branch snapshot)
 
@@ -38,7 +34,6 @@ jobs:
     uses: Netcracker/qubership-core-infra/.github/workflows/generic-maven-build.yaml@feat/consistent-snapshots-v2
     with:
       version-suffix: ${{ github.ref_name }}
-      # -T 2C only pairs with skipped tests: parallel execution breaks the test suites.
       maven-command: ${{ inputs.skip-tests && 'deploy -T 2C -Dmaven.test.skip=true' || 'deploy' }}
       maven-username: 'NetcrackerCLPLCI'
       skip-docker: true
