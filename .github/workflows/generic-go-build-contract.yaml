@@ -10,7 +10,9 @@ on:
       - '.github/actionlint.yaml'
       - '.github/workflows/generic-go-build.yaml'
       - '.github/workflows/docker-build.yaml'
+      - '.github/workflows/docker-build-core.yaml'
       - '.github/workflows/docker-build-dry-run.yaml'
+      - '.github/workflows/docker-build-trusted-dry-run.yaml'
       - '.github/workflows/generic-go-build-contract.yaml'
       - 'test/generic_go_build_contract_test.rb'
   pull_request:
@@ -18,7 +20,9 @@ on:
       - '.github/actionlint.yaml'
       - '.github/workflows/generic-go-build.yaml'
       - '.github/workflows/docker-build.yaml'
+      - '.github/workflows/docker-build-core.yaml'
       - '.github/workflows/docker-build-dry-run.yaml'
+      - '.github/workflows/docker-build-trusted-dry-run.yaml'
       - '.github/workflows/generic-go-build-contract.yaml'
       - 'test/generic_go_build_contract_test.rb'
 
