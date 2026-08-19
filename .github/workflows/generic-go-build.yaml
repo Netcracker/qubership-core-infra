@@ -17,12 +17,12 @@
 #   - Go tests with coverage
 #   - SonarQube code quality and security scanning with aggregated coverage (optional)
 #   - Envtest support for Kubernetes operators (optional)
-#   - Automatic Docker image build (skipped if no config or for fork PRs)
+#   - Automatic Docker image build (dry-run on pull requests; skipped if no config)
 #
-# Required secrets (inherited):
-#   - SONAR_TOKEN — for SonarQube analysis
+# Optional secrets (inherited):
+#   - SONAR_TOKEN — enables SonarQube analysis when sonar-project-key is also set
 #
-# Required vars:
+# Optional vars:
 #   - SONAR_PROJECT_KEY, SONAR_ORGANIZATION, SONAR_HOST_URL
 
 name: Generic Go build
@@ -96,12 +96,10 @@ on:
         default: 'docker-dev-config.json'
     secrets:
       SONAR_TOKEN:
-        required: true
+        description: 'Token for SonarQube analysis'
+        required: false
 
-permissions:
-  contents: read
-  pull-requests: write
-  packages: write
+permissions: {}
 
 concurrency:
   group: go-${{ github.workflow_ref }}-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
@@ -111,14 +109,44 @@ jobs:
   discover:
     name: Discover Go modules
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       modules: ${{ steps.discover.outputs.modules }}
+      sonar-enabled: ${{ steps.sonar-availability.outputs.enabled }}
     steps:
+      - name: Detect Sonar availability
+        id: sonar-availability
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          REPOSITORY: ${{ github.repository }}
+          SONAR_PROJECT_KEY: ${{ inputs.sonar-project-key }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          trusted_context=true
+          if [ "$EVENT_NAME" = "pull_request_target" ]; then
+            trusted_context=false
+          elif [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$REPOSITORY" ]; then
+            trusted_context=false
+          fi
+
+          enabled=false
+          if [ "$trusted_context" = "true" ] && [ -n "$SONAR_PROJECT_KEY" ] && [ -n "$SONAR_TOKEN" ]; then
+            enabled=true
+          fi
+
+          echo "enabled=${enabled}" >> "$GITHUB_OUTPUT"
+
       - name: Checkout code
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: ${{ inputs.ref }}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Discover go.mod files
         id: discover
@@ -218,6 +246,8 @@ jobs:
     name: Test ${{ matrix.module.dir }}
     needs: [discover]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -228,6 +258,7 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up Go
         uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
@@ -288,7 +319,7 @@ jobs:
           go test -v ./... -coverpkg="${{ matrix.module.cover_packages }}" -coverprofile coverage.out
 
       - name: Prepare coverage artifact
-        if: inputs.sonar-project-key != ''
+        if: needs.discover.outputs.sonar-enabled == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -296,7 +327,7 @@ jobs:
           cp "${{ matrix.module.dir }}/coverage.out" ".sonar/${{ matrix.module.name }}.coverage.out"
 
       - name: Upload coverage artifact
-        if: inputs.sonar-project-key != ''
+        if: needs.discover.outputs.sonar-enabled == 'true'
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: coverage-${{ matrix.module.name }}
@@ -305,15 +336,18 @@ jobs:
 
   sonar:
     name: Sonar analysis
-    if: inputs.sonar-project-key != ''
+    if: needs.discover.outputs.sonar-enabled == 'true'
     needs: [discover, test]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: ${{ inputs.ref }}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Resolve Sonar project configuration
         id: resolve
@@ -388,8 +422,22 @@ jobs:
   docker-build:
     name: Build Docker image
     needs: [test]
-    if: ${{ !inputs.skip-docker && !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
-    uses: Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml@v2.5.2
+    if: ${{ !inputs.skip-docker && (inputs.dry-run == true || github.event_name == 'pull_request' || github.event_name == 'pull_request_target') }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/docker-build-dry-run.yaml
+    with:
+      ref: ${{ inputs.ref }}
+      config-filename: ${{ inputs.docker-config-file }}
+
+  docker-publish:
+    name: Build Docker image
+    needs: [test]
+    if: ${{ !inputs.skip-docker && inputs.dry-run == false && github.event_name != 'pull_request' && github.event_name != 'pull_request_target' }}
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/docker-build.yaml
     with:
       ref: ${{ inputs.ref }}
       dry-run: ${{ inputs.dry-run }}

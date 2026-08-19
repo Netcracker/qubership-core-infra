@@ -88,17 +88,20 @@ Changes:
 
 **Restricted Actors:**
 - v1.x: checks actor from build-config.yaml, skips Sonar for restricted actors
-- v2.x: no actor checks, Sonar runs if sonar-project-key and SONAR_TOKEN are provided
+- v2.x: no actor checks, Sonar runs only when both `sonar-project-key` and `SONAR_TOKEN` are available
 
 **Docker Build:**
 - v1.x: separate workflows for lib (no docker) vs service (with docker)
-- v2.x: docker build always runs, auto-skips for fork PRs or missing docker config
+- v2.x: pull requests use read-only dry-run builds; other events use the configured `dry-run` value; missing Docker configuration skips the build
 
 **Manual Triggers:**
 - v1.x: workflow_dispatch available
 - v2.x: workflow_dispatch removed (not needed for Go projects)
 
-## Required Configuration
+## Optional Configuration
 
 Repository variables:
 - `SONAR_PROJECT_KEY` (optional)
+
+Repository secrets:
+- `SONAR_TOKEN` (optional; required only for Sonar analysis)
