@@ -72,17 +72,18 @@ pull_request_docker = docker_jobs.find { |job| job.fetch("if", "").include?("git
 publish_docker = docker_jobs.find { |job| job.fetch("if", "").include?("github.event_name != 'pull_request'") }
 
 check.call(
-  "pull requests must run Docker builds in read-only dry-run mode",
+  "only pull requests must run Docker builds through the read-only workflow",
   pull_request_docker &&
     pull_request_docker.fetch("if", "").include?("github.event_name == 'pull_request_target'") &&
-    pull_request_docker.fetch("if", "").include?("inputs.dry-run == true") &&
+    !pull_request_docker.fetch("if", "").include?("inputs.dry-run") &&
     pull_request_docker["permissions"] == { "contents" => "read" }
 )
 check.call(
-  "Docker publication must run only outside pull requests",
+  "trusted non-PR Docker builds must use the publication workflow even for explicit dry runs",
   publish_docker &&
     publish_docker.fetch("if", "").include?("github.event_name != 'pull_request_target'") &&
-    publish_docker.fetch("if", "").include?("inputs.dry-run == false") &&
+    !publish_docker.fetch("if", "").include?("inputs.dry-run == false") &&
+    publish_docker.dig("with", "dry-run") == "${{ inputs.dry-run }}" &&
     publish_docker.dig("permissions", "packages") == "write"
 )
 check.call(
