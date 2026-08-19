@@ -195,12 +195,20 @@ check.call(
     docker_core_jobs.values.none? { |job| job.key?("permissions") }
 )
 docker_core_steps = docker_core_jobs.values.flat_map { |job| job.fetch("steps", []) }
+docker_core_action_steps = docker_core_steps.select do |step|
+  step.fetch("uses", "").include?("/actions/docker-action@")
+end
 check.call(
   "the shared Docker core must contain the only metadata and Docker action implementations",
   docker_core_steps.count { |step| step.fetch("uses", "").include?("/actions/metadata-action@") } == 1 &&
     docker_core_steps.count { |step| step.fetch("uses", "").include?("/actions/docker-action@") } == 1 &&
     docker_trusted_dry_run_jobs.values.all? { |job| !job.key?("steps") } &&
     docker_publish_jobs.values.all? { |job| !job.key?("steps") }
+)
+check.call(
+  "the shared Docker core must forward the publication switch to the Docker action",
+  docker_core_action_steps.size == 1 &&
+    docker_core_action_steps.first.dig("with", "dry-run") == "${{ inputs.dry-run }}"
 )
 
 contract_triggers = contract_workflow.fetch(true)
