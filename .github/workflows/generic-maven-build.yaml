@@ -149,8 +149,9 @@ jobs:
           RAW_SUFFIX: ${{ inputs.version-suffix }}
         run: |
           SUFFIX=$(printf '%s' "$RAW_SUFFIX" \
-            | sed 's/[^a-zA-Z0-9]/-/g; s/-\+/-/g; s/^-//; s/-$//' \
-            | cut -c1-50)
+            | sed 's/[^a-zA-Z0-9]/-/g; s/-\+/-/g; s/^-//' \
+            | cut -c1-50 \
+            | sed 's/-$//')
 
           if [ -z "$SUFFIX" ]; then
             echo "::error::version-suffix '${RAW_SUFFIX}' holds no alphanumeric characters. Pass a branch name."
@@ -162,6 +163,11 @@ jobs:
 
           find . -name pom.xml \
             -exec sed -i "s/\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\)-SNAPSHOT/\1-${SUFFIX}-SNAPSHOT/g" {} +
+
+          if git diff --quiet; then
+            echo "::error::No X.Y.Z-SNAPSHOT version found in any pom.xml. The build would publish into the shared namespace."
+            exit 1
+          fi
 
           git diff --stat
 
