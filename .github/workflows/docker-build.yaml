@@ -27,8 +27,6 @@ on:
         type: string
         default: ''
 
-permissions: {}
-
 jobs:
   dry-run:
     name: Build Docker images without publishing
@@ -43,12 +41,10 @@ jobs:
       ref: ${{ inputs.ref }}
       build-args: ${{ inputs.build-args }}
 
-  publish:
+  # Publication inherits its caller's ceiling; requesting write here would invalidate read-only dry-run callers.
+  publish: # zizmor: ignore[excessive-permissions]
     name: Build Docker images
     if: ${{ inputs.dry-run == false }}
-    permissions:
-      contents: read
-      packages: write
     uses: $/.github/workflows/docker-build-core.yaml
     with:
       tags: ${{ inputs.tags }}

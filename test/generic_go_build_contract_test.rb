@@ -152,7 +152,7 @@ check.call(
 check.call(
   "the public Docker workflow must isolate direct dry runs from package write permission",
   docker_publish_jobs.size == 2 &&
-    docker_publish_workflow["permissions"] == {} &&
+    !docker_publish_workflow.key?("permissions") &&
     docker_publish_dry_run_job["permissions"] == { "contents" => "read" } &&
     docker_publish_dry_run_job["uses"] == "$/.github/workflows/docker-build-core.yaml" &&
     docker_publish_dry_run_job["with"] == {
@@ -164,8 +164,8 @@ check.call(
     }
 )
 check.call(
-  "the public Docker workflow must grant package write permission only to publication",
-  docker_publish_job["permissions"] == { "contents" => "read", "packages" => "write" } &&
+  "the public Docker workflow must let publication inherit its caller permission ceiling",
+  !docker_publish_job.key?("permissions") &&
     docker_publish_job["uses"] == "$/.github/workflows/docker-build-core.yaml" &&
     docker_publish_job["with"] == {
       "tags" => "${{ inputs.tags }}",
