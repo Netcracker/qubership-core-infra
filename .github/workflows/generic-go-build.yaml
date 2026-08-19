@@ -425,7 +425,7 @@ jobs:
     if: ${{ !inputs.skip-docker && (github.event_name == 'pull_request' || github.event_name == 'pull_request_target') }}
     permissions:
       contents: read
-    uses: ./.github/workflows/docker-build-dry-run.yaml
+    uses: $/.github/workflows/docker-build-dry-run.yaml
     with:
       ref: ${{ inputs.ref }}
       config-filename: ${{ inputs.docker-config-file }}
@@ -437,7 +437,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    uses: ./.github/workflows/docker-build.yaml
+    uses: $/.github/workflows/docker-build.yaml
     with:
       ref: ${{ inputs.ref }}
       dry-run: ${{ inputs.dry-run }}

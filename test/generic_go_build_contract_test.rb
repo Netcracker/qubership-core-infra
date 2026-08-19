@@ -87,12 +87,12 @@ check.call(
     publish_docker.dig("permissions", "packages") == "write"
 )
 check.call(
-  "pull requests must call a read-only Docker workflow from the same revision",
-  pull_request_docker && pull_request_docker["uses"] == "./.github/workflows/docker-build-dry-run.yaml"
+  "pull requests must call the read-only Docker workflow from the shared workflow revision",
+  pull_request_docker && pull_request_docker["uses"] == "$/.github/workflows/docker-build-dry-run.yaml"
 )
 check.call(
-  "non-PR builds must call the publication-capable Docker workflow from the same revision",
-  publish_docker && publish_docker["uses"] == "./.github/workflows/docker-build.yaml"
+  "non-PR builds must call the publication-capable Docker workflow from the shared workflow revision",
+  publish_docker && publish_docker["uses"] == "$/.github/workflows/docker-build.yaml"
 )
 docker_dry_run_jobs = docker_dry_run_workflow.fetch("jobs", {})
 check.call(
