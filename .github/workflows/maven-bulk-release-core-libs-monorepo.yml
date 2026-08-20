@@ -171,8 +171,8 @@ jobs:
           LOG_TO_CONSOLE: ${{ inputs.logsToConsole }}
         # language="shell script"
         run: |
-          cliVersion="1.8.2-SNAPSHOT"
-          cliVersionSpecific="1.8.2-20260417.092159-9"
+          cliVersion="1.9.0-SNAPSHOT"
+          cliVersionSpecific="1.9.0-20260820.092800-1"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-infra/org.qubership.cloud/maven-bulk-release-cli/${cliVersion}/maven-bulk-release-cli-${cliVersionSpecific}-jar-with-dependencies.jar"
           curl -L -o "maven-bulk-release-cli.jar" -H "Authorization: Bearer ${MAVEN_TOKEN}" "${url}"
           cli_jar="maven-bulk-release-cli.jar"
@@ -230,11 +230,14 @@ jobs:
           https://github.com/Netcracker/qubership-core-java-libs[branch=${BRANCH},pomFolder=core-external-boms]
           https://github.com/Netcracker/qubership-core-java-libs[branch=${BRANCH},pomFolder=core-maven-plugins]"
           
-          # set module to release from
-          if [ "${MODULE_TO_RELEASE}" != "all" ]; then
+          # set module to release from — partial release is only allowed from non-main branches
+          if [ "${MODULE_TO_RELEASE}" != "all" ] && [ "${BRANCH}" != "main" ]; then
             repositoryToReleaseFrom=$(echo "${repositories}" | grep -E ".*pomFolder=${MODULE_TO_RELEASE}\]")
             args="${args} --repositoryToReleaseFrom=${repositoryToReleaseFrom}"
           fi
+
+          # opt-in: rewrite inter-module deps back to SNAPSHOT after a full release from main
+          args="${args} --switchInterModuleDepsToSnapshot"
           
           tmpfile=$(mktemp)
           cat >"$tmpfile" <<EOF
