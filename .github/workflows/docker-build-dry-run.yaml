@@ -1,0 +1,112 @@
+name: Build Docker images without publishing
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Git reference to build'
+        required: false
+        type: string
+      config-filename:
+        description: 'Path to the Docker configuration file inside .github'
+        required: false
+        type: string
+        default: 'docker-dev-config.json'
+      build-args:
+        description: 'Build arguments in key=value format, one per line'
+        required: false
+        type: string
+        default: ''
+
+permissions: {}
+
+jobs:
+  load-config:
+    name: Load Docker configuration
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      components: ${{ steps.config.outputs.components }}
+      platforms: ${{ steps.config.outputs.platforms }}
+      skip: ${{ steps.config.outputs.skip }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      - name: Load Docker configuration
+        id: config
+        env:
+          CONFIG_FILENAME: ${{ inputs.config-filename }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          config_file="$GITHUB_WORKSPACE/.github/$CONFIG_FILENAME"
+          if [ ! -f "$config_file" ]; then
+            echo "::notice::Docker configuration not found at $config_file; skipping Docker build"
+            {
+              echo "skip=true"
+              echo "components=[]"
+              echo "platforms="
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if ! jq -e '
+            (.components | type == "array")
+            and (all(.components[]; has("name") and has("file") and has("context")))
+            and (.platforms | type == "string")
+          ' "$config_file" > /dev/null; then
+            echo "::error::Invalid Docker configuration at $config_file"
+            exit 1
+          fi
+
+          components=$(jq -c '
+            .components
+            | map(
+                . + {"download-artifact": (."download-artifact" // false)}
+                | if ."download-artifact" == true and (has("download-artifact-path") | not) then
+                    . + {"download-artifact-path": "./artifacts"}
+                  else
+                    .
+                  end
+              )
+          ' "$config_file")
+          platforms=$(jq -c '.platforms' "$config_file")
+
+          {
+            echo "skip=false"
+            echo "components=${components}"
+            echo "platforms=${platforms}"
+          } >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build Docker images
+    needs: [load-config]
+    if: needs.load-config.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        component: ${{ fromJson(needs.load-config.outputs.components) }}
+    steps:
+      - name: Build Docker image
+        uses: netcracker/qubership-workflow-hub/actions/docker-action@e64a1ee2fc2f68ab44a4ef416c27d83ce36ba8e1 # v2.2.1
+        with:
+          ref: ${{ inputs.ref }}
+          dry-run: true
+          download-artifact: ${{ matrix.component.download-artifact }}
+          download-artifact-path: ${{ matrix.component.download-artifact-path }}
+          component: ${{ toJson(matrix.component) }}
+          platforms: ${{ needs.load-config.outputs.platforms }}
+          build-args: ${{ inputs.build-args }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

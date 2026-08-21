@@ -1,0 +1,47 @@
+name: Generic Go build contract
+
+run-name: Validate generic Go build contract
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/actionlint.yaml'
+      - '.github/workflows/generic-go-build.yaml'
+      - '.github/workflows/docker-build.yaml'
+      - '.github/workflows/docker-build-core.yaml'
+      - '.github/workflows/docker-build-dry-run.yaml'
+      - '.github/workflows/generic-go-build-contract.yaml'
+      - 'test/generic_go_build_contract_test.rb'
+  pull_request:
+    paths:
+      - '.github/actionlint.yaml'
+      - '.github/workflows/generic-go-build.yaml'
+      - '.github/workflows/docker-build.yaml'
+      - '.github/workflows/docker-build-core.yaml'
+      - '.github/workflows/docker-build-dry-run.yaml'
+      - '.github/workflows/generic-go-build-contract.yaml'
+      - 'test/generic_go_build_contract_test.rb'
+
+permissions: {}
+
+concurrency:
+  group: generic-go-build-contract-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate generic Go build contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Test workflow contract
+        run: ruby test/generic_go_build_contract_test.rb

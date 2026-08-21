@@ -1,0 +1,9 @@
+paths:
+  .github/workflows/generic-go-build.yaml:
+    ignore:
+      # Remove after https://github.com/rhysd/actionlint/issues/711 is fixed.
+      - 'reusable workflow call "\$/.+" at "uses" is not following the format'
+  .github/workflows/docker-build.yaml:
+    ignore:
+      # Remove after https://github.com/rhysd/actionlint/issues/711 is fixed.
+      - 'reusable workflow call "\$/.+" at "uses" is not following the format'

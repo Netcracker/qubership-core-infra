@@ -1,0 +1,190 @@
+name: Build Docker images core
+
+on:
+  workflow_call:
+    inputs:
+      tags:
+        required: false
+        type: string
+        default: ''
+        description: 'Tags'
+      dry-run:
+        required: true
+        type: boolean
+        description: 'Dry run'
+      config-filename:
+        required: false
+        type: string
+        default: 'docker-dev-config.json'
+        description: 'Set name only or short path inside .github folder if required'
+      ref:
+        required: false
+        type: string
+        description: 'Git reference to use for the build'
+      build-args:
+        description: 'Build arguments for the Docker image, in key=value format, one per line.'
+        required: false
+        type: string
+        default: ''
+
+# Permissions are inherited from a permission-homogeneous wrapper workflow.
+jobs:
+  load_config:
+    name: 'Load Docker Configuration'
+    runs-on: ubuntu-latest
+    outputs:
+      components: ${{ steps.load_component.outputs.components }}
+      platforms: ${{ steps.load_component.outputs.platforms }}
+      skip: ${{ steps.load_component.outputs.skip }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      - name: Load Docker Configuration
+        id: load_component
+        env:
+          CONFIG_FILENAME: ${{ inputs.config-filename }}
+        shell: bash
+        run: |
+          config_file="$GITHUB_WORKSPACE/.github/$CONFIG_FILENAME"
+
+          if [ ! -f "$config_file" ]; then
+            echo "ℹ️ Config file $config_file not found, skipping docker build"
+            echo "ℹ️ Config file $config_file not found, skipping docker build" >> "$GITHUB_STEP_SUMMARY"
+            {
+              echo "skip=true"
+              echo "components=[]"
+              echo "platforms="
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          verify=$(jq '
+            def verify_structure:
+              .components as $components
+              | .platforms as $platforms
+              | ($components | type == "array")
+              and (all($components[]; has("name") and has("file") and has("context")))
+              and ($platforms | type == "string");
+            verify_structure
+            | if . then true else false end
+          ' "$config_file")
+          if [ "${verify}" == "true" ]; then
+            echo "✅ $config_file file is valid"
+
+            # Add default download-artifact to components that don't have it
+            components=$(jq -c '
+              .components | map(
+                if has("download-artifact") then .
+                else . + {"download-artifact": false}
+                end
+              )
+            ' "$config_file")
+
+            # Add default download-artifact-path to components that have download-artifact=true but no path
+            components=$(echo "$components" | jq -c '
+              map(
+                if .["download-artifact"] == true and (.["download-artifact-path"] | not) then
+                  . + {"download-artifact-path": "./artifacts"}
+                else
+                  .
+                end
+              )
+            ')
+
+            # Log component configurations to step summary
+            echo "## Component Configuration Summary" >> "$GITHUB_STEP_SUMMARY"
+            echo "$components" | jq -r '
+              .[] |
+              "**\(.name):**\n" +
+              "- download-artifact: \(.["download-artifact"])\n" +
+              (if .["download-artifact"] == true then "- download-artifact-path: \(.["download-artifact-path"])\n" else "" end)
+            ' >> "$GITHUB_STEP_SUMMARY"
+
+            platforms=$(jq -c ".platforms" "$config_file")
+          else
+            echo "❗ $config_file file is invalid"
+            echo "❗ $config_file file is invalid" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          {
+            echo "components=${components}"
+            echo "platforms=${platforms}"
+          } >> "$GITHUB_OUTPUT"
+
+  perform-version:
+    runs-on: ubuntu-latest
+    needs: [load_config]
+    if: needs.load_config.outputs.skip != 'true'
+    outputs:
+      metadata: '${{ steps.metadata.outputs.result }}'
+      tags: '${{ steps.prepare_tags.outputs.tags }}'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      - name: Get configuration file
+        run: |
+          curl https://raw.githubusercontent.com/Netcracker/qubership-core-infra/main/.github/metadata-action-go-config.yml -o .github/metadata-action-go-config.yml
+
+      - name: Create name
+        uses: netcracker/qubership-workflow-hub/actions/metadata-action@6b356d28e46b2d4683cccb1d91f92643d7f0c513 # v2.0.11
+        id: metadata
+        with:
+          configuration-path: .github/metadata-action-go-config.yml
+          short-sha: 7
+          default-template: '{{ref-name}}-{{timestamp}}-{{runNumber}}, {{ref-name}}-{{short-sha}}, {{ref-name}}-snapshot'
+          ref: ${{ inputs.ref }}
+
+      - name: Echo metadata
+        env:
+          METADATA_RESULT: ${{ steps.metadata.outputs.result }}
+        run: echo "Metadata result $METADATA_RESULT" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Prepare tags
+        id: prepare_tags
+        env:
+          BASE_TAG: ${{ steps.metadata.outputs.result }}
+          EXTRA_TAG: ${{ inputs.tags }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if [ -n "$EXTRA_TAG" ]; then
+            TAGS="${BASE_TAG}, ${EXTRA_TAG}"
+          else
+            TAGS="${BASE_TAG}"
+          fi
+          echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
+          echo "tags: ${TAGS}" >> "$GITHUB_STEP_SUMMARY"
+          echo "github.head_ref = $HEAD_REF"
+
+  build:
+    name: 'Build Docker Images'
+    needs: [load_config, perform-version]
+    if: needs.load_config.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        component: ${{ fromJson(needs.load_config.outputs.components) }}
+    steps:
+      - name: Docker
+        uses: netcracker/qubership-workflow-hub/actions/docker-action@6b356d28e46b2d4683cccb1d91f92643d7f0c513 # v2.0.11
+        with:
+          ref: ${{ inputs.ref }}
+          dry-run: ${{ inputs.dry-run }}
+          download-artifact: ${{ matrix.component.download-artifact }}
+          download-artifact-path: ${{ matrix.component.download-artifact-path }}
+          component: ${{ toJson(matrix.component) }}
+          platforms: ${{ needs.load_config.outputs.platforms }}
+          tags: ${{ needs.perform-version.outputs.tags }}
+          build-args: |
+            ${{ inputs.build-args }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
