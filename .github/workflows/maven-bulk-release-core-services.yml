@@ -113,19 +113,6 @@ jobs:
           done
           echo "gavs=${GAVS}" >> "${GITHUB_OUTPUT}"
 
-      - name: "Read repositories"
-        id: read-repositories
-        shell: bash
-        env:
-          BRANCH: ${{ inputs.branch }}
-        # language="shell script"
-        run: |
-          repositories="https://github.com/Netcracker/qubership-core-config-server[branch=${BRANCH}]
-          https://github.com/Netcracker/qubership-core-core-operator[branch=${BRANCH}]"
-          echo "repositories=\n${repositories}"
-          repositories=$(echo "${repositories}" | tr '\n' ',')
-          echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
-
       - name: "Cache Maven dependencies"
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
@@ -153,7 +140,7 @@ jobs:
         shell: bash
         env:
           GAVS: ${{ steps.download-gavs.outputs.gavs }}
-          REPOSITORIES: ${{ steps.read-repositories.outputs.repositories }}
+          BRANCH: ${{ inputs.branch }}
           REPOSITORY_TO_RELEASE_FROM: ${{ inputs.repositoryToRelease }}
           VERSION_INCREMENT_TYPE: ${{ inputs.versionIncrementType }}
           SKIP_TEST: ${{ inputs.skipTest }}
@@ -188,10 +175,9 @@ jobs:
             options="${options} --logsToConsole"
           fi
           
-          repositoriesToReleaseFrom=""
-          if [ "${REPOSITORY_TO_RELEASE_FROM}" != "all" ]; then
-            repositoriesToReleaseFrom=$(echo "${REPOSITORIES}" | tr ',' '\n' | grep "${REPOSITORY_TO_RELEASE_FROM}")
-          fi
+          repositories="https://github.com/Netcracker/qubership-core-config-server[branch=${BRANCH}]
+          https://github.com/Netcracker/qubership-core-core-operator[branch=${BRANCH}]"
+
           args="--baseDir=/tmp"
           args="${args} --gitURL=https://github.com"
           args="${args} --gitUsername=actions"
@@ -199,8 +185,6 @@ jobs:
           args="${args} --gitPassword=${MAVEN_TOKEN}"
           args="${args} --mavenDeployArtifacts=true"
           args="${args} --runParallelism=2"
-          args="${args} --repositories=${REPOSITORIES}"
-          args="${args} \"--repositoriesToReleaseFrom=${repositoriesToReleaseFrom}\""
           args="${args} --gavs=${GAVS}"
           args="${args} --versionIncrementType=${VERSION_INCREMENT_TYPE}"
           args="${args} --javaVersionToJavaHomeEnv=17=${JAVA_HOME_17_X64},21=${JAVA_HOME_21_X64},25=${JAVA_HOME_25_X64}"
@@ -208,6 +192,20 @@ jobs:
           args="${args} --summaryFile=${GITHUB_STEP_SUMMARY}"
           args="${args} --gavsResultFile=/tmp/gavs.txt"
           args="${args} --dependencyGraphFile=/tmp/graph.dot"
+
+          # set repository to release from - single repository release
+          if [ "${REPOSITORY_TO_RELEASE_FROM}" != "all" ]; then
+            repositoryToReleaseFrom=$(echo "${repositories}" | grep -E "/${REPOSITORY_TO_RELEASE_FROM}\[")
+            args="${args} \"--repositoryToReleaseFrom=${repositoryToReleaseFrom}\""
+          fi
+
+          tmpfile=$(mktemp)
+          cat >"$tmpfile" <<EOF
+          $repositories
+          EOF
+
+          args="${args} --repositoriesFile=${tmpfile}"
+
           args="${args} ${options}"
           cmd="java -jar ${cli_jar} ${args}"
           echo "running cmd: ${cmd}"
