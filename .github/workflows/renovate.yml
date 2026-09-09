@@ -170,8 +170,10 @@ jobs:
           args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchPackageNames':['/(.*netcracker.*)/'],'matchUpdateTypes':['digest'],'groupName':'go-netcracker-digest','groupSlug':'go-netcracker-digest','addLabels':['group:go-netcracker']}]}")
           # temporary rule to separate update github.com/valyala/fasthttp v1.69.0 → v1.70.0 (manual steps are required)
           args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchPackageNames':['github.com/valyala/fasthttp'],'matchNewValue':['v1.70.0'],'groupName':'go-fasthttp','groupSlug':'go-fasthttp','addLabels':['group:go']}]}")
-          # bump go version because there is bug in go when it switches from 1.23.x (from go directive) to 1.25.1 (from toolchain directive)
-          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchDepNames':['go'],'matchDepTypes':['golang'],'rangeStrategy':'bump','addLabels':['group:go-version']}]}")
+          # do not bump the go directive in go.mod on a new Go release: it is a lower bound for the whole
+          # module graph, so raising it forces every consumer of our libraries onto that Go version.
+          # go mod tidy still raises it when a dependency requires it; the build pins the compiler itself.
+          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchDepNames':['go'],'matchDepTypes':['golang','toolchain'],'enabled':false}]}")
           args+=("--fromJson={'packageRules':[{'matchManagers':['github-actions'],'groupName':'github-actions'}]}")
           args+=("--fromJson={'packageRules':[{'matchPackageNames':['/^com\\\\.netcracker\\\\./'],'groupName':'netcracker','groupSlug':'netcracker','addLabels':['group:netcracker']}]}")
           args+=("--groupNameMapping={'maven':'.*'}")
