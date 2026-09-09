@@ -218,6 +218,8 @@ jobs:
     name: Test ${{ matrix.module.dir }}
     needs: [discover]
     runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: local
     strategy:
       fail-fast: false
       matrix:
@@ -234,7 +236,7 @@ jobs:
         with:
           cache: true
           cache-dependency-path: ${{ matrix.module.dir }}/go.sum
-          go-version-file: ${{ matrix.module.dir }}/go.mod
+          go-version: '1.27.1'
 
       - name: Install envtest
         if: inputs.install-envtest == true
