@@ -68,6 +68,7 @@ jobs:
       MAVEN_USER: "x-access-token"
       MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
+      GOTOOLCHAIN: local
     outputs:
       result: ${{ steps.run-maven-bulk-release-cli.outputs.result }}
 
@@ -121,7 +122,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
         with:
-          go-version: '1.26.5'
+          go-version: '1.27.1'
 
       - name: "Install gomajor"
         run: |

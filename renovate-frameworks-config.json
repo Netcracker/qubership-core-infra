@@ -42,6 +42,18 @@
         "type:patch"
       ],
       "enabled": true
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchDepNames": [
+        "go"
+      ],
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "enabled": true
     }
   ]
 }
