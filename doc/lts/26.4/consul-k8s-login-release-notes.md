@@ -24,12 +24,6 @@ The mode is set by `CONSUL_AUTH_MODE` and read at startup, so it can be changed 
 An unknown mode keeps the microservice from starting, and so does a login failure the retries do not fix, unless the
 Go property source is configured to tolerate Consul failures.
 
-A pod that fell back retries during its next scheduled login, not on a timer of its own, so
-`CONSUL_AUTH_FALLBACK_RECHECK_INTERVAL` is a lower bound on how often it retries rather than the period. The period
-comes from the `MaxTokenTTL` of the auth method the pod logged in to. Where that auth method has no `MaxTokenTTL`,
-Consul issues a token that never expires, the pod never logs in again, and it keeps the way it picked until it
-restarts: a fleet in the default mode then stays on the M2M exchange until its pods are restarted.
-
 ## Login settings
 
 | Environment variable | Default | Controls |
@@ -37,16 +31,15 @@ restarts: a fleet in the default mode then stays on the M2M exchange until its p
 | `CONSUL_AUTH_MODE` | `kubernetes-with-m2m-fallback` | The way the ACL token is obtained |
 | `CONSUL_AUTH_METHOD` | `applications-k8s-m2m` | Name of the Consul auth method the projected token is presented to |
 | `CONSUL_AUTH_AUDIENCE` | `netcracker` | Audience of the projected token the pod sends |
-| `CONSUL_AUTH_FALLBACK_RECHECK_INTERVAL` | `5h` | Lower bound on how often a pod that fell back retries the projected token |
+| `CONSUL_AUTH_FALLBACK_RECHECK_INTERVAL` | `5h` | How often the fallback retries the projected token |
 
 The settings come from the environment and cannot be kept in Consul: the library needs them before it has the token
 that reading Consul requires.
 
-The names are the same on all three stacks, so one variable configures a Spring, a Quarkus, and a Go microservice
-alike. Write the interval with a unit, as `5h` or `30m`: that form works on all three stacks, while `PT5H` and a bare
-number do not.
+The names are the same on every stack, so one variable configures a microservice whatever it is written in. Write the
+interval with a unit, as `5h` or `30m`: that form works on all three stacks, while `PT5H` and a bare number do not.
 
-The defaults match what the platform registers. Set `CONSUL_AUTH_METHOD` or `CONSUL_AUTH_AUDIENCE` only if your
+The defaults match what the platform registers, so set `CONSUL_AUTH_METHOD` or `CONSUL_AUTH_AUDIENCE` only if your
 installation names them differently.
 
 ## The login schedule
@@ -55,18 +48,20 @@ A pod logs in again at 80% of the remaining lifetime of its token, where the pre
 before expiry. The schedule follows the current token, so a pod that migrates picks up the `MaxTokenTTL` of the new
 auth method without a restart.
 
-A failed login is retried instead of waiting out the whole schedule. On Go the delay starts at 10 seconds and doubles
-on each consecutive failure up to 5 minutes. On Spring and Quarkus that ladder is a floor rather than the delay: while
-the token in hand is still valid the retry waits for 80% of what is left of it, and the ladder takes over once that
-token is at or past expiry. Either way a pod that cannot reach Consul retries at most once every 5 minutes. Before
-this change it stayed quiet and kept serving with the token it already held until that token expired.
+A failed login is retried rather than waiting out the whole schedule, at most once every 5 minutes. Before this change
+the pod stayed quiet and kept serving with the token it already held until that token expired.
+
+A pod that fell back retries the projected token during its next scheduled login, not on a timer of its own, so
+`CONSUL_AUTH_FALLBACK_RECHECK_INTERVAL` is a lower bound on how often it retries rather than the period. The period
+comes from the `MaxTokenTTL` of the auth method the pod logged in to. Where that auth method has no `MaxTokenTTL`,
+Consul issues a token that never expires and the pod never logs in again, so a fleet in the default mode stays on the
+M2M exchange until its pods are restarted.
 
 ## What to change in your service
 
-Nothing is required. A microservice that only updates the library gets `kubernetes-with-m2m-fallback` with the default
-auth method name and audience, logs in with the projected token where the platform is ready, and keeps working through
-the M2M exchange where it is not. To keep the previous behavior instead, set `CONSUL_AUTH_MODE=m2m`. The M2M exchange
-is kept for the migration and will be removed in a later release, once the migration is complete.
+Nothing is required. A microservice that only updates the library gets `kubernetes-with-m2m-fallback` and the defaults
+above. To keep the previous behavior instead, set `CONSUL_AUTH_MODE=m2m`. The M2M exchange is kept for the migration
+and will be removed in a later release, once the migration is complete.
 
 What is recommended is to make the four settings configurable per environment, so that a mode can be pinned or an auth
 method name corrected without a new build. Add four deployment parameters to the microservice descriptor:
@@ -83,8 +78,7 @@ env:
     value: "{{ .Values.CONSUL_AUTH_FALLBACK_RECHECK_INTERVAL }}"
 ```
 
-A parameter nobody sets renders as an empty value, which the libraries treat as unset, so the defaults above apply
-until someone fills a parameter in.
+A parameter nobody sets renders as an empty value, which the libraries treat as unset, so the defaults above apply.
 
 Two things belong to the platform rather than to the microservice, and the projected token needs both:
 
@@ -92,14 +86,11 @@ Two things belong to the platform rather than to the microservice, and the proje
   `/var/run/secrets/tokens/<audience>/token`;
 - a Consul auth method named as in `CONSUL_AUTH_METHOD`, whose binding rules grant the microservice its policies.
 
-Until both are in place, the default mode keeps the microservice running through the M2M exchange.
-
 Once a pod migrates, its policies come from the binding rules of the new auth method, which need not grant what the
-M2M one granted. In the default mode a pod migrates on its own as soon as the platform side is ready, so this reaches
-every microservice that takes the upgrade, not only one that pins `CONSUL_AUTH_MODE=kubernetes`. Check that the
-binding rules cover what your microservice reads and writes in Consul. Narrower rules do not fail the login: the pod
-migrates, keeps the token, and Consul starts answering its reads and writes with `403`. Recover by restarting the pod
-with `CONSUL_AUTH_MODE=m2m`.
+M2M one granted. In the default mode a pod migrates on its own, so this reaches every microservice that takes the
+upgrade, not only one that pins `CONSUL_AUTH_MODE=kubernetes`. Check that the binding rules cover what your
+microservice reads and writes in Consul. Narrower rules do not fail the login: the pod migrates, keeps the token, and
+Consul starts answering its reads and writes with `403`. Recover by restarting the pod with `CONSUL_AUTH_MODE=m2m`.
 
 ## The supported way to use the Consul token
 
@@ -148,7 +139,7 @@ fallback, and the switch. On both, the fallback decision is logged once rather t
 started on the fallback and later migrated logs one more record, which is how a completed migration is visible. The
 bearer token, the ACL token, and the body of a successful login response are never logged.
 
-The wording differs between the stacks. On Spring and on Quarkus:
+On Spring and on Quarkus:
 
 ```text
 Perform login to http://consul:8500 with applications-k8s-m2m auth method
