@@ -43,6 +43,18 @@ alike.
 The defaults match what the platform registers. Set `CONSUL_AUTH_METHOD` or `CONSUL_AUTH_AUDIENCE` only if your
 installation names them differently.
 
+## The relogin schedule
+
+A pod relogins at 80% of the remaining lifetime of its token, where the previous library versions relogged in at a
+fixed five minutes before expiry. The period follows the current token, so a pod that moves to the Kubernetes way
+picks up the `MaxTokenTTL` of the new auth method without a restart.
+
+A failed relogin is retried instead of waiting out the whole period: the delay starts at 10 seconds, doubles on each
+consecutive failure up to 5 minutes, and returns to 10 seconds once a relogin succeeds. A pod facing an unavailable
+Consul therefore costs it one relogin every 5 minutes at most, which is a single login request on Go and up to 10 on
+Spring and Quarkus. Before this change the pod stayed quiet and kept serving with the token it already held until
+that token expired.
+
 ## What to change in your service
 
 Nothing is required. A microservice that only updates the library gets `kubernetes-with-m2m-fallback` with the default
@@ -109,6 +121,7 @@ Perform login to http://consul:8500 with applications-k8s-m2m auth method
 Consul ACL token is obtained by the kubernetes auth method
 Consul login by the kubernetes auth method failed, falling back to the m2m one and retrying it every PT5H: <reason>
 Consul ACL token is obtained by the kubernetes auth method from now on, the fallback to the m2m one is over
+Error occurred during getting new consul token. Will try in 20 seconds.
 ```
 
 On Go:
@@ -117,4 +130,5 @@ On Go:
 Logged in to Consul with auth method 'applications-k8s-m2m'
 Consul login with auth method 'applications-k8s-m2m' failed: <reason>. Falling back to auth method '<m2m auth method>'
 Consul login with auth method 'applications-k8s-m2m' succeeded. Fallback disabled
+failed to refresh Consul token: <reason>. Next attempt in 20s
 ```
