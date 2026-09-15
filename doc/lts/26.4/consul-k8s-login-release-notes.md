@@ -21,9 +21,8 @@ The mode is set by `CONSUL_AUTH_MODE` and read at startup, so it can be changed 
 | `kubernetes` | Logs in with the projected token only. There is no fallback. |
 | `m2m` | Logs in with the M2M token only, the way the previous versions did. The login schedule below still applies. |
 
-An unknown mode keeps the microservice from starting, and so does a login failure the retries do not fix. A Go
-property source configured with `Failsafe: true` starts without Consul properties instead, as it already does for
-other Consul failures.
+An unknown mode keeps the microservice from starting, and so does a login failure the retries do not fix, unless the
+Go property source is configured to tolerate Consul failures.
 
 A pod that fell back retries during its next scheduled login, not on a timer of its own, so
 `CONSUL_AUTH_FALLBACK_RECHECK_INTERVAL` is a lower bound on how often it retries rather than the period. The period
