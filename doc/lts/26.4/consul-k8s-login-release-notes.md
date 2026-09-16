@@ -6,10 +6,10 @@ while the platform side is not ready yet. Nothing in the way a microservice read
 
 | Stack | Artifact | Version |
 |---|---|---|
-| Spring, RestTemplate | `com.netcracker.cloud:consul-config-provider-spring-resttemplate` | TBD |
-| Spring, WebClient | `com.netcracker.cloud:consul-config-provider-spring-webclient` | TBD |
-| Quarkus | `com.netcracker.cloud.quarkus:consul-client` | TBD |
-| Go | `github.com/netcracker/qubership-core-lib-go-rest-utils/v2/consul-propertysource` | TBD |
+| Spring, RestTemplate | `com.netcracker.cloud:consul-config-provider-spring-resttemplate` | 7.5.0 |
+| Spring, WebClient | `com.netcracker.cloud:consul-config-provider-spring-webclient` | 7.5.0 |
+| Quarkus | `com.netcracker.cloud.quarkus:consul-client` | 10.3.0 |
+| Go | `github.com/netcracker/qubership-core-lib-go-rest-utils/v2/consul-propertysource` | v2.9.0 |
 
 ## Login modes
 
