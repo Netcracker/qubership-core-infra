@@ -31,7 +31,7 @@ Go property source is configured to tolerate Consul failures.
 | `CONSUL_AUTH_MODE` | `kubernetes-with-m2m-fallback` | The way the ACL token is obtained |
 | `CONSUL_AUTH_METHOD` | `applications-k8s-m2m` | Name of the Consul auth method the projected token is presented to |
 | `CONSUL_AUTH_AUDIENCE` | `netcracker` | Audience of the projected token the pod sends |
-| `CONSUL_AUTH_FALLBACK_RECHECK_INTERVAL` | `5h` | How often the fallback retries the projected token |
+| `CONSUL_AUTH_FALLBACK_RECHECK_INTERVAL` | `5h` | Lower bound on how often the fallback retries the projected token |
 
 The settings come from the environment and cannot be kept in Consul: the library needs them before it has the token
 that reading Consul requires.
@@ -48,7 +48,7 @@ A pod logs in again at 80% of the remaining lifetime of its token, where the pre
 before expiry. The schedule follows the current token, so a pod that migrates picks up the `MaxTokenTTL` of the new
 auth method without a restart.
 
-A failed login is retried rather than waiting out the whole schedule, at most once every 5 minutes. Before this change
+A failed login is retried rather than waiting out the whole schedule, with a delay that grows to at most 5 minutes. Before this change
 the pod stayed quiet and kept serving with the token it already held until that token expired.
 
 A pod that fell back retries the projected token during its next scheduled login, not on a timer of its own, so
@@ -84,7 +84,8 @@ Two things belong to the platform rather than to the microservice, and the proje
 
 - a projected volume mounted so that the token of the audience from `CONSUL_AUTH_AUDIENCE` lands at
   `/var/run/secrets/tokens/<audience>/token`;
-- a Consul auth method named as in `CONSUL_AUTH_METHOD`, whose binding rules grant the microservice its policies.
+- a Consul auth method of type `jwt` named as in `CONSUL_AUTH_METHOD`, whose `BoundAudiences` cover
+  `CONSUL_AUTH_AUDIENCE` and whose binding rules grant the microservice its policies.
 
 Once a pod migrates, its policies come from the binding rules of the new auth method, which need not grant what the
 M2M one granted. In the default mode a pod migrates on its own, so this reaches every microservice that takes the
@@ -143,9 +144,8 @@ On Spring and on Quarkus:
 
 ```text
 Perform login to http://consul:8500 with applications-k8s-m2m auth method
-Consul ACL token is obtained by the kubernetes auth method
-Consul login by the kubernetes auth method failed, falling back to the m2m one and retrying it every PT5H: <reason>
-Consul ACL token is obtained by the kubernetes auth method from now on, the fallback to the m2m one is over
+Consul ACL token is obtained by the kubernetes way
+Consul ACL token is obtained by the kubernetes way from now on, the fallback to the m2m one is over
 ```
 
 On Go:
