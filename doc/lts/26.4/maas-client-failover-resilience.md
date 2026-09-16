@@ -40,6 +40,9 @@ client := kafka.NewClient(namespace, maasAgentUrl, tenantManagerUrl, httpClient,
 
 Go has no off switch: a zero or negative duration means the default 60s, not "do not retry".
 
+The declarative Kafka client is not affected: it keeps its own loop, which repeats every five
+seconds until the topic answers, and it now sends one attempt per call, exactly as before.
+
 ### Go: a failed call reports a different message
 
 **Applies to:** qubership-core-lib-go-maas-client
