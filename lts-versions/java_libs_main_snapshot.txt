@@ -38,9 +38,9 @@ com.netcracker.cloud:core-error-handling:4.3.3-SNAPSHOT
 com.netcracker.cloud:core-error-handling-report-aggregate:4.3.3-SNAPSHOT
 com.netcracker.cloud:core-error-handling-rest:4.3.3-SNAPSHOT
 com.netcracker.cloud:core-error-handling-runtime:4.3.3-SNAPSHOT
-com.netcracker.cloud.junit.cloudcore:cloud-core-extension:8.10.3-SNAPSHOT
-com.netcracker.cloud.junit.cloudcore:cloud-core-extension-bom:8.10.3-SNAPSHOT
-com.netcracker.cloud.junit.cloudcore:cloud-core-parent:8.10.3-SNAPSHOT
+com.netcracker.cloud.junit.cloudcore:cloud-core-extension:8.11.0-SNAPSHOT
+com.netcracker.cloud.junit.cloudcore:cloud-core-extension-bom:8.11.0-SNAPSHOT
+com.netcracker.cloud.junit.cloudcore:cloud-core-parent:8.11.0-SNAPSHOT
 com.netcracker.cloud:cloud-core-java-bom:12.2.3-SNAPSHOT
 com.netcracker.cloud:cloud-core-java-bom-parent:12.2.3-SNAPSHOT
 com.netcracker.cloud:framework-extension-bom:7.2.3-SNAPSHOT
