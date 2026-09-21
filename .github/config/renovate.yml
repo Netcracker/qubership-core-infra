@@ -35,9 +35,20 @@ packageRules:
     registryUrls:
       - "https://repo.maven.apache.org/maven2"
       - "https://maven.pkg.github.com/netcracker/*"
-  - matchDatasources: [ "docker" ]
+  - description: "Java base images: <java>-<os>-<version>, os flavour (alpine/ubi) is preserved"
+    matchDatasources: [ "docker" ]
     matchPackageNames: [ "/.+/netcracker/qubership-java-base.*/" ]
-    versioning: "regex:^(?<compatibility>\\d+)-alpine-(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$"
+    versioning: "regex:^(?<compatibility>\\d+-(?:alpine|ubi))-(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$"
+  - description: "Core/nginx base images: legacy unprefixed tags are treated as alpine and migrated to alpine-<version>, ubi-<version> stays ubi"
+    matchDatasources: [ "docker" ]
+    matchPackageNames: [ "/.+/netcracker/qubership-(core|nginx)-base$/" ]
+    versioning: "regex:^(?:(?<compatibility>ubi)-|alpine-)?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$"
+    allowedVersions: "/^(alpine|ubi)-\\d/"
+  - description: "Core/nginx base images: legacy unprefixed latest tag is replaced with alpine-latest"
+    matchDatasources: [ "docker" ]
+    matchPackageNames: [ "/.+/netcracker/qubership-(core|nginx)-base$/" ]
+    matchCurrentValue: "latest"
+    replacementVersion: "alpine-latest"
   - matchDatasources: [ "docker" ]
     matchPackageNames: [ "golang" ]
     separateMinorPatch: true
