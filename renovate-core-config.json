@@ -49,6 +49,12 @@
     "versioning" : "regex:^(?:(?<compatibility>ubi)-|alpine-)?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$",
     "allowedVersions" : "/^(alpine|ubi)-\\d/"
   }, {
+    "description" : "Core/nginx base images: legacy unprefixed latest tag is replaced with alpine-latest",
+    "matchDatasources" : [ "docker" ],
+    "matchPackageNames" : [ "/.+/netcracker/qubership-(core|nginx)-base$/" ],
+    "matchCurrentValue" : "latest",
+    "replacementVersion" : "alpine-latest"
+  }, {
     "matchDatasources" : [ "docker" ],
     "matchPackageNames" : [ "golang" ],
     "separateMinorPatch" : true
