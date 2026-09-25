@@ -22,7 +22,7 @@ on:
 jobs:
   maven-verify:
     name: Maven verify
-    uses: Netcracker/qubership-core-infra/.github/workflows/generic-maven-build.yaml@v2.6.1
+    uses: Netcracker/qubership-core-infra/.github/workflows/generic-maven-build.yaml@8a233b03c5b5355d59c1585ffdaa1f45ea816405 # v2.6.1
     with:
       maven-command: 'verify'
       sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
