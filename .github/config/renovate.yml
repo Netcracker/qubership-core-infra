@@ -52,6 +52,11 @@ packageRules:
   - matchDatasources: [ "docker" ]
     matchPackageNames: [ "golang" ]
     separateMinorPatch: true
+  - description: "OpenTelemetry instrumentation must match the OpenTelemetry SDK managed by Spring Boot (Boot 4.1.x -> SDK 1.62.0 -> instrumentation 2.28.x). Update together with Spring Boot's OpenTelemetry version."
+    matchPackageNames:
+      - "io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom"
+      - "io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha"
+    allowedVersions: "/^2\\.28\\./"
 
 platform: "github"
 platformAutomerge: true
