@@ -35,6 +35,15 @@ packageRules:
     registryUrls:
       - "https://repo.maven.apache.org/maven2"
       - "https://maven.pkg.github.com/netcracker/*"
+  - description: "Netcracker artifacts are published to GitHub Packages only: do not query Maven Central for them (avoids Maven Central 429 rate limiting that aborts the whole run)"
+    matchDatasources: [ "maven" ]
+    matchPackageNames: [ "/^com\\.netcracker\\./" ]
+    registryUrls:
+      - "https://maven.pkg.github.com/netcracker/*"
+  - description: "Inter-module SNAPSHOT dependencies are managed by the release process, not by Renovate: skip their lookups"
+    matchDatasources: [ "maven" ]
+    matchCurrentValue: "/-SNAPSHOT$/"
+    enabled: false
   - description: "Java base images: <java>-<os>-<version>, os flavour (alpine/ubi) is preserved"
     matchDatasources: [ "docker" ]
     matchPackageNames: [ "/.+/netcracker/qubership-java-base.*/" ]
