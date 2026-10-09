@@ -96,7 +96,7 @@ jobs:
           cliVersion="1.8.2-SNAPSHOT"
           cliVersionSpecific="1.8.2-20260810.102245-31"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${cli_name}/${cliVersion}/${cli_name}-${cliVersionSpecific}-jar-with-dependencies.jar"
-          curl -L -v -o "${cli_name}.jar" -H "Authorization: Bearer ${GH_ACCESS_TOKEN}" "${url}"
+          curl -L -sS --fail-with-body -o "${cli_name}.jar" -H "Authorization: Bearer ${GH_ACCESS_TOKEN}" "${url}" || { echo "::error::failed to download ${cli_name} from ${url}"; cat "${cli_name}.jar"; exit 1; }
           
           args="--baseDir=${GITHUB_WORKSPACE}"
           args="${args} --type1PomRelativeDir=dependencies/spring-dependencies"
@@ -146,7 +146,7 @@ jobs:
           cliVersion="1.8.2-SNAPSHOT"
           cliVersionSpecific="1.8.2-20260807.092819-28"
           url="https://maven.pkg.github.com/Netcracker/qubership-core-bulk-release/org.qubership.cloud/${cli_name}/${cliVersion}/${cli_name}-${cliVersionSpecific}-jar-with-dependencies.jar"
-          curl -L -v -o "${cli_name}.jar" -H "Authorization: Bearer ${GH_ACCESS_TOKEN}" "${url}"
+          curl -L -sS --fail-with-body -o "${cli_name}.jar" -H "Authorization: Bearer ${GH_ACCESS_TOKEN}" "${url}" || { echo "::error::failed to download ${cli_name} from ${url}"; cat "${cli_name}.jar"; exit 1; }
           
           branchPrefix="renovate-${GITHUB_REF_NAME}/"
           
@@ -192,6 +192,10 @@ jobs:
           # commit renovate-core-config.json if updated
           git config user.email "actions@github.com"
           git config user.name "actions"
+          if [ "${DRY_RUN}" = "true" ]; then
+            echo "dry-run: renovate-core-config.json is not committed (see the renovate-core-config artifact)"
+            exit 0
+          fi
           git add renovate-core-config.json
           git diff --cached --quiet || git commit -m "Update renovate core config"
           git push
