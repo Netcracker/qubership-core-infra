@@ -66,7 +66,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       MAVEN_USER: "x-access-token"
-      MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+      MAVEN_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
       GOTOOLCHAIN: local
     outputs:
@@ -142,7 +142,7 @@ jobs:
         id: run-go-bulk-release-cli
         shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
           REPOSITORIES: ${{ steps.read-repositories.outputs.repositories }}
           REPOSITORY_TO_RELEASE: ${{ inputs.repositoryToRelease }}
           SKIP_TEST: ${{ inputs.skipTest }}

@@ -150,4 +150,4 @@ GitHub Actions workflow (`.github/workflows/lts-versions-report.yml`):
 - Clones Java repositories in a shell loop reading both `java-libs-repos.txt` and `java-services-repos.txt` (full clone, needed to read `pom.xml` from disk for monorepo detection).
 - The script clones Go repositories internally, reading `go-libs-repos.txt` and `go-services-repos.txt`.
 - Installs `jinja2`, runs the script, deploys `_site/` to `gh-pages` under `lts-versions/` (`keep_files: true`).
-- `GH_TOKEN` / `MAVEN_RELEASE_DEV_TOKEN` secret is used for all private repository access.
+- `GH_TOKEN` / `GH_ACCESS_TOKEN` secret is used for all private repository access.

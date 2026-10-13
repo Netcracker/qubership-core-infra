@@ -80,7 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       MAVEN_USER: "x-access-token"
-      MAVEN_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+      MAVEN_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
       MAVEN_GPG_PASSPHRASE: ${{ secrets.maven-gpg-passphrase }}
     outputs:
       result: ${{ steps.run-maven-bulk-release-cli.outputs.result }}
@@ -90,7 +90,7 @@ jobs:
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: "main"
-          token: '${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}'
+          token: '${{ secrets.GH_ACCESS_TOKEN }}'
 
       - name: "Download GAVs from another release workflow(s)"
         id: download-gavs

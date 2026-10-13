@@ -21,7 +21,7 @@ jobs:
 
       - name: Generate HTML report
         env:
-          GITHUB_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
         run: |
           mkdir -p _site
           python3 pr-report/pr-report.py _site/index.html

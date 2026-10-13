@@ -20,7 +20,7 @@ jobs:
 
       - name: Clone Java repos
         env:
-          TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+          TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
         run: |
           for list in infra/lts-versions-script/java-libs-repos.txt infra/lts-versions-script/java-services-repos.txt; do
             while IFS= read -r repo || [ -n "$repo" ]; do
@@ -37,7 +37,7 @@ jobs:
 
       - name: Generate HTML report
         env:
-          GH_TOKEN: ${{ secrets.MAVEN_RELEASE_DEV_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
         run: |
           mkdir -p _site
           python3 infra/lts-versions-script/lts-versions.py _site/index.html \
