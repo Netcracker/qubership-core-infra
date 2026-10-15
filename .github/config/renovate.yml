@@ -66,6 +66,13 @@ packageRules:
       - "io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom"
       - "io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha"
     allowedVersions: "/^2\\.28\\./"
+  - description: "Quarkus platform BOMs share one version (usually one quarkus.platform.version property). Only quarkus-bom and quarkus-maven-plugin get the generated Quarkus pin, so any other io.quarkus.platform artifact (e.g. quarkus-operator-sdk-bom) would bump the shared property past the pin. Disable them; if java-libs starts using another platform BOM, add it to the exclusions so the generator pins it."
+    matchDatasources: [ "maven" ]
+    matchPackageNames:
+      - "/^io\\.quarkus\\.platform:/"
+      - "!io.quarkus.platform:quarkus-bom"
+      - "!io.quarkus.platform:quarkus-maven-plugin"
+    enabled: false
 
 platform: "github"
 platformAutomerge: true

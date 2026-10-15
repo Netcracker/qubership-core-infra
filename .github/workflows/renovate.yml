@@ -170,6 +170,10 @@ jobs:
           args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchPackageNames':['/(.*netcracker.*)/'],'matchUpdateTypes':['digest'],'groupName':'go-netcracker-digest','groupSlug':'go-netcracker-digest','addLabels':['group:go-netcracker']}]}")
           # temporary rule to separate update github.com/valyala/fasthttp v1.69.0 → v1.70.0 (manual steps are required)
           args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchPackageNames':['github.com/valyala/fasthttp'],'matchNewValue':['v1.70.0'],'groupName':'go-fasthttp','groupSlug':'go-fasthttp','addLabels':['group:go']}]}")
+          # bun modules check each other's version at init (pgdialect panics when it differs from bun), so they
+          # must move together. Renovate does not update indirect Go deps by default, which left pgdialect behind
+          # bun in site-management#295; enable them for bun and put all bun modules into one group.
+          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchPackageNames':['github.com/uptrace/bun','github.com/uptrace/bun/**'],'matchDepTypes':['require','indirect'],'enabled':true,'groupName':'go-bun','groupSlug':'go-bun','addLabels':['group:go']}]}")
           # do not bump the go directive in go.mod on a new Go release: it is a lower bound for the whole
           # module graph, so raising it forces every consumer of our libraries onto that Go version.
           # go mod tidy still raises it when a dependency requires it; the build pins the compiler itself.
