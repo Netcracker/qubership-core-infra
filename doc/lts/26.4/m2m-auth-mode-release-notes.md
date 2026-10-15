@@ -3,8 +3,7 @@
 Starting with release 26.4, Cloud Core services can authenticate their machine-to-machine (M2M) calls with the pod's
 Kubernetes projected service account token instead of the legacy M2M token from the application's token provider. With
 the Kubernetes token, a service calls DBaaS and MaaS directly rather than through dbaas-agent and maas-agent. The
-`M2M_AUTH_MODE` environment variable selects the mode. Its default, `legacy`, keeps the previous behavior, so an upgrade
-alone changes nothing.
+`M2M_AUTH_MODE` environment variable selects the mode. After an upgrade, M2M calls stay in the default `legacy` mode.
 
 ## Modes
 
@@ -46,8 +45,9 @@ A client in `hybrid` sends the legacy M2M token instead of the Kubernetes token 
 A `403`, a `5xx`, or a network error does not trigger the fallback and is returned to the caller. DBaaS and MaaS
 clients send the fallback request to dbaas-agent or maas-agent.
 
-After a successful fallback, the client sends only the legacy token to that receiver for the next 5 hours. When a
-receiver starts accepting the Kubernetes token, running clients switch to it within 5 hours or after a restart.
+After a successful fallback, the client caches the use of the legacy token for 5 hours. Java clients retry the
+Kubernetes token on the next request after the cache entry expires. Go clients extend the expiry after each successful
+legacy request, so continued traffic can keep them on the legacy token. Restart the caller pods to retry immediately.
 
 ## DBaaS and MaaS
 
@@ -58,11 +58,10 @@ In DBaaS and MaaS, `M2M_AUTH_MODE` sets which credentials they accept. `hybrid` 
 | `legacy` (default) | Basic only; any Bearer token gets `401` |
 | `hybrid`, `k8s` | Basic and the Kubernetes token with the `dbaas` or `maas` audience |
 
-Switching DBaaS and MaaS to `hybrid` or `k8s` breaks no caller: dbaas-agent and maas-agent forward calls with Basic
-credentials, which are accepted in every mode.
+Calls through dbaas-agent and maas-agent continue to work in every mode because the agents send Basic credentials.
 
 In `hybrid` and `k8s`, DBaaS and MaaS fetch the cluster's OIDC discovery document and JWKS at startup and do not start
-if that fails. Their pods must have the service account token mounted and must reach the Kubernetes API.
+if that fails. Their pods must have the default service account token mounted.
 
 ### dbaas-operator
 
@@ -75,7 +74,7 @@ needs DBaaS in `hybrid` or `k8s`. The operator in `legacy` works with DBaaS in a
 The Cloud Core charts take `M2M_AUTH_MODE`; set the same value for all Cloud Core services. A caller can only be
 switched to `k8s` once every service it calls accepts the Kubernetes token, so move receivers first:
 
-1. Upgrade Cloud Core and your services to release 26.4. The mode stays `legacy`, and nothing changes.
+1. Upgrade Cloud Core and your services to release 26.4. M2M calls stay in `legacy` mode.
 2. Switch DBaaS and MaaS to `hybrid` or `k8s`.
 3. Prepare Cloud Core and your services as described below, and switch them to `hybrid`. Find the calls that still
    fall back, as described in [Troubleshooting](#troubleshooting).
@@ -217,15 +216,6 @@ The API is described in the
 [Java Kubernetes utilities](https://github.com/Netcracker/qubership-core-java-libs/tree/main/core-utils/k8s) and the
 [Go REST client](https://github.com/Netcracker/qubership-core-lib-go/tree/main/security/rest).
 
-### Accept the Kubernetes token in incoming calls
-
-Except in DBaaS and MaaS, `M2M_AUTH_MODE` sets only the token a service sends, not the one it accepts. Accepting the
-Kubernetes token with the `netcracker` audience is the job of the service's security integration, and it must be in
-place before the callers of the service switch to `k8s`. Until then, the service must answer `401` to the Kubernetes
-token, so that callers in `hybrid` fall back. The libraries provide the verifier: `KubernetesTokenVerifier` in
-`k8s-utils` for Java, and the
-[`tokenverifier` package](https://github.com/Netcracker/qubership-core-lib-go/tree/main/security/tokenverifier) for Go.
-
 ## Troubleshooting
 
 | Message | Cause | Action |
@@ -235,8 +225,10 @@ token, so that callers in `hybrid` fall back. The libraries provide the verifier
 | `maas.internal.address is not set: with M2M_AUTH_MODE=k8s the client sends requests directly to MaaS, ...` | `k8s` without the MaaS address | Set `MAAS_INTERNAL_ADDRESS` |
 | `DBaaS address is not available, falling back to dbaas-agent. ...`, `MaaS address is not available, falling back to maas-agent. ...` | `hybrid` without the address; the client uses the agent | Set the address before switching to `k8s` |
 | Warning with `error acquiring kubernetes token for m2m communication` or `cannot get the Kubernetes M2M token for <url>` | `hybrid` and no token for the audience; the client falls back to the legacy token | Mount the projected token of that audience |
-| `401` from DBaaS or MaaS in `k8s`; MaaS logs `bearer tokens are not accepted with M2M_AUTH_MODE=legacy, ...` | DBaaS or MaaS runs in `legacy` | Switch DBaaS or MaaS to `hybrid` or `k8s` |
+| MaaS logs `bearer tokens are not accepted with M2M_AUTH_MODE=legacy, ...` | MaaS runs in `legacy` | Switch MaaS to `hybrid` or `k8s` |
+| `401` from DBaaS or MaaS in `k8s` | The receiver rejects the token | Check the receiver's mode and logs for audience, issuer, expiry, or signature errors |
 
 The fallback after a `401` is logged only at `DEBUG` level. To find the receivers that still answer `401` to the
 Kubernetes token in `hybrid`, set the `DEBUG` level for the `rest-client` logger in Go
 (`logging.level.rest-client=debug`) or for `com.netcracker.cloud.security.core.utils.k8s.impl.M2MInterceptor` in Java.
+Restart the caller pods to clear cached fallback decisions before checking.
