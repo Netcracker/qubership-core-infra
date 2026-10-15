@@ -4,12 +4,14 @@ The Consul config provider libraries obtain the Consul ACL token by exchanging t
 account token for it. The previous exchange of an M2M token stays the default, and in the `hybrid` mode a pod falls back
 to it on its own while the platform side is not ready yet. Nothing in the way a microservice reads Consul properties changes.
 
-| Stack | Artifact | Version |
-|---|---|---|
-| Spring, RestTemplate | `com.netcracker.cloud:consul-config-provider-spring-resttemplate` | 7.5.0 |
-| Spring, WebClient | `com.netcracker.cloud:consul-config-provider-spring-webclient` | 7.5.0 |
-| Quarkus | `com.netcracker.cloud.quarkus:consul-client` | 10.3.0 |
-| Go | `github.com/netcracker/qubership-core-lib-go-rest-utils/v2/consul-propertysource` | v2.9.0 |
+The feature ships in release 26.4 of these libraries:
+
+| Stack | Artifact |
+|---|---|
+| Spring, RestTemplate | `com.netcracker.cloud:consul-config-provider-spring-resttemplate` |
+| Spring, WebClient | `com.netcracker.cloud:consul-config-provider-spring-webclient` |
+| Quarkus | `com.netcracker.cloud.quarkus:consul-client` |
+| Go | `github.com/netcracker/qubership-core-lib-go-rest-utils/v2/consul-propertysource` |
 
 ## Login modes
 
