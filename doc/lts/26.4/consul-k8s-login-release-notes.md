@@ -1,15 +1,17 @@
 # Consul login with the Kubernetes projected token
 
 The Consul config provider libraries obtain the Consul ACL token by exchanging the pod's Kubernetes projected service
-account token for it. The previous exchange of an M2M token stays in place, and a pod falls back to it on its own
-while the platform side is not ready yet. Nothing in the way a microservice reads Consul properties changes.
+account token for it. The previous exchange of an M2M token stays the default, and in the `hybrid` mode a pod falls back
+to it on its own while the platform side is not ready yet. Nothing in the way a microservice reads Consul properties changes.
 
-| Stack | Artifact | Version |
-|---|---|---|
-| Spring, RestTemplate | `com.netcracker.cloud:consul-config-provider-spring-resttemplate` | 7.5.0 |
-| Spring, WebClient | `com.netcracker.cloud:consul-config-provider-spring-webclient` | 7.5.0 |
-| Quarkus | `com.netcracker.cloud.quarkus:consul-client` | 10.3.0 |
-| Go | `github.com/netcracker/qubership-core-lib-go-rest-utils/v2/consul-propertysource` | v2.9.0 |
+The feature ships in release 26.4 of these libraries:
+
+| Stack | Artifact |
+|---|---|
+| Spring, RestTemplate | `com.netcracker.cloud:consul-config-provider-spring-resttemplate` |
+| Spring, WebClient | `com.netcracker.cloud:consul-config-provider-spring-webclient` |
+| Quarkus | `com.netcracker.cloud.quarkus:consul-client` |
+| Go | `github.com/netcracker/qubership-core-lib-go-rest-utils/v2/consul-propertysource` |
 
 ## Login modes
 
@@ -17,9 +19,9 @@ The mode is set by `CONSUL_AUTH_MODE` and read at startup, so it can be changed 
 
 | Mode | Behavior |
 |---|---|
-| `kubernetes-with-m2m-fallback` | Default. Logs in with the projected token. On failure the pod keeps working through the M2M exchange and tries the projected token again later. The first success migrates the pod for good. |
-| `kubernetes` | Logs in with the projected token only. There is no fallback. |
-| `m2m` | Logs in with the M2M token only, the way the previous versions did. The login schedule below still applies. |
+| `legacy` | Default. Logs in with the M2M token only, the way the previous versions did. The login schedule below still applies. |
+| `hybrid` | Logs in with the projected token. On failure the pod keeps working through the M2M exchange and tries the projected token again later. The first success migrates the pod for good. |
+| `k8s` | Logs in with the projected token only. There is no fallback. |
 
 An unknown mode keeps the microservice from starting, and so does a login failure the retries do not fix, unless the
 Go property source is configured to tolerate Consul failures.
@@ -28,7 +30,7 @@ Go property source is configured to tolerate Consul failures.
 
 | Environment variable | Default | Controls |
 |---|---|---|
-| `CONSUL_AUTH_MODE` | `kubernetes-with-m2m-fallback` | The way the ACL token is obtained |
+| `CONSUL_AUTH_MODE` | `legacy` | The way the ACL token is obtained |
 | `CONSUL_AUTH_METHOD` | `applications-k8s-m2m` | Name of the Consul auth method the projected token is presented to |
 | `CONSUL_AUTH_AUDIENCE` | `netcracker` | Audience of the projected token the pod sends |
 | `CONSUL_AUTH_FALLBACK_RECHECK_INTERVAL` | `5h` | Lower bound on how often the fallback retries the projected token |
@@ -54,13 +56,14 @@ the pod stayed quiet and kept serving with the token it already held until that 
 A pod that fell back retries the projected token during its next scheduled login, not on a timer of its own, so
 `CONSUL_AUTH_FALLBACK_RECHECK_INTERVAL` is a lower bound on how often it retries rather than the period. The period
 comes from the `MaxTokenTTL` of the auth method the pod logged in to. Where that auth method has no `MaxTokenTTL`,
-Consul issues a token that never expires and the pod never logs in again, so a fleet in the default mode stays on the
+Consul issues a token that never expires and the pod never logs in again, so a fleet in the `hybrid` mode stays on the
 M2M exchange until its pods are restarted.
 
 ## What to change in your service
 
-Nothing is required. A microservice that only updates the library gets `kubernetes-with-m2m-fallback` and the defaults
-above. To keep the previous behavior instead, set `CONSUL_AUTH_MODE=m2m`. The M2M exchange is kept for the migration
+Nothing is required. A microservice that only updates the library gets `legacy` and the defaults above, so it keeps
+the M2M exchange. To move it to the projected token, set `CONSUL_AUTH_MODE=hybrid`, or `k8s` once the platform side
+below is in place. The M2M exchange is kept for the migration
 and will be removed in a later release, once the migration is complete.
 
 What is recommended is to make the four settings configurable per environment, so that a mode can be pinned or an auth
@@ -88,10 +91,10 @@ Two things belong to the platform rather than to the microservice, and the proje
   `CONSUL_AUTH_AUDIENCE` and whose binding rules grant the microservice its policies.
 
 Once a pod migrates, its policies come from the binding rules of the new auth method, which need not grant what the
-M2M one granted. In the default mode a pod migrates on its own, so this reaches every microservice that takes the
-upgrade, not only one that pins `CONSUL_AUTH_MODE=kubernetes`. Check that the binding rules cover what your
+M2M one granted. In the `hybrid` mode a pod migrates on its own, so this reaches every microservice set to `hybrid`,
+not only one set to `k8s`. Check that the binding rules cover what your
 microservice reads and writes in Consul. Narrower rules do not fail the login: the pod migrates, keeps the token, and
-Consul starts answering its reads and writes with `403`. Recover by restarting the pod with `CONSUL_AUTH_MODE=m2m`.
+Consul starts answering its reads and writes with `403`. Recover by restarting the pod with `CONSUL_AUTH_MODE=legacy`.
 
 ## The supported way to use the Consul token
 
