@@ -51,5 +51,4 @@
 
 | Repository | Build | Coverage | Duplicated lines | Vulnerabilities | Bugs | Code smells |
 |---|---|---|---|---|---|---|
-| qubership-core-bootstrap | [![[CR Synchronizer] Go build](https://github.com/Netcracker/qubership-core-bootstrap/actions/workflows/cr-synchronizer---go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-bootstrap/actions/workflows/cr-synchronizer---go-build.yml) [![[Core Bootstrap] Go build](https://github.com/Netcracker/qubership-core-bootstrap/actions/workflows/core-bootstrap---go-build.yml/badge.svg)](https://github.com/Netcracker/qubership-core-bootstrap/actions/workflows/core-bootstrap---go-build.yml)  |  |  |  |  |  |
 | qubership-core-base-images | [![Build and Push On Commit](https://github.com/Netcracker/qubership-core-base-images/actions/workflows/docker-build-on-commit.yaml/badge.svg)](https://github.com/Netcracker/qubership-core-base-images/actions/workflows/docker-build-on-commit.yaml) |  |  |  |  |  |
