@@ -259,7 +259,7 @@
     "groupName" : "maven",
     "allowedVersions" : "/^2.0.5$/"
   }, {
-    "matchPackageNames" : [ "org.springframework.security:spring-security-oauth2-client", "org.springframework.security:spring-security-oauth2-core", "org.springframework.security:spring-security-oauth2-jose", "org.springframework.security:spring-security-test" ],
+    "matchPackageNames" : [ "org.springframework.security:spring-security-oauth2-client", "org.springframework.security:spring-security-oauth2-core", "org.springframework.security:spring-security-test" ],
     "groupName" : "maven",
     "allowedVersions" : "/^7.1.1$/"
   }, {
@@ -270,10 +270,6 @@
     "matchPackageNames" : [ "com.sun.xml.bind:jaxb-core", "com.sun.xml.bind:jaxb-impl" ],
     "groupName" : "maven",
     "allowedVersions" : "/^4.0.9$/"
-  }, {
-    "matchPackageNames" : [ "com.nimbusds:nimbus-jose-jwt" ],
-    "groupName" : "maven",
-    "allowedVersions" : "/^10.7$/"
   }, {
     "matchPackageNames" : [ "org.jetbrains.kotlin:kotlin-bom" ],
     "groupName" : "maven",
@@ -331,7 +327,7 @@
     "groupName" : "maven",
     "allowedVersions" : "/^6.0.1$/"
   }, {
-    "matchPackageNames" : [ "io.micrometer:micrometer-bom", "io.micrometer:micrometer-core", "io.micrometer:micrometer-observation", "io.micrometer:micrometer-registry-prometheus" ],
+    "matchPackageNames" : [ "io.micrometer:micrometer-bom", "io.micrometer:micrometer-core", "io.micrometer:micrometer-registry-prometheus" ],
     "groupName" : "maven",
     "allowedVersions" : "/^1.17.1$/"
   }, {
@@ -343,7 +339,7 @@
     "groupName" : "maven",
     "allowedVersions" : "/^3.0.1$/"
   }, {
-    "matchPackageNames" : [ "org.springframework.boot:spring-boot", "org.springframework.boot:spring-boot-actuator", "org.springframework.boot:spring-boot-actuator-autoconfigure", "org.springframework.boot:spring-boot-autoconfigure", "org.springframework.boot:spring-boot-dependencies", "org.springframework.boot:spring-boot-http-client", "org.springframework.boot:spring-boot-jackson2", "org.springframework.boot:spring-boot-micrometer-metrics-test", "org.springframework.boot:spring-boot-micrometer-tracing-test", "org.springframework.boot:spring-boot-properties-migrator", "org.springframework.boot:spring-boot-restclient", "org.springframework.boot:spring-boot-resttestclient", "org.springframework.boot:spring-boot-starter-actuator", "org.springframework.boot:spring-boot-starter-data-cassandra", "org.springframework.boot:spring-boot-starter-data-elasticsearch", "org.springframework.boot:spring-boot-starter-data-jpa", "org.springframework.boot:spring-boot-starter-data-mongodb", "org.springframework.boot:spring-boot-starter-data-redis", "org.springframework.boot:spring-boot-starter-integration", "org.springframework.boot:spring-boot-starter-jdbc", "org.springframework.boot:spring-boot-starter-kafka", "org.springframework.boot:spring-boot-starter-opentelemetry", "org.springframework.boot:spring-boot-starter-parent", "org.springframework.boot:spring-boot-starter-restclient-test", "org.springframework.boot:spring-boot-starter-security", "org.springframework.boot:spring-boot-starter-test", "org.springframework.boot:spring-boot-starter-web", "org.springframework.boot:spring-boot-starter-webflux", "org.springframework.boot:spring-boot-test", "org.springframework.boot:spring-boot-test-autoconfigure", "org.springframework.boot:spring-boot-webmvc-test" ],
+    "matchPackageNames" : [ "org.springframework.boot:spring-boot", "org.springframework.boot:spring-boot-actuator", "org.springframework.boot:spring-boot-actuator-autoconfigure", "org.springframework.boot:spring-boot-autoconfigure", "org.springframework.boot:spring-boot-dependencies", "org.springframework.boot:spring-boot-http-client", "org.springframework.boot:spring-boot-jackson2", "org.springframework.boot:spring-boot-micrometer-metrics-test", "org.springframework.boot:spring-boot-micrometer-tracing-test", "org.springframework.boot:spring-boot-restclient", "org.springframework.boot:spring-boot-resttestclient", "org.springframework.boot:spring-boot-starter-actuator", "org.springframework.boot:spring-boot-starter-data-cassandra", "org.springframework.boot:spring-boot-starter-data-elasticsearch", "org.springframework.boot:spring-boot-starter-data-mongodb", "org.springframework.boot:spring-boot-starter-data-redis", "org.springframework.boot:spring-boot-starter-jdbc", "org.springframework.boot:spring-boot-starter-kafka", "org.springframework.boot:spring-boot-starter-parent", "org.springframework.boot:spring-boot-starter-restclient-test", "org.springframework.boot:spring-boot-starter-security", "org.springframework.boot:spring-boot-starter-test", "org.springframework.boot:spring-boot-starter-web", "org.springframework.boot:spring-boot-starter-webflux", "org.springframework.boot:spring-boot-test", "org.springframework.boot:spring-boot-test-autoconfigure", "org.springframework.boot:spring-boot-webmvc-test" ],
     "groupName" : "maven",
     "allowedVersions" : "/^4.1.1$/"
   }, {
@@ -359,7 +355,7 @@
     "groupName" : "maven",
     "allowedVersions" : "/^1.83.1$/"
   }, {
-    "matchPackageNames" : [ "io.fabric8:kubernetes-client", "io.fabric8:mockwebserver" ],
+    "matchPackageNames" : [ "io.fabric8:kubernetes-client" ],
     "groupName" : "maven",
     "allowedVersions" : "/^7.5.2$/"
   }, {
@@ -439,21 +435,17 @@
     "groupName" : "maven",
     "allowedVersions" : "/^3.33.4$/"
   }, {
-    "matchPackageNames" : [ "org.springframework.cloud:spring-cloud-config-client", "org.springframework.cloud:spring-cloud-config-server" ],
+    "matchPackageNames" : [ "org.springframework.cloud:spring-cloud-config-client" ],
     "groupName" : "maven",
     "allowedVersions" : "/^5.0.5$/"
-  }, {
-    "matchPackageNames" : [ "org.springframework.cloud:spring-cloud-context", "org.springframework.cloud:spring-cloud-starter-bootstrap", "org.springframework.cloud:spring-cloud-starter-consul-config" ],
-    "groupName" : "maven",
-    "allowedVersions" : "/^5.0.3$/"
   }, {
     "matchPackageNames" : [ "org.springframework.cloud:spring-cloud-dependencies" ],
     "groupName" : "maven",
     "allowedVersions" : "/^2025.1.3$/"
   }, {
-    "matchPackageNames" : [ "org.springframework.integration:spring-integration-jdbc" ],
+    "matchPackageNames" : [ "org.springframework.cloud:spring-cloud-starter-bootstrap" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^7.1.1$/"
+    "allowedVersions" : "/^5.0.3$/"
   }, {
     "matchPackageNames" : [ "jakarta.validation:jakarta.validation-api" ],
     "groupName" : "maven",
@@ -571,10 +563,6 @@
     "groupName" : "maven",
     "allowedVersions" : "/^4.1.1$/"
   }, {
-    "matchPackageNames" : [ "jakarta.persistence:jakarta.persistence-api" ],
-    "groupName" : "maven",
-    "allowedVersions" : "/^3.2.0$/"
-  }, {
     "matchPackageNames" : [ "org.bitbucket.b_c:jose4j" ],
     "groupName" : "maven",
     "allowedVersions" : "/^0.9.6$/"
@@ -623,6 +611,7 @@
   "recreateWhen" : "always",
   "repositories" : [ ],
   "reviewersFromCodeOwners" : true,
+  "semanticCommits" : "enabled",
   "vulnerabilityAlerts" : {
     "addLabels" : [ "security" ],
     "vulnerabilityFixStrategy" : "lowest"
