@@ -10,6 +10,7 @@ globalExtends:
   - ":dependencyDashboard"
 extends:
   - ":semanticCommitTypeAll(chore)"
+semanticCommits: "enabled"
 minimumReleaseAge: "0 days"
 hostRules:
   - hostType: "maven"
