@@ -78,6 +78,10 @@
     "matchPackageNames" : [ "/^io\\.quarkus\\.platform:/", "!io.quarkus.platform:quarkus-bom", "!io.quarkus.platform:quarkus-maven-plugin" ],
     "enabled" : false
   }, {
+    "description" : "Surefire/Failsafe 3.6.0 breaks tests that self-attach a Java agent (Mockito inline mock maker, system-stubs): its StackWalkerStrategy static init calls loadClass on the context class loader, which is null in the JVM Attach Listener thread, so agent attach fails with NoClassDefFoundError. Exclude only the broken release; extend the list if the next one still fails.",
+    "matchPackageNames" : [ "org.apache.maven.plugins:maven-surefire-plugin", "org.apache.maven.plugins:maven-failsafe-plugin" ],
+    "allowedVersions" : "!/^3\\.6\\.0$/"
+  }, {
     "matchManagers" : [ "maven" ],
     "groupName" : "maven",
     "groupSlug" : "maven",
@@ -183,6 +187,10 @@
     "groupName" : "maven",
     "allowedVersions" : "/^1.5.38$/"
   }, {
+    "matchPackageNames" : [ "io.smallrye.reactive:smallrye-mutiny-vertx-web-client" ],
+    "groupName" : "maven",
+    "allowedVersions" : "/^3.23.1$/"
+  }, {
     "matchPackageNames" : [ "io.smallrye.reactive:smallrye-reactive-messaging-in-memory" ],
     "groupName" : "maven",
     "allowedVersions" : "/^4.33.0$/"
@@ -215,7 +223,7 @@
     "groupName" : "maven",
     "allowedVersions" : "/^4.2.1$/"
   }, {
-    "matchPackageNames" : [ "io.quarkus:quarkus-arc", "io.quarkus:quarkus-arc-deployment", "io.quarkus:quarkus-config-yaml", "io.quarkus:quarkus-core", "io.quarkus:quarkus-core-deployment", "io.quarkus:quarkus-extension-maven-plugin", "io.quarkus:quarkus-extension-processor", "io.quarkus:quarkus-flyway", "io.quarkus:quarkus-flyway-deployment", "io.quarkus:quarkus-hibernate-orm-panache", "io.quarkus:quarkus-jackson-deployment", "io.quarkus:quarkus-jdbc-postgresql", "io.quarkus:quarkus-jdbc-postgresql-deployment", "io.quarkus:quarkus-junit", "io.quarkus:quarkus-junit-internal", "io.quarkus:quarkus-junit-mockito", "io.quarkus:quarkus-junit5", "io.quarkus:quarkus-maven-plugin", "io.quarkus:quarkus-messaging-kafka", "io.quarkus:quarkus-messaging-rabbitmq", "io.quarkus:quarkus-micrometer", "io.quarkus:quarkus-micrometer-deployment", "io.quarkus:quarkus-mongodb-client", "io.quarkus:quarkus-mongodb-client-deployment", "io.quarkus:quarkus-narayana-jta", "io.quarkus:quarkus-opentelemetry", "io.quarkus:quarkus-reactive-routes", "io.quarkus:quarkus-reactive-routes-deployment", "io.quarkus:quarkus-rest", "io.quarkus:quarkus-rest-client", "io.quarkus:quarkus-rest-client-jackson", "io.quarkus:quarkus-rest-jackson", "io.quarkus:quarkus-rest-spi-deployment", "io.quarkus:quarkus-resteasy-client-jackson", "io.quarkus:quarkus-resteasy-common-spi", "io.quarkus:quarkus-resteasy-deployment", "io.quarkus:quarkus-resteasy-jackson", "io.quarkus:quarkus-resteasy-jackson-deployment", "io.quarkus:quarkus-security-spi", "io.quarkus:quarkus-smallrye-context-propagation", "io.quarkus:quarkus-smallrye-context-propagation-deployment", "io.quarkus:quarkus-test-common", "io.quarkus:quarkus-vertx", "io.quarkus:quarkus-vertx-deployment", "io.quarkus:quarkus-vertx-http", "io.quarkus:quarkus-vertx-http-deployment", "io.quarkus:quarkus-websockets-client" ],
+    "matchPackageNames" : [ "io.quarkus:quarkus-arc", "io.quarkus:quarkus-arc-deployment", "io.quarkus:quarkus-config-yaml", "io.quarkus:quarkus-core", "io.quarkus:quarkus-core-deployment", "io.quarkus:quarkus-elytron-security-jdbc", "io.quarkus:quarkus-extension-maven-plugin", "io.quarkus:quarkus-extension-processor", "io.quarkus:quarkus-flyway", "io.quarkus:quarkus-flyway-deployment", "io.quarkus:quarkus-hibernate-orm-panache", "io.quarkus:quarkus-hibernate-validator", "io.quarkus:quarkus-jackson-deployment", "io.quarkus:quarkus-jdbc-h2", "io.quarkus:quarkus-jdbc-postgresql", "io.quarkus:quarkus-jdbc-postgresql-deployment", "io.quarkus:quarkus-junit", "io.quarkus:quarkus-junit-internal", "io.quarkus:quarkus-junit-mockito", "io.quarkus:quarkus-junit5", "io.quarkus:quarkus-maven-plugin", "io.quarkus:quarkus-messaging-kafka", "io.quarkus:quarkus-messaging-rabbitmq", "io.quarkus:quarkus-micrometer", "io.quarkus:quarkus-micrometer-deployment", "io.quarkus:quarkus-micrometer-registry-prometheus", "io.quarkus:quarkus-mongodb-client", "io.quarkus:quarkus-mongodb-client-deployment", "io.quarkus:quarkus-narayana-jta", "io.quarkus:quarkus-opentelemetry", "io.quarkus:quarkus-reactive-routes", "io.quarkus:quarkus-reactive-routes-deployment", "io.quarkus:quarkus-rest", "io.quarkus:quarkus-rest-client", "io.quarkus:quarkus-rest-client-jackson", "io.quarkus:quarkus-rest-jackson", "io.quarkus:quarkus-rest-spi-deployment", "io.quarkus:quarkus-resteasy-client", "io.quarkus:quarkus-resteasy-client-jackson", "io.quarkus:quarkus-resteasy-common-spi", "io.quarkus:quarkus-resteasy-deployment", "io.quarkus:quarkus-resteasy-jackson", "io.quarkus:quarkus-resteasy-jackson-deployment", "io.quarkus:quarkus-scheduler", "io.quarkus:quarkus-security", "io.quarkus:quarkus-security-spi", "io.quarkus:quarkus-smallrye-context-propagation", "io.quarkus:quarkus-smallrye-context-propagation-deployment", "io.quarkus:quarkus-smallrye-fault-tolerance", "io.quarkus:quarkus-smallrye-health", "io.quarkus:quarkus-smallrye-jwt", "io.quarkus:quarkus-smallrye-jwt-build", "io.quarkus:quarkus-smallrye-openapi", "io.quarkus:quarkus-test-common", "io.quarkus:quarkus-test-oidc-server", "io.quarkus:quarkus-vertx", "io.quarkus:quarkus-vertx-deployment", "io.quarkus:quarkus-vertx-http", "io.quarkus:quarkus-vertx-http-deployment", "io.quarkus:quarkus-websockets-client" ],
     "groupName" : "maven",
     "allowedVersions" : "/^3.33.4$/"
   }, {
@@ -251,11 +259,11 @@
     "groupName" : "maven",
     "allowedVersions" : "/^4.19.3$/"
   }, {
-    "matchPackageNames" : [ "org.testcontainers:testcontainers", "org.testcontainers:testcontainers-bom", "org.testcontainers:testcontainers-cassandra", "org.testcontainers:testcontainers-consul", "org.testcontainers:testcontainers-junit-jupiter", "org.testcontainers:testcontainers-kafka", "org.testcontainers:testcontainers-mongodb", "org.testcontainers:testcontainers-postgresql" ],
+    "matchPackageNames" : [ "org.testcontainers:testcontainers", "org.testcontainers:testcontainers-bom", "org.testcontainers:testcontainers-cassandra", "org.testcontainers:testcontainers-consul", "org.testcontainers:testcontainers-junit-jupiter", "org.testcontainers:testcontainers-kafka", "org.testcontainers:testcontainers-mongodb", "org.testcontainers:testcontainers-postgresql", "org.testcontainers:testcontainers-rabbitmq" ],
     "groupName" : "maven",
     "allowedVersions" : "/^2.0.5$/"
   }, {
-    "matchPackageNames" : [ "org.springframework.security:spring-security-oauth2-client", "org.springframework.security:spring-security-oauth2-core", "org.springframework.security:spring-security-oauth2-jose", "org.springframework.security:spring-security-test" ],
+    "matchPackageNames" : [ "org.springframework.security:spring-security-oauth2-client", "org.springframework.security:spring-security-oauth2-core", "org.springframework.security:spring-security-test" ],
     "groupName" : "maven",
     "allowedVersions" : "/^7.1.1$/"
   }, {
@@ -266,10 +274,6 @@
     "matchPackageNames" : [ "com.sun.xml.bind:jaxb-core", "com.sun.xml.bind:jaxb-impl" ],
     "groupName" : "maven",
     "allowedVersions" : "/^4.0.9$/"
-  }, {
-    "matchPackageNames" : [ "com.nimbusds:nimbus-jose-jwt" ],
-    "groupName" : "maven",
-    "allowedVersions" : "/^10.7$/"
   }, {
     "matchPackageNames" : [ "org.jetbrains.kotlin:kotlin-bom" ],
     "groupName" : "maven",
@@ -327,7 +331,7 @@
     "groupName" : "maven",
     "allowedVersions" : "/^6.0.1$/"
   }, {
-    "matchPackageNames" : [ "io.micrometer:micrometer-bom", "io.micrometer:micrometer-core", "io.micrometer:micrometer-observation", "io.micrometer:micrometer-registry-prometheus" ],
+    "matchPackageNames" : [ "io.micrometer:micrometer-bom", "io.micrometer:micrometer-core", "io.micrometer:micrometer-registry-prometheus" ],
     "groupName" : "maven",
     "allowedVersions" : "/^1.17.1$/"
   }, {
@@ -339,7 +343,7 @@
     "groupName" : "maven",
     "allowedVersions" : "/^3.0.1$/"
   }, {
-    "matchPackageNames" : [ "org.springframework.boot:spring-boot", "org.springframework.boot:spring-boot-actuator", "org.springframework.boot:spring-boot-actuator-autoconfigure", "org.springframework.boot:spring-boot-autoconfigure", "org.springframework.boot:spring-boot-dependencies", "org.springframework.boot:spring-boot-http-client", "org.springframework.boot:spring-boot-jackson2", "org.springframework.boot:spring-boot-micrometer-metrics-test", "org.springframework.boot:spring-boot-micrometer-tracing-test", "org.springframework.boot:spring-boot-properties-migrator", "org.springframework.boot:spring-boot-restclient", "org.springframework.boot:spring-boot-resttestclient", "org.springframework.boot:spring-boot-starter-actuator", "org.springframework.boot:spring-boot-starter-data-cassandra", "org.springframework.boot:spring-boot-starter-data-elasticsearch", "org.springframework.boot:spring-boot-starter-data-jpa", "org.springframework.boot:spring-boot-starter-data-mongodb", "org.springframework.boot:spring-boot-starter-data-redis", "org.springframework.boot:spring-boot-starter-integration", "org.springframework.boot:spring-boot-starter-jdbc", "org.springframework.boot:spring-boot-starter-kafka", "org.springframework.boot:spring-boot-starter-opentelemetry", "org.springframework.boot:spring-boot-starter-parent", "org.springframework.boot:spring-boot-starter-restclient-test", "org.springframework.boot:spring-boot-starter-security", "org.springframework.boot:spring-boot-starter-test", "org.springframework.boot:spring-boot-starter-web", "org.springframework.boot:spring-boot-starter-webflux", "org.springframework.boot:spring-boot-test", "org.springframework.boot:spring-boot-test-autoconfigure", "org.springframework.boot:spring-boot-webmvc-test" ],
+    "matchPackageNames" : [ "org.springframework.boot:spring-boot", "org.springframework.boot:spring-boot-actuator", "org.springframework.boot:spring-boot-actuator-autoconfigure", "org.springframework.boot:spring-boot-autoconfigure", "org.springframework.boot:spring-boot-dependencies", "org.springframework.boot:spring-boot-http-client", "org.springframework.boot:spring-boot-jackson2", "org.springframework.boot:spring-boot-micrometer-metrics-test", "org.springframework.boot:spring-boot-micrometer-tracing-test", "org.springframework.boot:spring-boot-restclient", "org.springframework.boot:spring-boot-resttestclient", "org.springframework.boot:spring-boot-starter-actuator", "org.springframework.boot:spring-boot-starter-data-cassandra", "org.springframework.boot:spring-boot-starter-data-elasticsearch", "org.springframework.boot:spring-boot-starter-data-mongodb", "org.springframework.boot:spring-boot-starter-data-redis", "org.springframework.boot:spring-boot-starter-jdbc", "org.springframework.boot:spring-boot-starter-kafka", "org.springframework.boot:spring-boot-starter-parent", "org.springframework.boot:spring-boot-starter-restclient-test", "org.springframework.boot:spring-boot-starter-security", "org.springframework.boot:spring-boot-starter-test", "org.springframework.boot:spring-boot-starter-web", "org.springframework.boot:spring-boot-starter-webflux", "org.springframework.boot:spring-boot-test", "org.springframework.boot:spring-boot-test-autoconfigure", "org.springframework.boot:spring-boot-webmvc-test" ],
     "groupName" : "maven",
     "allowedVersions" : "/^4.1.1$/"
   }, {
@@ -355,7 +359,7 @@
     "groupName" : "maven",
     "allowedVersions" : "/^1.83.1$/"
   }, {
-    "matchPackageNames" : [ "io.fabric8:kubernetes-client", "io.fabric8:mockwebserver" ],
+    "matchPackageNames" : [ "io.fabric8:kubernetes-client" ],
     "groupName" : "maven",
     "allowedVersions" : "/^7.5.2$/"
   }, {
@@ -382,6 +386,10 @@
     "matchPackageNames" : [ "org.apache.commons:commons-lang3" ],
     "groupName" : "maven",
     "allowedVersions" : "/^3.20.0$/"
+  }, {
+    "matchPackageNames" : [ "org.apache.commons:commons-text" ],
+    "groupName" : "maven",
+    "allowedVersions" : "/^1.15.0$/"
   }, {
     "matchPackageNames" : [ "com.squareup.okhttp3:mockwebserver", "com.squareup.okhttp3:okhttp" ],
     "groupName" : "maven",
@@ -431,21 +439,17 @@
     "groupName" : "maven",
     "allowedVersions" : "/^3.33.4$/"
   }, {
-    "matchPackageNames" : [ "org.springframework.cloud:spring-cloud-config-client", "org.springframework.cloud:spring-cloud-config-server" ],
+    "matchPackageNames" : [ "org.springframework.cloud:spring-cloud-config-client" ],
     "groupName" : "maven",
     "allowedVersions" : "/^5.0.5$/"
-  }, {
-    "matchPackageNames" : [ "org.springframework.cloud:spring-cloud-context", "org.springframework.cloud:spring-cloud-starter", "org.springframework.cloud:spring-cloud-starter-bootstrap", "org.springframework.cloud:spring-cloud-starter-consul-config" ],
-    "groupName" : "maven",
-    "allowedVersions" : "/^5.0.3$/"
   }, {
     "matchPackageNames" : [ "org.springframework.cloud:spring-cloud-dependencies" ],
     "groupName" : "maven",
     "allowedVersions" : "/^2025.1.3$/"
   }, {
-    "matchPackageNames" : [ "org.springframework.integration:spring-integration-jdbc" ],
+    "matchPackageNames" : [ "org.springframework.cloud:spring-cloud-starter", "org.springframework.cloud:spring-cloud-starter-bootstrap", "org.springframework.cloud:spring-cloud-starter-consul-config" ],
     "groupName" : "maven",
-    "allowedVersions" : "/^7.1.1$/"
+    "allowedVersions" : "/^5.0.3$/"
   }, {
     "matchPackageNames" : [ "jakarta.validation:jakarta.validation-api" ],
     "groupName" : "maven",
@@ -503,10 +507,6 @@
     "groupName" : "maven",
     "allowedVersions" : "/^33.5.0-jre$/"
   }, {
-    "matchPackageNames" : [ "org.jsoup:jsoup" ],
-    "groupName" : "maven",
-    "allowedVersions" : "/^1.23.2$/"
-  }, {
     "matchPackageNames" : [ "org.apache.maven.plugin-tools:maven-plugin-annotations" ],
     "groupName" : "maven",
     "allowedVersions" : "/^3.15.1$/"
@@ -562,10 +562,6 @@
     "matchPackageNames" : [ "org.springframework.kafka:spring-kafka", "org.springframework.kafka:spring-kafka-test" ],
     "groupName" : "maven",
     "allowedVersions" : "/^4.1.1$/"
-  }, {
-    "matchPackageNames" : [ "jakarta.persistence:jakarta.persistence-api" ],
-    "groupName" : "maven",
-    "allowedVersions" : "/^3.2.0$/"
   }, {
     "matchPackageNames" : [ "org.bitbucket.b_c:jose4j" ],
     "groupName" : "maven",
