@@ -74,6 +74,11 @@ packageRules:
       - "!io.quarkus.platform:quarkus-bom"
       - "!io.quarkus.platform:quarkus-maven-plugin"
     enabled: false
+  - description: "Surefire/Failsafe 3.6.0 breaks tests that self-attach a Java agent (Mockito inline mock maker, system-stubs): its StackWalkerStrategy static init calls loadClass on the context class loader, which is null in the JVM Attach Listener thread, so agent attach fails with NoClassDefFoundError. Exclude only the broken release; extend the list if the next one still fails."
+    matchPackageNames:
+      - "org.apache.maven.plugins:maven-surefire-plugin"
+      - "org.apache.maven.plugins:maven-failsafe-plugin"
+    allowedVersions: "!/^3\\.6\\.0$/"
 
 platform: "github"
 platformAutomerge: true
