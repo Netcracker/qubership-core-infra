@@ -34,9 +34,9 @@ packageRules:
     allowedVersions: "!/.*(redhat|composite|groovyless|jboss|atlassian|preview|does-not-exist|-SNAPSHOT).*/"
   - matchDatasources: [ "maven" ]
     registryUrls:
-      - "https://repo.maven.apache.org/maven2"
+      - "https://maven-central.storage-download.googleapis.com/maven2"
       - "https://maven.pkg.github.com/netcracker/*"
-  - description: "Netcracker artifacts are published to GitHub Packages only: do not query Maven Central for them (avoids Maven Central 429 rate limiting that aborts the whole run)"
+  - description: "Netcracker artifacts are published to GitHub Packages only: do not query Maven Central for them"
     matchDatasources: [ "maven" ]
     matchPackageNames: [ "/^com\\.netcracker\\./" ]
     registryUrls:
