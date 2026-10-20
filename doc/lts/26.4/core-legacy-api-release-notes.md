@@ -18,18 +18,24 @@
 - **Kubernetes resources.** The Deployment, pods, container, ServiceAccount, HPA, and PodMonitor are named
   `core-legacy-api`. RBAC bindings, label selectors, Consul ACL binding rules, and log or metric filters that use the
   `config-server` names stop matching.
+- **Consul access.** Properties are read and written with the static token from the `config-server-consul-token`
+  secret, as in `config-server`. The secret is optional: without it the service uses Consul anonymously, so with ACLs
+  enabled the start fails with the Consul error. The new `CONSUL_AUTH_*` parameters apply only to reading log levels.
 - **Helm.** The chart has no DBaaS, `CONSUL_ENABLED`, or JVM parameters, and `CONSUL_URL` is required. A removed
   parameter left in the values is ignored without an error. The resource profiles set 80Mi to 100Mi of memory, where
   `config-server` had 360Mi to 435Mi.
-- **API.** The encryption endpoints, `/metrics`, `/health/{component}`, and `/v3/api-docs` are gone. A write of
-  conflicting keys such as `db` and `db.url` succeeds instead of returning 400, concurrent writes take no lock, and a
-  read while Consul is unreachable returns 500 instead of an empty property source. The `.json`, `.properties`, and
-  `.yaml` output lists keys in sorted order.
+- **API.** The encryption endpoints, `/metrics`, `/health/{component}` other than `/health/liveness` and
+  `/health/readiness`, and `/v3/api-docs` are gone. A write of conflicting keys such as `db` and `db.url` succeeds
+  instead of returning 400, concurrent writes take no lock, and a read while Consul is unreachable returns 500 instead
+  of an empty property source. The `.json`, `.properties`, and `.yaml` output lists keys in sorted order.
 - **Default properties.** On every start the service adds the missing default properties for the `global`,
-  `tenant-manager`, and `dmp-tenant-activator` applications. Properties that are already stored keep their values.
+  `tenant-manager`, and `dmp-tenant-activator` applications. Properties that are already stored keep their values,
+  but a default property deleted through the API is restored at the next start; `config-server` wrote the defaults
+  only once.
 - **Monitoring.** Metrics have other names and labels, so dashboards and alerts built on `config-server` metrics show
-  no data. `/health` no longer checks Consul, and the new `/readiness` endpoint does. Traces go to Zipkin instead of
-  an OTLP collector.
+  no data. `/health` and `/health/liveness` no longer check Consul. `/readiness` and `/health/readiness` do, and
+  return 503 while Consul is unreachable, where `config-server` `/health/readiness` stayed 200. Traces go to Zipkin
+  instead of an OTLP collector.
 
 ## How a deployment switches
 
