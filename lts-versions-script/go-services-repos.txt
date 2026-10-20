@@ -4,3 +4,4 @@ Netcracker/qubership-core-facade-operator
 Netcracker/qubership-core-maas-agent
 Netcracker/qubership-core-paas-mediation
 Netcracker/qubership-core-site-management
+Netcracker/qubership-mini-core

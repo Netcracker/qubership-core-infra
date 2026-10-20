@@ -41,6 +41,7 @@ on:
           - qubership-core-maas-agent
           - qubership-core-paas-mediation
           - qubership-core-site-management
+          - qubership-mini-core
       ltsRelease:
         description: "LTS release"
         type: boolean
