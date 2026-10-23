@@ -1,8 +1,9 @@
 # Consul login with the Kubernetes projected token
 
 The Consul config provider libraries obtain the Consul ACL token by exchanging the pod's Kubernetes projected service
-account token for it. The previous exchange of an M2M token stays the default, and in the `hybrid` mode a pod falls back
-to it on its own while the platform side is not ready yet. Nothing in the way a microservice reads Consul properties changes.
+account token for it. The previous exchange of an M2M token stays the default while neither `CONSUL_AUTH_MODE` nor
+`M2M_AUTH_MODE` is set, and in the `hybrid` mode a pod falls back to it on its own while the platform side is not ready
+yet. Nothing in the way a microservice reads Consul properties changes.
 
 The feature ships in release 26.4 of these libraries:
 
@@ -16,21 +17,25 @@ The feature ships in release 26.4 of these libraries:
 ## Login modes
 
 The mode is set by `CONSUL_AUTH_MODE` and read at startup, so it can be changed without rebuilding the microservice.
+When `CONSUL_AUTH_MODE` is unset or empty, the mode is taken from `M2M_AUTH_MODE`, the setting of the
+[M2M calls](m2m-auth-mode-release-notes.md). One variable thus moves the M2M calls and the Consul login together, and
+`CONSUL_AUTH_MODE` overrides it for the Consul login alone. With neither set, the mode is `legacy`.
 
 | Mode | Behavior |
 |---|---|
-| `legacy` | Default. Logs in with the M2M token only, the way the previous versions did. The login schedule below still applies. |
+| `legacy` | Default when neither `CONSUL_AUTH_MODE` nor `M2M_AUTH_MODE` is set. Logs in with the M2M token only, the way the previous versions did. The login schedule below still applies. |
 | `hybrid` | Logs in with the projected token. On failure the pod keeps working through the M2M exchange and tries the projected token again later. The first success migrates the pod for good. |
 | `k8s` | Logs in with the projected token only. There is no fallback. |
 
-An unknown mode keeps the microservice from starting, and so does a login failure the retries do not fix, unless the
+An unknown mode keeps the microservice from starting, and so do an unsupported `M2M_AUTH_MODE` while `CONSUL_AUTH_MODE`
+is unset and a login failure the retries do not fix, unless the
 Go property source is configured to tolerate Consul failures.
 
 ## Login settings
 
 | Environment variable | Default | Controls |
 |---|---|---|
-| `CONSUL_AUTH_MODE` | `legacy` | The way the ACL token is obtained |
+| `CONSUL_AUTH_MODE` | `M2M_AUTH_MODE`, else `legacy` | The way the ACL token is obtained |
 | `CONSUL_AUTH_METHOD` | `applications-k8s-m2m` | Name of the Consul auth method the projected token is presented to |
 | `CONSUL_AUTH_AUDIENCE` | `netcracker` | Audience of the projected token the pod sends |
 | `CONSUL_AUTH_FALLBACK_RECHECK_INTERVAL` | `5h` | Lower bound on how often the fallback retries the projected token |
@@ -61,9 +66,11 @@ M2M exchange until its pods are restarted.
 
 ## What to change in your service
 
-Nothing is required. A microservice that only updates the library gets `legacy` and the defaults above, so it keeps
-the M2M exchange. To move it to the projected token, set `CONSUL_AUTH_MODE=hybrid`, or `k8s` once the platform side
-below is in place. The M2M exchange is kept for the migration
+Nothing is required while `M2M_AUTH_MODE` stays unset or `legacy`. A microservice that only updates the library takes
+its mode from `M2M_AUTH_MODE`, and gets `legacy` and the defaults above when that is unset too, so it keeps the M2M
+exchange. Moving `M2M_AUTH_MODE` moves the Consul login as well; see the end of this section. To move the Consul login
+to the projected token, set `CONSUL_AUTH_MODE=hybrid`, or `k8s` once the platform side below is in place. Setting
+`M2M_AUTH_MODE` to the same value does it too, for a microservice that leaves `CONSUL_AUTH_MODE` unset. The M2M exchange is kept for the migration
 and will be removed in a later release, once the migration is complete.
 
 What is recommended is to make the four settings configurable per environment, so that a mode can be pinned or an auth
@@ -82,6 +89,12 @@ env:
 ```
 
 A parameter nobody sets renders as an empty value, which the libraries treat as unset, so the defaults above apply.
+
+Because the Consul login follows `M2M_AUTH_MODE`, switching an installation's M2M calls to `hybrid` or `k8s` also
+switches the Consul login of every microservice that leaves `CONSUL_AUTH_MODE` unset. Where the platform side below is
+not in place yet, set `CONSUL_AUTH_MODE=legacy` for those microservices. Otherwise, in `k8s` the login fails and the
+microservice does not start, and in `hybrid` a pod migrates as soon as the auth method exists, onto binding rules that
+may grant less than the M2M ones did.
 
 Two things belong to the platform rather than to the microservice, and the projected token needs both:
 
