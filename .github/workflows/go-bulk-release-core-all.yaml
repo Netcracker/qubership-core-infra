@@ -42,6 +42,7 @@ on:
           - qubership-core-paas-mediation
           - qubership-core-site-management
           - qubership-mini-core
+          - qubership-rate-limiter
       ltsRelease:
         description: "LTS release"
         type: boolean
@@ -117,6 +118,7 @@ jobs:
           https://github.com/Netcracker/qubership-core-paas-mediation
           https://github.com/Netcracker/qubership-core-site-management
           https://github.com/Netcracker/qubership-mini-core
+          https://github.com/Netcracker/qubership-rate-limiter
           "
           echo "repositories=\n${repositories}"
           repositories=$(echo "${repositories}" | tr '\n' ',')
