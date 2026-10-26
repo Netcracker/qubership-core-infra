@@ -81,7 +81,7 @@ switched to `k8s` once every service it calls accepts the Kubernetes token, so m
 4. Switch Cloud Core and your services to `k8s`. Services on the Cloud Core libraries then no longer use dbaas-agent and
    maas-agent.
 
-Consul login follows `M2M_AUTH_MODE` too, unless its own setting, `CONSUL_AUTH_MODE`, is set. Steps 2–4 therefore
+Consul login follows `M2M_AUTH_MODE` too, unless its own setting, `CONSUL_AUTH_MODE`, is set. Steps 3–4 therefore
 move the Consul login of a service without `CONSUL_AUTH_MODE` as well, and that needs the Consul auth method and its
 binding rules in place first. Set `CONSUL_AUTH_MODE=legacy` to keep the Consul login where it is while the M2M calls
 move; see [Consul login with the Kubernetes projected token](consul-k8s-login-release-notes.md).
