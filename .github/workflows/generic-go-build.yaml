@@ -9,6 +9,7 @@
 #       with:
 #         sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
 #         install-envtest: true  # for Kubernetes operators
+#         codecov-upload: true   # needs the CODECOV_TOKEN secret
 #         go-module-configs: '[{"dir":".","cover-packages":"./controllers/...,./api/..."},{"dir":"cmd/etcd-certs-to-secret","cover-packages":"./..."}]'
 #       secrets: inherit
 #
@@ -16,11 +17,15 @@
 #   - Automatic go.mod discovery with multi-module mono-repo support
 #   - Go tests with coverage
 #   - SonarQube code quality and security scanning with aggregated coverage (optional)
+#   - Codecov upload of each module's coverage, flagged per module (optional)
 #   - Envtest support for Kubernetes operators (optional)
 #   - Automatic Docker image build (skipped if no config or for fork PRs)
 #
 # Required secrets (inherited):
 #   - SONAR_TOKEN — for SonarQube analysis
+#
+# Optional secrets (inherited):
+#   - CODECOV_TOKEN: for the Codecov upload; a pull request from a fork of a public repository uploads without it
 #
 # Required vars:
 #   - SONAR_PROJECT_KEY, SONAR_ORGANIZATION, SONAR_HOST_URL
@@ -45,6 +50,13 @@ on:
         description: 'Sonar project key for analysis'
         required: false
         type: string
+
+      # Codecov configuration
+      codecov-upload:
+        description: 'Upload the coverage profile of each module to Codecov. Each upload is flagged with the module directory, in which "/" and "." become "_", so the flag of the root module is "_". Requires the CODECOV_TOKEN secret, except on a pull request from a fork of a public repository. A rejected upload fails the test job of that module, and a failed test job skips Sonar analysis and the Docker build.'
+        required: false
+        type: boolean
+        default: false
 
       # Envtest configuration (for Kubernetes operators)
       install-envtest:
@@ -97,6 +109,9 @@ on:
     secrets:
       SONAR_TOKEN:
         required: true
+      CODECOV_TOKEN:
+        description: 'Codecov upload token, used when codecov-upload is true'
+        required: false
 
 permissions:
   contents: read
@@ -218,6 +233,9 @@ jobs:
     name: Test ${{ matrix.module.dir }}
     needs: [discover]
     runs-on: ubuntu-latest
+    # The token stays read-only because checkout leaves it in .git/config and the job runs third-party actions.
+    permissions:
+      contents: read
     env:
       GOTOOLCHAIN: local
     strategy:
@@ -288,6 +306,19 @@ jobs:
           echo "::info:: Running tests with coverage..."
           echo "::info:: Using cover packages: ${{ matrix.module.cover_packages }}"
           go test -v ./... -coverpkg="${{ matrix.module.cover_packages }}" -coverprofile coverage.out
+
+      # This step depends on codecov-upload alone, so it also runs on a pull request from a fork.
+      # Such a run gets no secrets and no variables, so sonar-project-key is usually empty there,
+      # and for a public repository Codecov accepts the upload without a token.
+      - name: Upload coverage to Codecov
+        if: inputs.codecov-upload == true
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ${{ matrix.module.dir }}/coverage.out
+          flags: ${{ matrix.module.name }}
+          disable_search: true
+          fail_ci_if_error: true
 
       - name: Prepare coverage artifact
         if: inputs.sonar-project-key != ''
