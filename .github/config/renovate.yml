@@ -62,6 +62,11 @@ packageRules:
   - matchDatasources: [ "docker" ]
     matchPackageNames: [ "golang" ]
     separateMinorPatch: true
+  - description: "Java runtime images: the Java major (e.g. 21 in 21-jre-alpine-3.24) is chosen deliberately, usually an LTS, and is not bumped by Renovate. Updates within the major and digest updates still come."
+    matchDatasources: [ "docker" ]
+    matchPackageNames: [ "eclipse-temurin", "**/eclipse-temurin" ]
+    matchUpdateTypes: [ "major" ]
+    enabled: false
   - description: "OpenTelemetry instrumentation must match the OpenTelemetry SDK managed by Spring Boot (Boot 4.1.x -> SDK 1.62.0 -> instrumentation 2.28.x). Update together with Spring Boot's OpenTelemetry version."
     matchPackageNames:
       - "io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom"
