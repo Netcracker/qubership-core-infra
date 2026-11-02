@@ -48,23 +48,6 @@
     "matchCurrentValue" : "/-SNAPSHOT$/",
     "enabled" : false
   }, {
-    "description" : "Java base images: <java>-<os>-<version>, os flavour (alpine/ubi) is preserved",
-    "matchDatasources" : [ "docker" ],
-    "matchPackageNames" : [ "/.+/netcracker/qubership-java-base.*/" ],
-    "versioning" : "regex:^(?<compatibility>\\d+-(?:alpine|ubi))-(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$"
-  }, {
-    "description" : "Core/nginx base images: legacy unprefixed tags are treated as alpine and migrated to alpine-<version>, ubi-<version> stays ubi",
-    "matchDatasources" : [ "docker" ],
-    "matchPackageNames" : [ "/.+/netcracker/qubership-(core|nginx)-base$/" ],
-    "versioning" : "regex:^(?:(?<compatibility>ubi)-|alpine-)?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$",
-    "allowedVersions" : "/^(alpine|ubi)-\\d/"
-  }, {
-    "description" : "Core/nginx base images: legacy unprefixed latest tag is replaced with alpine-latest",
-    "matchDatasources" : [ "docker" ],
-    "matchPackageNames" : [ "/.+/netcracker/qubership-(core|nginx)-base$/" ],
-    "matchCurrentValue" : "latest",
-    "replacementVersion" : "alpine-latest"
-  }, {
     "matchDatasources" : [ "docker" ],
     "matchPackageNames" : [ "golang" ],
     "separateMinorPatch" : true
@@ -94,30 +77,35 @@
     "addLabels" : [ "group:maven" ]
   }, {
     "matchManagers" : [ "gomod" ],
+    "matchDatasources" : [ "go" ],
     "matchUpdateTypes" : [ "major" ],
     "groupName" : "go-major",
     "groupSlug" : "go-major",
     "addLabels" : [ "group:go" ]
   }, {
     "matchManagers" : [ "gomod" ],
+    "matchDatasources" : [ "go" ],
     "matchUpdateTypes" : [ "minor" ],
     "groupName" : "go-minor",
     "groupSlug" : "go-minor",
     "addLabels" : [ "group:go" ]
   }, {
     "matchManagers" : [ "gomod" ],
+    "matchDatasources" : [ "go" ],
     "matchUpdateTypes" : [ "patch" ],
     "groupName" : "go-patch",
     "groupSlug" : "go-patch",
     "addLabels" : [ "group:go" ]
   }, {
     "matchManagers" : [ "gomod" ],
+    "matchDatasources" : [ "go" ],
     "matchUpdateTypes" : [ "digest" ],
     "groupName" : "go-digest",
     "groupSlug" : "go-digest",
     "addLabels" : [ "group:go" ]
   }, {
     "matchManagers" : [ "gomod" ],
+    "matchDatasources" : [ "go" ],
     "matchPackageNames" : [ "/(.*netcracker.*)/" ],
     "matchUpdateTypes" : [ "major" ],
     "groupName" : "go-netcracker-major",
@@ -125,6 +113,7 @@
     "addLabels" : [ "group:go-netcracker" ]
   }, {
     "matchManagers" : [ "gomod" ],
+    "matchDatasources" : [ "go" ],
     "matchPackageNames" : [ "/(.*netcracker.*)/" ],
     "matchUpdateTypes" : [ "minor" ],
     "groupName" : "go-netcracker-minor",
@@ -132,6 +121,7 @@
     "addLabels" : [ "group:go-netcracker" ]
   }, {
     "matchManagers" : [ "gomod" ],
+    "matchDatasources" : [ "go" ],
     "matchPackageNames" : [ "/(.*netcracker.*)/" ],
     "matchUpdateTypes" : [ "patch" ],
     "groupName" : "go-netcracker-patch",
@@ -139,6 +129,7 @@
     "addLabels" : [ "group:go-netcracker" ]
   }, {
     "matchManagers" : [ "gomod" ],
+    "matchDatasources" : [ "go" ],
     "matchPackageNames" : [ "/(.*netcracker.*)/" ],
     "matchUpdateTypes" : [ "digest" ],
     "groupName" : "go-netcracker-digest",
@@ -159,11 +150,6 @@
     "groupName" : "go-bun",
     "groupSlug" : "go-bun",
     "addLabels" : [ "group:go" ]
-  }, {
-    "matchManagers" : [ "gomod" ],
-    "matchDepNames" : [ "go" ],
-    "matchDepTypes" : [ "golang", "toolchain" ],
-    "enabled" : false
   }, {
     "matchManagers" : [ "github-actions" ],
     "groupName" : "github-actions"
@@ -293,10 +279,6 @@
     "groupName" : "maven",
     "allowedVersions" : "/^2.23.0$/"
   }, {
-    "matchPackageNames" : [ "org.bouncycastle:bcprov-jdk18on" ],
-    "groupName" : "maven",
-    "allowedVersions" : "/^1.86$/"
-  }, {
     "matchPackageNames" : [ "jakarta.transaction:jakarta.transaction-api" ],
     "groupName" : "maven",
     "allowedVersions" : "/^2.0.1$/"
@@ -305,21 +287,25 @@
     "groupName" : "maven",
     "allowedVersions" : "/^3.0.2$/"
   }, {
-    "matchPackageNames" : [ "org.springframework.cloud:spring-cloud-config-client" ],
+    "matchPackageNames" : [ "org.springframework.cloud:spring-cloud-config-client", "org.springframework.cloud:spring-cloud-config-server" ],
     "groupName" : "maven",
     "allowedVersions" : "/^5.0.6$/"
+  }, {
+    "matchPackageNames" : [ "org.springframework.cloud:spring-cloud-context", "org.springframework.cloud:spring-cloud-starter", "org.springframework.cloud:spring-cloud-starter-bootstrap", "org.springframework.cloud:spring-cloud-starter-consul-config" ],
+    "groupName" : "maven",
+    "allowedVersions" : "/^5.0.4$/"
   }, {
     "matchPackageNames" : [ "org.springframework.cloud:spring-cloud-dependencies" ],
     "groupName" : "maven",
     "allowedVersions" : "/^2025.1.4$/"
   }, {
-    "matchPackageNames" : [ "org.springframework.cloud:spring-cloud-starter", "org.springframework.cloud:spring-cloud-starter-bootstrap", "org.springframework.cloud:spring-cloud-starter-consul-config" ],
-    "groupName" : "maven",
-    "allowedVersions" : "/^5.0.4$/"
-  }, {
     "matchPackageNames" : [ "org.flywaydb:flyway-core", "org.flywaydb:flyway-database-postgresql" ],
     "groupName" : "maven",
     "allowedVersions" : "/^12.4.0$/"
+  }, {
+    "matchPackageNames" : [ "org.springframework.integration:spring-integration-jdbc" ],
+    "groupName" : "maven",
+    "allowedVersions" : "/^7.1.2$/"
   }, {
     "matchPackageNames" : [ "org.mockito:mockito-core", "org.mockito:mockito-junit-jupiter" ],
     "groupName" : "maven",
@@ -337,7 +323,7 @@
     "groupName" : "maven",
     "allowedVersions" : "/^3.1.1$/"
   }, {
-    "matchPackageNames" : [ "org.springframework.security:spring-security-oauth2-client", "org.springframework.security:spring-security-oauth2-core", "org.springframework.security:spring-security-test" ],
+    "matchPackageNames" : [ "org.springframework.security:spring-security-oauth2-client", "org.springframework.security:spring-security-oauth2-core", "org.springframework.security:spring-security-oauth2-jose", "org.springframework.security:spring-security-test" ],
     "groupName" : "maven",
     "allowedVersions" : "/^7.1.2$/"
   }, {
@@ -360,6 +346,10 @@
     "matchPackageNames" : [ "net.bytebuddy:byte-buddy", "net.bytebuddy:byte-buddy-agent" ],
     "groupName" : "maven",
     "allowedVersions" : "/^1.18.15$/"
+  }, {
+    "matchPackageNames" : [ "com.nimbusds:nimbus-jose-jwt" ],
+    "groupName" : "maven",
+    "allowedVersions" : "/^10.7$/"
   }, {
     "matchPackageNames" : [ "org.jboss.logmanager:jboss-logmanager" ],
     "groupName" : "maven",
@@ -385,7 +375,7 @@
     "groupName" : "maven",
     "allowedVersions" : "/^5.1.2$/"
   }, {
-    "matchPackageNames" : [ "org.springframework.data:spring-data-commons", "org.springframework.data:spring-data-jpa" ],
+    "matchPackageNames" : [ "org.springframework.data:spring-data-commons", "org.springframework.data:spring-data-jpa", "org.springframework.data:spring-data-redis" ],
     "groupName" : "maven",
     "allowedVersions" : "/^4.1.2$/"
   }, {
@@ -449,10 +439,6 @@
     "groupName" : "maven",
     "allowedVersions" : "/^2.25.5$/"
   }, {
-    "matchPackageNames" : [ "commons-codec:commons-codec" ],
-    "groupName" : "maven",
-    "allowedVersions" : "/^1.21.0$/"
-  }, {
     "matchPackageNames" : [ "org.apache.maven:maven-artifact", "org.apache.maven:maven-model", "org.apache.maven:maven-plugin-api" ],
     "groupName" : "maven",
     "allowedVersions" : "/^3.9.12$/"
@@ -501,6 +487,10 @@
     "groupName" : "maven",
     "allowedVersions" : "/^4.1.2$/"
   }, {
+    "matchPackageNames" : [ "jakarta.persistence:jakarta.persistence-api" ],
+    "groupName" : "maven",
+    "allowedVersions" : "/^3.2.0$/"
+  }, {
     "matchPackageNames" : [ "io.rest-assured:rest-assured" ],
     "groupName" : "maven",
     "allowedVersions" : "/^5.5.6$/"
@@ -509,7 +499,7 @@
     "groupName" : "maven",
     "allowedVersions" : "/^6.0.1$/"
   }, {
-    "matchPackageNames" : [ "io.micrometer:micrometer-bom", "io.micrometer:micrometer-core", "io.micrometer:micrometer-registry-prometheus" ],
+    "matchPackageNames" : [ "io.micrometer:micrometer-bom", "io.micrometer:micrometer-core", "io.micrometer:micrometer-observation", "io.micrometer:micrometer-registry-prometheus" ],
     "groupName" : "maven",
     "allowedVersions" : "/^1.17.2$/"
   }, {
@@ -525,7 +515,7 @@
     "groupName" : "maven",
     "allowedVersions" : "/^3.0.1$/"
   }, {
-    "matchPackageNames" : [ "org.springframework.boot:spring-boot", "org.springframework.boot:spring-boot-actuator", "org.springframework.boot:spring-boot-actuator-autoconfigure", "org.springframework.boot:spring-boot-autoconfigure", "org.springframework.boot:spring-boot-dependencies", "org.springframework.boot:spring-boot-http-client", "org.springframework.boot:spring-boot-jackson2", "org.springframework.boot:spring-boot-micrometer-metrics-test", "org.springframework.boot:spring-boot-micrometer-tracing-test", "org.springframework.boot:spring-boot-restclient", "org.springframework.boot:spring-boot-resttestclient", "org.springframework.boot:spring-boot-starter-actuator", "org.springframework.boot:spring-boot-starter-data-cassandra", "org.springframework.boot:spring-boot-starter-data-elasticsearch", "org.springframework.boot:spring-boot-starter-data-mongodb", "org.springframework.boot:spring-boot-starter-jdbc", "org.springframework.boot:spring-boot-starter-kafka", "org.springframework.boot:spring-boot-starter-parent", "org.springframework.boot:spring-boot-starter-restclient-test", "org.springframework.boot:spring-boot-starter-security", "org.springframework.boot:spring-boot-starter-test", "org.springframework.boot:spring-boot-starter-web", "org.springframework.boot:spring-boot-starter-webflux", "org.springframework.boot:spring-boot-test", "org.springframework.boot:spring-boot-test-autoconfigure", "org.springframework.boot:spring-boot-webmvc-test" ],
+    "matchPackageNames" : [ "org.springframework.boot:spring-boot", "org.springframework.boot:spring-boot-actuator", "org.springframework.boot:spring-boot-actuator-autoconfigure", "org.springframework.boot:spring-boot-autoconfigure", "org.springframework.boot:spring-boot-dependencies", "org.springframework.boot:spring-boot-http-client", "org.springframework.boot:spring-boot-jackson2", "org.springframework.boot:spring-boot-micrometer-metrics-test", "org.springframework.boot:spring-boot-micrometer-tracing-test", "org.springframework.boot:spring-boot-properties-migrator", "org.springframework.boot:spring-boot-restclient", "org.springframework.boot:spring-boot-resttestclient", "org.springframework.boot:spring-boot-starter-actuator", "org.springframework.boot:spring-boot-starter-data-cassandra", "org.springframework.boot:spring-boot-starter-data-elasticsearch", "org.springframework.boot:spring-boot-starter-data-jpa", "org.springframework.boot:spring-boot-starter-data-mongodb", "org.springframework.boot:spring-boot-starter-data-redis", "org.springframework.boot:spring-boot-starter-integration", "org.springframework.boot:spring-boot-starter-jdbc", "org.springframework.boot:spring-boot-starter-kafka", "org.springframework.boot:spring-boot-starter-opentelemetry", "org.springframework.boot:spring-boot-starter-parent", "org.springframework.boot:spring-boot-starter-restclient-test", "org.springframework.boot:spring-boot-starter-security", "org.springframework.boot:spring-boot-starter-test", "org.springframework.boot:spring-boot-starter-web", "org.springframework.boot:spring-boot-starter-webflux", "org.springframework.boot:spring-boot-test", "org.springframework.boot:spring-boot-test-autoconfigure", "org.springframework.boot:spring-boot-webmvc-test" ],
     "groupName" : "maven",
     "allowedVersions" : "/^4.1.2$/"
   }, {
@@ -553,7 +543,7 @@
     "groupName" : "maven",
     "allowedVersions" : "/^1.84.1$/"
   }, {
-    "matchPackageNames" : [ "io.fabric8:kubernetes-client" ],
+    "matchPackageNames" : [ "io.fabric8:kubernetes-client", "io.fabric8:mockwebserver" ],
     "groupName" : "maven",
     "allowedVersions" : "/^7.5.2$/"
   }, {
@@ -580,10 +570,6 @@
     "matchPackageNames" : [ "org.jboss.logging:jboss-logging" ],
     "groupName" : "maven",
     "allowedVersions" : "/^3.6.3.Final$/"
-  }, {
-    "matchPackageNames" : [ "org.apache.maven.wagon:wagon-provider-api" ],
-    "groupName" : "maven",
-    "allowedVersions" : "/^3.5.3$/"
   }, {
     "matchPackageNames" : [ "org.springframework.retry:spring-retry" ],
     "groupName" : "maven",
