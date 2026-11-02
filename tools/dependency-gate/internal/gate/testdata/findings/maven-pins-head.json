@@ -1,0 +1,102 @@
+{
+  "schema": "dependency-gate-findings/v1",
+  "adapter": {
+    "name": "maven-pins",
+    "ecosystem": "maven",
+    "tool": "dependency-gate-maven-plugin 1.2.0",
+    "status": "ok",
+    "checks": ["pin-exceeded", "pin-mismatch", "pin-lagging", "pin-conflict", "shared-property", "feature-snapshot"]
+  },
+  "revision": "head",
+  "findings": [
+    {
+      "check": "pin-exceeded",
+      "package": "org.springframework.boot:spring-boot-dependencies",
+      "version": "4.1.2",
+      "from": "4.1.1",
+      "symbol": null,
+      "vuln": null,
+      "message": "above the pin 4.1.1",
+      "note": "bump dependencies/spring-dependencies in qubership-core-infra first; it also brings 3 managed version(s)",
+      "locations": [{ "file": "pom.xml", "line": 31, "unit": "fixture-parent" }]
+    },
+    {
+      "check": "pin-exceeded",
+      "package": "com.fasterxml.jackson:jackson-bom",
+      "version": "2.21.7",
+      "message": "above the pin 2.21.5",
+      "locations": [{ "file": "bom/pom.xml", "line": 21, "unit": "fixture-bom" }]
+    },
+    {
+      "check": "pin-exceeded",
+      "package": "com.rabbitmq:amqp-client",
+      "version": "5.37.0",
+      "message": "above the pin 5.30.0",
+      "locations": [{ "file": "bom/pom.xml", "line": 10, "unit": "fixture-bom" }]
+    },
+    {
+      "check": "pin-exceeded",
+      "package": "io.quarkus:quarkus-maven-plugin",
+      "version": "3.40.1",
+      "message": "above the pin 3.33.5",
+      "locations": [{ "file": "quarkus-app/pom.xml", "line": 40, "unit": "fixture-quarkus-app" }]
+    },
+    {
+      "check": "pin-exceeded",
+      "package": "io.quarkus:quarkus-core",
+      "version": "3.40.1",
+      "message": "above the pin 3.33.5",
+      "note": "managed by io.quarkus:quarkus-universe-bom:3.40.1"
+    },
+    {
+      "check": "pin-exceeded",
+      "package": "org.projectlombok:lombok",
+      "version": "1.18.48",
+      "message": "above the pin 1.18.46",
+      "locations": [{ "file": "lib/pom.xml", "line": 27, "unit": "fixture-lib" }]
+    },
+    {
+      "check": "pin-exceeded",
+      "package": "com.fasterxml.jackson.core:jackson-databind",
+      "version": "2.21.8",
+      "message": "above the pin 2.21.5",
+      "transitive": true,
+      "locations": [{ "file": "lib/pom.xml", "unit": "fixture-lib" }]
+    },
+    {
+      "check": "pin-mismatch",
+      "package": "org.apache.maven.plugins:maven-surefire-plugin",
+      "version": "3.6.0",
+      "message": "does not match the pin 3.5.4",
+      "locations": [{ "file": "pom.xml", "line": 55, "unit": "fixture-parent" }]
+    },
+    {
+      "check": "pin-conflict",
+      "package": "io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter",
+      "version": "2.28.1",
+      "message": "above the pin 2.27.0",
+      "note": "managed by io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.28.1, which its own rule allows"
+    },
+    {
+      "check": "pin-lagging",
+      "package": "org.slf4j:slf4j-api",
+      "version": "2.0.17",
+      "message": "below the pin 2.0.18",
+      "locations": [{ "file": "lib/pom.xml", "line": 33, "unit": "fixture-lib" }]
+    },
+    {
+      "check": "shared-property",
+      "package": "${quarkus.version}",
+      "version": "3.40.1",
+      "message": "one property versions io.quarkus:quarkus-universe-bom and io.quarkus:quarkus-maven-plugin with different pins",
+      "locations": [{ "file": "quarkus-app/pom.xml", "line": 12, "unit": "fixture-quarkus-app" }]
+    },
+    {
+      "check": "feature-snapshot",
+      "package": "com.netcracker.cloud:consul-config-provider-common",
+      "version": "7.5.3-feat-consul-auth-mode-SNAPSHOT",
+      "message": "feature SNAPSHOT version",
+      "locations": [{ "file": "lib/pom.xml", "line": 41, "unit": "fixture-lib" }]
+    }
+  ]
+}

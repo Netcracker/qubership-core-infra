@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Netcracker/qubership-core-infra/tools/dependency-gate/schemas/report.v1.json",
+  "title": "Dependency gate report",
+  "description": "Final report of the gate: findings after levels, exceptions and baseline, and the verdict.",
+  "type": "object",
+  "required": ["schema", "gate", "config", "mode", "adapters", "findings", "counts", "verdict"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "dependency-gate-report/v1" },
+    "repository": { "type": "string" },
+    "pullRequest": { "type": "integer" },
+    "base": { "type": "string" },
+    "head": { "type": "string" },
+    "gate": { "description": "Version of the gate (infra revision)", "type": "string" },
+    "config": { "description": "Configuration files in merge order", "type": "array", "items": { "type": "string" } },
+    "scope": {
+      "description": "What the configuration keeps from the adapters, by ecosystem; it narrows locked checks too",
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "roots": {
+            "description": "Configured Maven root pom directories: nothing else is checked",
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "modules": {
+            "description": "Configured Go module directories: nothing else is checked",
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "exclude": {
+            "description": "Patterns of poms (maven excludes) or module directories (go exclude) not checked",
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "transitive": {
+            "description": "Highest level of findings only the resolved dependency tree shows",
+            "enum": ["fail", "warn", "info", "off"]
+          }
+        }
+      }
+    },
+    "mode": { "enum": ["report", "enforce"] },
+    "verdict": {
+      "description": "Computed in both modes; in report mode the check stays green whatever the verdict",
+      "$ref": "#/$defs/verdict"
+    },
+    "adapters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "ecosystem": { "enum": ["maven", "go"] },
+          "tool": { "type": "string" },
+          "status": { "enum": ["ok", "error", "skipped"] },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "findings": { "type": "array", "items": { "$ref": "#/$defs/finding" } },
+    "counts": {
+      "description": "fail, warn and info count new findings only",
+      "type": "object",
+      "required": ["fail", "warn", "info", "preexisting", "allowed"],
+      "additionalProperties": false,
+      "properties": {
+        "fail": { "type": "integer", "minimum": 0 },
+        "warn": { "type": "integer", "minimum": 0 },
+        "info": { "type": "integer", "minimum": 0 },
+        "preexisting": { "type": "integer", "minimum": 0 },
+        "allowed": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "verdict": { "enum": ["pass", "warn", "fail"] },
+    "finding": {
+      "type": "object",
+      "required": ["key", "check", "level", "status", "message"],
+      "additionalProperties": false,
+      "properties": {
+        "key": { "description": "ecosystem|check|package|version|symbol, plus |transitive: what the baseline compares", "type": "string" },
+        "ecosystem": { "description": "Absent for findings of the gate itself", "enum": ["maven", "go"] },
+        "adapter": { "type": "string" },
+        "check": { "type": "string" },
+        "level": { "description": "Effective level after policy", "enum": ["fail", "warn", "info"] },
+        "status": {
+          "description": "new; preexisting: also on the base revision; allowed: by an exception or an ignore rule",
+          "enum": ["new", "preexisting", "allowed"]
+        },
+        "package": { "type": "string" },
+        "version": { "type": "string" },
+        "from": { "type": "string" },
+        "symbol": { "type": "string" },
+        "vuln": { "type": "string" },
+        "license": { "type": "string" },
+        "message": { "type": "string" },
+        "note": { "type": "string" },
+        "locations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["file"],
+            "additionalProperties": false,
+            "properties": {
+              "file": { "type": "string" },
+              "line": { "type": "integer", "minimum": 1 },
+              "unit": { "type": "string" }
+            }
+          }
+        },
+        "transitive": { "description": "Found only in the resolved dependency tree", "type": "boolean" },
+        "exception": {
+          "description": "The exception or ignore rule that allowed the finding",
+          "type": "object",
+          "required": ["source", "reason"],
+          "additionalProperties": false,
+          "properties": {
+            "source": { "description": "File and JSON pointer of the entry", "type": "string" },
+            "reason": { "type": "string" },
+            "until": { "type": "string", "format": "date" },
+            "issue": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

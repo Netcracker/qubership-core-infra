@@ -1,0 +1,107 @@
+# $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-action.json
+name: "Dependency gate"
+description: >
+  Builds tools/dependency-gate from the same revision of qubership-core-infra as this action and runs one command:
+  detect (which ecosystems to check) or evaluate (apply the policy to the adapter findings, report, comment).
+  See tools/dependency-gate/README.md.
+inputs:
+  command:
+    description: "detect | evaluate"
+    required: true
+  go-version:
+    description: "Go to build the gate with (GO_VERSION of the reusable workflow)"
+    required: true
+  repo-dir:
+    description: "Checkout of the checked repository"
+    required: false
+    default: "."
+  findings-dir:
+    description: "evaluate: directory with the findings.v1 files of the adapters; a missing directory means none"
+    required: false
+    default: ""
+  expect:
+    description: "evaluate: lines of adapter=<job result> for adapters that must have reported"
+    required: false
+    default: ""
+  out-dir:
+    description: "evaluate: where report.json, summary.md and comment.md are written (default $RUNNER_TEMP/dependency-gate)"
+    required: false
+    default: ""
+  comment:
+    description: "evaluate: keep the sticky PR comment up to date"
+    required: false
+    default: "true"
+  gate-ref:
+    description: "Revision of qubership-core-infra, written to the report"
+    required: false
+    default: ""
+  token:
+    description: "Token to keep the sticky PR comment"
+    required: false
+    default: ${{ github.token }}
+outputs:
+  verdict:
+    description: "evaluate: pass | warn | fail (computed in both modes)"
+    value: ${{ steps.evaluate.outputs.verdict }}
+  maven:
+    description: "detect: true when the Maven adapter has something to check"
+    value: ${{ steps.detect.outputs.maven }}
+  maven-roots:
+    description: "detect: JSON array of root pom directories"
+    value: ${{ steps.detect.outputs.maven-roots }}
+  go:
+    description: "detect: true when the Go adapters have something to check"
+    value: ${{ steps.detect.outputs.go }}
+  go-modules:
+    description: "detect: JSON array of Go module directories"
+    value: ${{ steps.detect.outputs.go-modules }}
+  config:
+    description: "detect: effective configuration (infra defaults merged with the repository file), JSON"
+    value: ${{ steps.detect.outputs.config }}
+runs:
+  using: composite
+  steps:
+    - name: Set up Go
+      uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+      with:
+        go-version: ${{ inputs.go-version }}
+        # the module lies outside the workspace, where the cache key cannot be computed
+        cache: false
+
+    - name: Build dependency-gate
+      shell: bash
+      env:
+        GOTOOLCHAIN: local
+      run: |
+        cd "$GITHUB_ACTION_PATH/../../../tools/dependency-gate"
+        go build -trimpath -o "$RUNNER_TEMP/dependency-gate-bin/dependency-gate" .
+
+    - name: Detect
+      id: detect
+      if: inputs.command == 'detect'
+      shell: bash
+      env:
+        REPO_DIR: ${{ inputs.repo-dir }}
+      run: '"$RUNNER_TEMP/dependency-gate-bin/dependency-gate" detect -repo "$REPO_DIR"'
+
+    - name: Evaluate
+      id: evaluate
+      if: inputs.command == 'evaluate'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+        REPO_DIR: ${{ inputs.repo-dir }}
+        FINDINGS_DIR: ${{ inputs.findings-dir }}
+        EXPECT: ${{ inputs.expect }}
+        OUT_DIR: ${{ inputs.out-dir }}
+        COMMENT: ${{ inputs.comment }}
+        GATE_REF: ${{ inputs.gate-ref }}
+      run: |
+        args=(evaluate -repo "$REPO_DIR" -out "${OUT_DIR:-$RUNNER_TEMP/dependency-gate}")
+        if [ -n "$GATE_REF" ]; then args+=(-gate "qubership-core-infra@$GATE_REF"); fi
+        if [ -n "$FINDINGS_DIR" ] && [ -d "$FINDINGS_DIR" ]; then args+=(-findings "$FINDINGS_DIR"); fi
+        while read -r e; do
+          if [ -n "$e" ]; then args+=(-expect "$e"); fi
+        done <<< "$EXPECT"
+        if [ "$COMMENT" = true ]; then args+=(-comment); fi
+        "$RUNNER_TEMP/dependency-gate-bin/dependency-gate" "${args[@]}"

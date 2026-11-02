@@ -1,0 +1,19 @@
+<!-- Netcracker GitHub Packages for Maven: dependencies and plugins, snapshots included. Credentials come from the
+     MAVEN_USERNAME and MAVEN_TOKEN environment variables. -->
+<settings>
+  <servers>
+    <server><id>github</id><username>${env.MAVEN_USERNAME}</username><password>${env.MAVEN_TOKEN}</password></server>
+  </servers>
+  <profiles>
+    <profile>
+      <id>github</id>
+      <repositories>
+        <repository><id>github</id><url>https://maven.pkg.github.com/netcracker/*</url><snapshots><enabled>true</enabled></snapshots></repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository><id>github</id><url>https://maven.pkg.github.com/netcracker/*</url><snapshots><enabled>true</enabled></snapshots></pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+  <activeProfiles><activeProfile>github</activeProfile></activeProfiles>
+</settings>

@@ -1,0 +1,66 @@
+# Lints the pins (renovate-core-config.json) that "Generate renovate config" produced, dry runs included, with the
+# dependency-gate plugin. Warnings only, e.g. a BOM pinned below its own modules (jackson-bom vs jackson-core).
+#
+# A workflow of its own, not a job of renovate.yml: renovate.yml is also reusable (workflow_call), and a nested job
+# asking for `packages: read` makes GitHub reject the whole run of a caller that does not grant it.
+# workflow_run fires only for runs of renovate.yml in this repository (workflow_dispatch), not when another
+# workflow calls it.
+
+name: Lint generated pins
+
+on:
+  workflow_run:
+    workflows: [Generate renovate config]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  lint-pins:
+    name: Lint generated pins
+    # the artifact is uploaded by the last step of a successful run
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # runs the dependency-gate plugin, code of another repository: a read-only workflow token, no secrets
+    permissions:
+      contents: read
+      packages: read
+      # the renovate-core-config artifact of the triggering run
+      actions: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          sparse-checkout: .github/actions/maven-settings
+          persist-credentials: false
+
+      - name: Set up java
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          java-version: "21"
+          distribution: temurin
+
+      - name: Download renovate-core-config.json
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: renovate-core-config
+          path: ${{ runner.temp }}/pins
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Maven settings
+        id: settings
+        uses: ./.github/actions/maven-settings
+
+      - name: Lint
+        env:
+          PINS_PLUGIN: com.netcracker.cloud.plugins:dependency-gate-maven-plugin:1.2.0-SNAPSHOT:lint
+          SETTINGS: ${{ steps.settings.outputs.path }}
+          MAVEN_USERNAME: ${{ github.actor }}
+          MAVEN_TOKEN: ${{ github.token }}
+        run: |
+          # outside the workspace: the lint needs no project
+          cd "${RUNNER_TEMP}"
+          mvn -B -ntp -s "${SETTINGS}" "${PINS_PLUGIN}" "-Ddependency-gate.pins=${RUNNER_TEMP}/pins/renovate-core-config.json" \
+            || echo "::warning::the dependency pins lint did not run"
