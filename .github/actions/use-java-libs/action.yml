@@ -1,0 +1,161 @@
+# $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-action.json
+name: "Use a java-libs build"
+description: >
+  Points a checkout at a qubership-core-java-libs build. Installs the build into a Maven repository when an artifact
+  or a tarball is given, then rewrites poms with .github/scripts/java-libs-versions.py. strict keeps foreign BOMs
+  as they are and reports matched=false when the checkout does not use the installed artifacts.
+
+inputs:
+  artifact:
+    description: "Artifact from Build java-libs: java-libs-m2.tar.gz and java-libs-versions.json. Empty skips the download."
+    required: false
+    default: ""
+  tarball:
+    description: "Already downloaded archive of Maven repository paths. Used when the caller downloaded the artifact itself."
+    required: false
+    default: ""
+  versions-file:
+    description: "Versions JSON to apply when there is no artifact. Ignored when strict is true."
+    required: false
+    default: ""
+  repository:
+    description: "Maven repository to install into. Empty uses ~/.m2/repository. A separate directory is seeded from the runner cache, then the archive is extracted over it."
+    required: false
+    default: ""
+  path:
+    description: "Checkout whose poms to rewrite"
+    required: false
+    default: "."
+  poms:
+    description: "tracked: pom.xml known to git. all: every pom.xml under path except target. strict walks the tree itself."
+    required: false
+    default: "tracked"
+  strict:
+    description: "Retarget only artifacts this install produced. matched=false when none of them are referenced."
+    required: false
+    default: "false"
+
+outputs:
+  versions-file:
+    description: "JSON with the java-libs module and BOM versions. Empty in strict mode."
+    value: ${{ steps.versions.outputs.versions-file }}
+  matched:
+    description: "false when strict found no reference to the installed library"
+    value: ${{ steps.rewrite.outputs.matched }}
+  repository:
+    description: "Maven repository the library was installed into. Empty when nothing was installed."
+    value: ${{ steps.install.outputs.repository }}
+
+runs:
+  using: composite
+  steps:
+    - name: Download the java-libs build
+      if: inputs.artifact != ''
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      with:
+        name: ${{ inputs.artifact }}
+        path: ${{ runner.temp }}/java-libs
+
+    - name: Install the java-libs build into the local Maven repository
+      id: install
+      if: inputs.artifact != '' || inputs.tarball != ''
+      shell: bash
+      env:
+        ARTIFACT: ${{ inputs.artifact }}
+        TARBALL: ${{ inputs.tarball }}
+        REPOSITORY: ${{ inputs.repository }}
+      run: |
+        set -euo pipefail
+        if [ -n "$REPOSITORY" ]; then
+          dest="$REPOSITORY"
+          mkdir -p "$dest"
+          if [ -d "$HOME/.m2/repository" ]; then
+            cp -a "$HOME/.m2/repository/." "$dest/"
+          fi
+        else
+          dest="$HOME/.m2/repository"
+          mkdir -p "$dest"
+        fi
+        if [ -n "$ARTIFACT" ]; then
+          tar -C "$dest" -xzf "$RUNNER_TEMP/java-libs/java-libs-m2.tar.gz"
+        elif [ -f "$TARBALL" ]; then
+          tar -C "$dest" -xzf "$TARBALL"
+        else
+          echo "::error::tarball not found: $TARBALL"
+          exit 1
+        fi
+        echo "repository=$dest" >> "$GITHUB_OUTPUT"
+
+    - name: Keep Maven on the installed snapshots
+      if: inputs.artifact != '' || inputs.tarball != ''
+      shell: bash
+      run: echo "MAVEN_ARGS=${MAVEN_ARGS:+$MAVEN_ARGS }-nsu" >> "$GITHUB_ENV"
+
+    - name: Resolve the versions file
+      id: versions
+      shell: bash
+      env:
+        ARTIFACT: ${{ inputs.artifact }}
+        GIVEN: ${{ inputs.versions-file }}
+        STRICT: ${{ inputs.strict }}
+      run: |
+        set -euo pipefail
+        if [ "$STRICT" = true ]; then
+          echo "versions-file=" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        if [ -n "$ARTIFACT" ]; then
+          file="$RUNNER_TEMP/java-libs/java-libs-versions.json"
+        elif [ -n "$GIVEN" ]; then
+          file="$GIVEN"
+        else
+          echo "::error::artifact, tarball with strict, or versions-file is required"
+          exit 1
+        fi
+        if [ ! -f "$file" ]; then
+          echo "::error::versions file not found: $file"
+          exit 1
+        fi
+        echo "versions-file=$file" >> "$GITHUB_OUTPUT"
+
+    - name: Rewrite the poms
+      id: rewrite
+      shell: bash
+      working-directory: ${{ inputs.path }}
+      env:
+        VERSIONS: ${{ steps.versions.outputs.versions-file }}
+        POMS: ${{ inputs.poms }}
+        WHERE: ${{ inputs.path }}
+        STRICT: ${{ inputs.strict }}
+        REPOSITORY: ${{ steps.install.outputs.repository }}
+      run: |
+        set -euo pipefail
+        script="$GITHUB_ACTION_PATH/../../scripts/java-libs-versions.py"
+        set +e
+        if [ "$STRICT" = true ]; then
+          python3 "$script" apply --strict --installed "$REPOSITORY" . | tee "$RUNNER_TEMP/java-libs-changes.txt"
+        elif [ "$POMS" = tracked ]; then
+          git ls-files -z '*pom.xml' | xargs -0 --no-run-if-empty python3 "$script" apply "$VERSIONS" | tee "$RUNNER_TEMP/java-libs-changes.txt"
+        elif [ "$POMS" = all ]; then
+          find . -name pom.xml -not -path '*/target/*' -print0 | xargs -0 --no-run-if-empty python3 "$script" apply "$VERSIONS" | tee "$RUNNER_TEMP/java-libs-changes.txt"
+        else
+          echo "::error::poms must be tracked or all, not $POMS"
+          exit 1
+        fi
+        rc=$?
+        set -e
+        if [ "$STRICT" = true ] && [ "$rc" -eq 3 ]; then
+          echo "matched=false" >> "$GITHUB_OUTPUT"
+          echo "no dependency, parent or plugin matches the installed library" | tee -a "$RUNNER_TEMP/java-libs-changes.txt"
+        elif [ "$rc" -ne 0 ]; then
+          exit "$rc"
+        else
+          echo "matched=true" >> "$GITHUB_OUTPUT"
+        fi
+        {
+          echo "## java-libs versions in use: ${WHERE}"
+          echo ""
+          echo '```'
+          cat "$RUNNER_TEMP/java-libs-changes.txt"
+          echo '```'
+        } >> "$GITHUB_STEP_SUMMARY"

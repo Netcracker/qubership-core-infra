@@ -1,20 +1,20 @@
 # $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-action.json
 name: "Maven consumer check"
 description: >
-  Builds one Maven consumer against a library revision installed into a local repository.
-  Writes findings.v1 for the Consumers check. See maven-consumer.sh.
+  Runs mvn verify for one consumer revision and writes findings.v1. The library is already installed and the poms
+  already point at it; use-java-libs does that.
 inputs:
+  revision:
+    description: "head or base"
+    required: true
   consumer-dir:
     description: "Consumer checkout"
     required: true
   consumer-name:
     description: "<repo>/<module>, for the report"
     required: true
-  head-tarball:
-    description: "Library artifacts installed from the head revision (tar.gz of the local repo paths)"
-    required: true
-  base-tarball:
-    description: "The same for the base revision; empty when there is no baseline"
+  maven-repo:
+    description: "Local Maven repository for this revision. Empty or skip writes a skipped head finding and does not build."
     required: false
     default: ""
   out-dir:
@@ -27,16 +27,16 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Build against the library
+    - name: Verify
       shell: bash
       env:
         SCRIPTS: ${{ github.action_path }}
+        REVISION: ${{ inputs.revision }}
         CONSUMER_DIR: ${{ inputs.consumer-dir }}
         CONSUMER_NAME: ${{ inputs.consumer-name }}
-        HEAD: ${{ inputs.head-tarball }}
-        BASE: ${{ inputs.base-tarball }}
+        REPO: ${{ inputs.maven-repo }}
         OUT_DIR: ${{ inputs.out-dir }}
         SETTINGS: ${{ inputs.settings }}
       run: |
-        bash "$SCRIPTS/maven-consumer.sh" "$CONSUMER_DIR" "$HEAD" "$BASE" \
+        bash "$SCRIPTS/maven-consumer.sh" "$REVISION" "$CONSUMER_DIR" "${REPO:-skip}" \
           "${OUT_DIR:-$RUNNER_TEMP/dependency-gate-findings}" "$CONSUMER_NAME"

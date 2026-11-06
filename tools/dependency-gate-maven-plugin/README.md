@@ -104,49 +104,19 @@ modules). It needs no project and is not part of the gate.
 
 ## Usage
 
-In CI the plugin runs in the `maven` job of the reusable workflow `dependency-gate.yml` of qubership-core-infra,
-on the pull request merge commit and on its base. The caller repository only adds the workflow, as
-`.github/workflows/dependency-gate.yml` of qubership-core-java-libs:
+In CI the plugin runs in the `maven` job of the reusable workflow. The caller file, its inputs and the
+repository file are in [Enabling the checks](../dependency-gate/README.md#enabling-the-checks).
 
-```yaml
-name: Dependency gate
-
-on:
-  pull_request:
-    types: [ opened, synchronize, reopened ]
-  push:
-    branches: [ main ]
-  workflow_dispatch:
-
-# the ceiling for the reusable workflow, which narrows them per job
-permissions:
-  contents: read
-  # the plugin and the BOMs from GitHub Packages, with the workflow token
-  packages: read
-  pull-requests: write
-
-jobs:
-  dependency-gate:
-    uses: Netcracker/qubership-core-infra/.github/workflows/dependency-gate.yml@<sha>
-```
-
-Maven reads GitHub Packages with the workflow token. Only if that is not enough, pass a read-only token
-(`read:packages`) as `MAVEN_TOKEN`, never one that can write or delete packages: see the header of the workflow.
-
-Levels, pins and the consumer list come from the infra defaults. See the gate's README.
-
-Locally, from the repository root (the plugin is published to GitHub Packages, so the `github` repository must be
-configured in `settings.xml` as a plugin repository), find, then evaluate with the gate:
+The plugin is not published. Install it from this revision, then run `check` in the repository under review.
+`<version>` is the `project.version` of `tools/dependency-gate-maven-plugin/pom.xml`.
 
 ```bash
+mvn -DskipTests -f tools/dependency-gate-maven-plugin/pom.xml install
 mvn com.netcracker.cloud.plugins:dependency-gate-maven-plugin:<version>:check -Ddependency-gate.transitive=true
-```
-
-```bash
 go run github.com/Netcracker/qubership-core-infra/tools/dependency-gate@<sha> evaluate -findings target/dependency-gate
 ```
 
-Without a root pom, or for several independent roots, list them:
+Without a root pom, or for several independent roots:
 
 ```bash
 mvn com.netcracker.cloud.plugins:dependency-gate-maven-plugin:<version>:check -Ddependency-gate.poms=service-a,service-b

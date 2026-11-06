@@ -5,7 +5,7 @@
 # both because platformAutomerge is false; neither verdict waits for the other. Adapters only write findings.v1
 # files. Each check applies the policy (levels, baseline) from the infra defaults and the caller's
 # .github/dependency-gate.json. In `report` mode (the pilot) a check stays green whatever the verdict.
-# Details: tools/dependency-gate/README.md.
+# Caller file, inputs and which checks run: tools/dependency-gate/README.md#enabling-the-checks.
 #
 # Usage (caller repository, .github/workflows/dependency-gate.yml):
 #   on:
@@ -98,8 +98,8 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
 
   # Adapter jobs plug in here: maven (dependency-gate-maven-plugin on HEAD^1 and HEAD) and go-library
-  # (family-split and apidiff-exposed) feed the "Dependency gate" check. go-consumers (the reference matrix)
-  # feeds the separate "Consumers" check. Each adapter needs `detect`, runs when its output says so, takes the
+  # (family-split and apidiff-exposed) feed the "Dependency gate" check. go-consumers and maven-consumers
+  # feed the separate "Consumers" check. Each adapter needs `detect`, runs when its output says so, takes the
   # effective configuration from needs.detect.outputs.config and uploads findings.v1 as
   # dependency-gate-findings-<adapter>. The check that owns the adapter lists it in `expect`
   # (<adapter>=${{ needs.<job>.result }}), so an adapter that crashed without findings fails that check.
@@ -468,21 +468,71 @@ jobs:
           path: ${{ runner.temp }}/m2-head
 
       - name: Download base library
+        id: base-library
         continue-on-error: true
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: dependency-gate-m2-base
           path: ${{ runner.temp }}/m2-base
 
-      - name: Build against the library
+      - name: Point the consumer at the head library
+        id: head
+        uses: $/.github/actions/use-java-libs
+        with:
+          tarball: ${{ runner.temp }}/m2-head/m2-head.tgz
+          repository: ${{ runner.temp }}/repo-head
+          path: consumer/${{ matrix.consumer.module }}
+          poms: all
+          strict: true
+
+      - name: Build against the head library
+        if: success() && steps.head.outputs.matched == 'true'
         uses: $/.github/actions/maven-consumer
         with:
+          revision: head
           consumer-dir: consumer/${{ matrix.consumer.module }}
           consumer-name: ${{ matrix.consumer.repo }}/${{ matrix.consumer.module }}
-          head-tarball: ${{ runner.temp }}/m2-head/m2-head.tgz
-          base-tarball: ${{ runner.temp }}/m2-base/m2-base.tgz
+          maven-repo: ${{ runner.temp }}/repo-head
           settings: ${{ steps.settings.outputs.path }}
           out-dir: ${{ runner.temp }}/dependency-gate-findings
+
+      - name: Record a consumer that does not use the library
+        if: success() && steps.head.outputs.matched != 'true'
+        uses: $/.github/actions/maven-consumer
+        with:
+          revision: head
+          consumer-dir: consumer/${{ matrix.consumer.module }}
+          consumer-name: ${{ matrix.consumer.repo }}/${{ matrix.consumer.module }}
+          maven-repo: skip
+          settings: ${{ steps.settings.outputs.path }}
+          out-dir: ${{ runner.temp }}/dependency-gate-findings
+
+      - name: Point the consumer at the base library
+        id: base
+        if: success() && steps.head.outputs.matched == 'true' && steps.base-library.outcome == 'success'
+        uses: $/.github/actions/use-java-libs
+        with:
+          tarball: ${{ runner.temp }}/m2-base/m2-base.tgz
+          repository: ${{ runner.temp }}/repo-base
+          path: consumer/${{ matrix.consumer.module }}
+          poms: all
+          strict: true
+
+      - name: Build against the base library
+        if: success() && steps.head.outputs.matched == 'true' && steps.base.outputs.matched == 'true'
+        uses: $/.github/actions/maven-consumer
+        with:
+          revision: base
+          consumer-dir: consumer/${{ matrix.consumer.module }}
+          consumer-name: ${{ matrix.consumer.repo }}/${{ matrix.consumer.module }}
+          maven-repo: ${{ runner.temp }}/repo-base
+          settings: ${{ steps.settings.outputs.path }}
+          out-dir: ${{ runner.temp }}/dependency-gate-findings
+
+      - name: No base library
+        if: success() && steps.head.outputs.matched == 'true' && steps.base-library.outcome != 'success'
+        shell: bash
+        run: echo "maven-consumer: no base library build: a failure of this consumer counts as new"
 
       - name: Report a failed run
         if: ${{ failure() }}

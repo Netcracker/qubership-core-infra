@@ -6,10 +6,10 @@ consumer. Automerge waits for both; neither verdict waits for the other.
 
 ```
 adapters (find)                          gate (decide)
-  maven-pins   ─┐                          levels, locked
-  go-library   ─┴─ findings.v1 (head,  ─▶  ignore rules, baseline,   ─▶ report.v1, job summary,
-                     base)                    mode                      annotations, PR comment, exit code
-  go-consumers ─── findings.v1          ─▶  the same policy          ─▶ a second report, exit code
+  maven-pins     ─┐                        levels, locked
+  go-library     ─┴─ findings.v1       ─▶  ignore rules, baseline,   ─▶ Dependency gate
+  maven-consumers ─┐  (head, base)         mode                         report, summary, comment
+  go-consumers   ─┘                    ─▶  the same policy          ─▶ Consumers
                         infra defaults.json + .github/dependency-gate.json (config.v1)
 ```
 
@@ -113,7 +113,7 @@ and a label change does not start one: it applies from the next push.
   Which poms and which findings reach them is still up to the repository: see `excludes` and `transitive` above.
 - Checks of the gate (`config-invalid`, `tool-error`) take no ignore rules or label
   levels, and a repository may only raise their level above the catalog default (`tool-error: fail` also makes a
-  `go-consumers` failure block). A repository file cannot make a failed adapter pass.
+  `go-consumers` or `maven-consumers` failure block). A repository file cannot make a failed adapter pass.
 - `feature-snapshot` applies only when the target branch matches `protectedBranches`.
 - `ecosystems.<eco>.transitive` caps findings that only the resolved dependency tree shows (`"transitive": true`):
   infra sets `warn` for Maven, `fail` makes them count like declared ones, `off` drops them.
@@ -180,7 +180,7 @@ The version is part of the key: a violation that gets worse (log4j 2.26.1 → 2.
   names the module; annotations need a `line`.
 
 A file that does not match the schema, a finding without an ecosystem or with a check unknown for it, or an adapter that was expected (`-expect name=<job result>`)
-but wrote nothing is a `tool-error` of that adapter: the gate fails closed (`fail`; `warn` for `go-consumers`).
+but wrote nothing is a `tool-error` of that adapter: the gate fails closed (`fail`; `warn` for `go-consumers` and `maven-consumers`).
 
 ### report.v1 (the gate, artifact `dependency-gate-report`)
 
@@ -211,38 +211,127 @@ Before writing, the gate validates its own report against the schema.
 | `vuln-new`, `vuln-fixed`, `vuln-open` | both | off | a security bump past the pin is already `pin-exceeded` |
 | `license-not-allowed`, `license-changed`, `license-unknown` | both | off | not part of this job |
 | `config-invalid` | gate | fail | the repository configuration is invalid |
-| `tool-error` | gate | fail; warn for `go-consumers` | an adapter failed or broke the contract |
+| `tool-error` | gate | fail; warn for `go-consumers` and `maven-consumers` | an adapter failed or broke the contract |
 
 The catalog still names the off checks, so an old findings file stays valid. This job's adapters do not emit them.
 
-## CI
+## Enabling the checks
 
-Callers use the reusable workflow
-[`.github/workflows/dependency-gate.yml`](../../.github/workflows/dependency-gate.yml) (usage in its header). Its jobs:
+Add `.github/workflows/dependency-gate.yml` to the repository that should be checked:
 
-- `detect` — runs `dependency-gate detect`; outputs `maven`, `maven-roots`, `go`, `go-modules` and the effective
-  `config` for the adapter jobs. On pull requests an ecosystem is checked only when its manifests changed
-  (`pom.xml`, `.mvn/**`; `go.mod`, `go.sum`); pushes and manual runs check everything.
-- adapter jobs — each uploads its findings as an artifact `dependency-gate-findings-<adapter>`;
-- `gate` — named **Dependency gate**. It needs `detect`, `maven` and `go-library`, downloads only those findings
-  and runs `dependency-gate evaluate`. It writes the summary, annotations and the sticky comment
-  (`<!-- dependency-gate -->`, created when the change brings new warn or fail findings, updated afterwards, never on
-  forks; findings already on the base branch are in the summary only);
-- `consumers` — named **Consumers**. It runs when the Go consumer matrix ran, downloads only
-  `dependency-gate-findings-go-consumers-*` and evaluates that check with the comment off, so it does not overwrite
-  the sticky marker. Java consumer builds are not in this workflow yet.
+```yaml
+name: Dependency gate
 
-Adapter jobs run the pull request's code (Maven build extensions, Go `init()` and tests), so permissions are set per
-job: `contents: read` for all, `packages: read` for `maven`, and only `gate` gets
-`pull-requests: write`, for the comment. Maven reads GitHub Packages with the workflow token; an optional `MAVEN_TOKEN` secret must be
-read-only (`read:packages`). The `maven` job sets every `dependency-gate.*` parameter of the plugin with `-D` on the
-command line (an empty excludes file, `poms=.` included), so a `-D` in the change's `.mvn/maven.config` cannot replace
-it. The Maven plugin is installed from `tools/dependency-gate-maven-plugin` of this revision and is not published.
-On pull requests the base revision is checked with the Maven roots it
-has: a root the change adds has no baseline.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+  workflow_dispatch:
 
-`detect`, `gate` and `consumers` use the composite action [`.github/actions/dependency-gate`](../../.github/actions/dependency-gate/action.yml),
-which builds this module from the same revision of qubership-core-infra.
+permissions:
+  contents: read
+  packages: read
+  pull-requests: write
+
+jobs:
+  dependency-gate:
+    uses: Netcracker/qubership-core-infra/.github/workflows/dependency-gate.yml@<sha> # vX.Y.Z
+```
+
+Do not add a `paths` filter. `detect` already skips an ecosystem whose manifests did not change, and a workflow
+that never starts gives Renovate no check to wait for.
+
+This call, with no `with`, no secret and no `.github/dependency-gate.json`, runs two GitHub checks. `mode` is
+`report`: a fail verdict leaves the check green and the summary says "would fail".
+
+**Dependency gate** — versions against the pins, and Go API breaks.
+
+| When | Checks |
+|---|---|
+| `pull_request`, and `pom.xml` or `.mvn/**` changed | `pin-exceeded`, `pin-mismatch` (fail, locked); `pin-lagging`, `pin-conflict`, `shared-property`, `snapshot` (warn); `feature-snapshot` (fail, locked, only into `main`, `master`, `release/*`, `support/*`). Head and its base. A version only the dependency tree shows is at most warn. |
+| `pull_request`, and `go.mod` or `go.sum` changed | `family-split` (fail, head and its base), `apidiff-exposed` (fail, head). |
+| `push`, `workflow_dispatch` | the same checks for every ecosystem the repository has. There is no base, so every finding is new. |
+
+**Consumers** — `pull_request` only. `push` and `workflow_dispatch` do not run it.
+
+| When | Checks |
+|---|---|
+| the repository has Maven | `consumer-build`, `consumer-test` of `Netcracker/qubership-core-config-server` and `Netcracker/qubership-core-core-operator` (`mvn verify -DskipITs`). A consumer that does not reference this build is skipped. |
+| the repository has Go, and a reference consumer depends on it | `consumer-build`. A consumer the infra list marks with tests also runs `consumer-test` (`consumer-test-flaky` is info). |
+
+The same finding key on the base build is preexisting and does not block. A Maven consumer whose base build is
+missing counts a head failure as new.
+
+### Repository nothing consumes
+
+A service is not a library the reference consumers compile against. Use the same caller and add
+`.github/dependency-gate.json` on the default branch. A pull request reads this file from its base, so it applies
+from the next pull request.
+
+```json
+{
+  "version": 1,
+  "mode": "enforce",
+  "consumers": false
+}
+```
+
+**Dependency gate** runs as in the table above. Renovate security updates (`vulnerabilityAlerts`,
+`vulnerabilityFixStrategy: lowest`) ignore `allowedVersions` and will automerge a minor or patch above the pin
+once every check is green. `pin-exceeded` is fail and locked. `mode: enforce` makes that fail the check, so
+Renovate waits.
+
+**Consumers** does not run, and neither does the job that installs this repository as a library. That install
+rewrites every `X.Y.Z-SNAPSHOT` in the checkout, including an imported BOM, and then fails. With
+`"consumers": false` the job plans an empty list and skips the install.
+
+### Workflow inputs
+
+These do not choose which checks run.
+
+| Input | Default | Effect |
+|---|---|---|
+| `comment` | `true` | sticky comment of **Dependency gate** (`<!-- dependency-gate -->`): created when the change brings a new warn or fail, updated afterwards, never on a fork. `false` leaves the job summary and the annotations. **Consumers** does not comment. |
+| `java-version` | `"21"` | JDK for the Maven pin check and the Maven consumer builds |
+| `maven-username` | the actor | GitHub Packages user of `MAVEN_TOKEN` |
+| secret `MAVEN_TOKEN` | the workflow token | read-only token (`read:packages`) when the workflow token cannot read a package. Do not pass a token that can write or delete packages: the Maven job runs build extensions from the pull request. A fork pull request gets no secrets; Maven still reads packages with the read-only workflow token, and the comment is skipped. |
+
+```yaml
+jobs:
+  dependency-gate:
+    uses: Netcracker/qubership-core-infra/.github/workflows/dependency-gate.yml@<sha>
+    with:
+      comment: false
+      java-version: "21"
+    secrets:
+      MAVEN_TOKEN: ${{ secrets.MAVEN_TOKEN }}
+```
+
+### Repository file
+
+`.github/dependency-gate.json` is optional. On a pull request it is read from the base branch (`HEAD^1`), so an
+edit applies from the next pull request. A file the schema rejects is `config-invalid`: the file is ignored and
+the infra defaults apply. An `exceptions` array is rejected.
+
+| Field | Default | What it changes |
+|---|---|---|
+| `mode` | `report` | `enforce`: a new fail fails the check |
+| `consumers` | the infra list | `false`: **Consumers** does not run. **Dependency gate** still does. A repository cannot replace the list. |
+| `ecosystems.maven.transitive` | `warn` | `off` drops findings only the dependency tree shows; `fail` counts them like declared versions. Locked checks included. |
+| `ecosystems.maven.excludes` | none | Java regexes of pom paths. A matching pom is not checked, locked checks included. |
+| `ecosystems.maven.roots` | the reactor root, or top-level poms that no other pom lists as a module | only these directories. Nothing else of Maven is checked. |
+| `ecosystems.go.modules` | every `go.mod` outside `vendor/` and `testdata/` | only these directories |
+| `ecosystems.go.exclude` | none | RE2 regexes of module directories not to check |
+| `checks.<id>` | the catalog level | `fail`, `warn`, `info` or `off`. Locked checks (`pin-exceeded`, `pin-mismatch`, `feature-snapshot`) cannot be lowered, and they take no ignore rules. |
+| `checks.<id>.ignore` | none | a matched finding is allowed and does not count. Needs `reason`. |
+
+A repository cannot set the pins file, `protectedBranches` or `locked`.
+
+`permissions` in the caller are the ceiling. The workflow narrows them per job: `contents: read` everywhere,
+`packages: read` for Maven, `pull-requests: write` only for the comment. The Maven plugin is installed from
+`tools/dependency-gate-maven-plugin` of the called revision and is not published. The `maven` job passes every
+`dependency-gate.*` parameter with `-D`, so a `-D` in the pull request's `.mvn/maven.config` cannot replace one.
 
 ## Development
 
