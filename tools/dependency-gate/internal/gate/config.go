@@ -426,6 +426,9 @@ func validate(c, infra *Config) []string {
 	if _, err := regexp.Compile(c.ProtectedBranches); err != nil {
 		add("protectedBranches: %v", err)
 	}
+	if len(c.Exceptions) > 0 {
+		add("exceptions are not part of the policy")
+	}
 	return errs
 }
 

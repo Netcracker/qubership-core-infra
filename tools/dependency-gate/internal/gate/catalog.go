@@ -57,6 +57,8 @@ const (
 	ToolError         = "tool-error"
 )
 
+const expiringDays = 14
+
 type checkDef struct {
 	// default level per ecosystem; the "" key marks a gate check
 	levels map[string]Level
@@ -77,45 +79,40 @@ var catalog = map[string]checkDef{
 	"shared-property":  {levels: maven(Warn)},
 	"feature-snapshot": {levels: maven(Fail), protectedOnly: true},
 	"snapshot":         {levels: maven(Off)},
-	"api-exposed":      {levels: maven(Warn)},
+	// outside this job: a repository may still name them, the default does not count them
+	"api-exposed": {levels: maven(Off)},
 
 	"apidiff-exposed":  {levels: golang(Fail)},
-	"apidiff-internal": {levels: golang(Warn)},
-	"build":            {levels: golang(Fail)},
-	"vet-new":          {levels: golang(Fail)},
-	"tests-compile":    {levels: golang(Fail)},
-	"init-all":         {levels: golang(Fail)},
-	"go-directive":     {levels: golang(Fail)},
-	"mod-verify":       {levels: golang(Fail)},
-	"mod-tidy":         {levels: golang(Warn)},
-	"pseudo-version":   {levels: golang(Warn)},
-	"replace-local":    {levels: golang(Warn)},
+	"apidiff-internal": {levels: golang(Off)},
+	"build":            {levels: golang(Off)},
+	"vet-new":          {levels: golang(Off)},
+	"tests-compile":    {levels: golang(Off)},
+	"init-all":         {levels: golang(Off)},
+	"go-directive":     {levels: golang(Off)},
+	"mod-verify":       {levels: golang(Off)},
+	"mod-tidy":         {levels: golang(Off)},
+	"pseudo-version":   {levels: golang(Off)},
+	"replace-local":    {levels: golang(Off)},
 
-	"family-split":        {levels: both(Warn, Fail)},
-	"consumer-build":      {levels: both(Off, Fail)},
-	"consumer-test":       {levels: golang(Fail)},
+	"family-split":        {levels: both(Off, Fail)},
+	"consumer-build":      {levels: both(Fail, Fail)},
+	"consumer-test":       {levels: both(Fail, Fail)},
 	"consumer-test-flaky": {levels: golang(Info)},
-	"downgrade":           {levels: both(Warn, Warn)},
-	"dependency-diff":     {levels: both(Info, Info)},
-	"vuln-new":            {levels: both(Warn, Warn)},
-	"vuln-fixed":          {levels: both(Info, Info)},
-	"vuln-open":           {levels: both(Info, Info)},
-	"license-not-allowed": {levels: both(Warn, Warn)},
-	"license-changed":     {levels: both(Warn, Warn)},
-	"license-unknown":     {levels: both(Warn, Warn)},
+	"downgrade":           {levels: both(Off, Off)},
+	"dependency-diff":     {levels: both(Off, Off)},
+	"vuln-new":            {levels: both(Off, Off)},
+	"vuln-fixed":          {levels: both(Off, Off)},
+	"vuln-open":           {levels: both(Off, Off)},
+	"license-not-allowed": {levels: both(Off, Off)},
+	"license-changed":     {levels: both(Off, Off)},
+	"license-unknown":     {levels: both(Off, Off)},
 
-	ConfigInvalid:     {levels: gateCheck(Fail)},
-	ExceptionInvalid:  {levels: gateCheck(Fail)},
-	ExceptionExpired:  {levels: gateCheck(Fail)},
-	ExceptionExpiring: {levels: gateCheck(Warn)},
-	ExceptionUnused:   {levels: gateCheck(Warn)},
-	ToolError:         {levels: gateCheck(Fail)},
+	ConfigInvalid: {levels: gateCheck(Fail)},
+	ToolError:     {levels: gateCheck(Fail)},
 }
 
-// Adapters whose failure is a warning: network outages there must not stop every pull request.
-var softAdapters = []string{"osv", "go-consumers"}
-
-const expiringDays = 14
+// Adapters whose failure is a warning: a network failure of the consumer matrix must not stop every pull request.
+var softAdapters = []string{"go-consumers", "maven-consumers"}
 
 func knownCheck(id string) bool {
 	_, ok := catalog[id]

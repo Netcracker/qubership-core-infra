@@ -2,7 +2,7 @@
 
 Go adapters of the dependency gate (jobs `go-library` and `go-consumers` of
 [`.github/workflows/dependency-gate.yml`](../../workflows/dependency-gate.yml)). They only find problems and write
-findings.v1 files; levels, ignore rules, exceptions, the baseline and the report belong to the gate
+findings.v1 files; levels, ignore rules, the baseline and the report belong to the gate
 ([`tools/dependency-gate`](../../../tools/dependency-gate/README.md)). Module families and reference consumers come
 from the gate configuration (`families` with `ecosystem: go`, `consumers.go` in the infra defaults). The gate is not a required check: in `mode: enforce` it stops
 the Renovate automerge, and a person with merge rights can merge with a red gate.
@@ -15,20 +15,11 @@ revision run.
 
 | Check | What it finds | Revisions |
 |---|---|---|
-| `build` | `go build ./...` (or `go list -m all`) fails | both |
-| `tests-compile` | `go test -count=1 -run '^$' ./...`: tests do not compile or a test binary panics in `init()`, per package | both |
-| `init-all` | a program importing every non-main package of the module fails to start: `init()` of packages without tests and of their dependencies (e.g. `pgdialect and Bun must have the same version`) | both |
 | `family-split` | modules of a family (bun, otel v1, k8s.io staging, testcontainers) on different versions, indirect ones included | both |
-| `mod-verify`, `mod-tidy` | `go mod verify`; `go mod tidy -diff` | both |
-| `dependency-diff` | modules changed, added or removed in the build graph; a major bump is paired across the path change (`x/v4` → `x/v5`) | head |
-| `downgrade` | a version in the build graph went down, or the go directive was lowered | head |
-| `go-directive` | the go directive was raised, and which new dependency requires it | head |
-| `apidiff-exposed`, `apidiff-internal` | apidiff of every dependency package the module imports (tests included): one finding per changed top-level symbol our code references as `pkg.Symbol` (with the places), one (`pkg.*`) for the rest; `exposed` when the package's types appear in the module's exported API (`go doc -all`); a package apidiff cannot compare is an `apidiff-exposed` finding (the change is unknown) | head |
-| `vet-new` | `go vet` findings that are not on base (by file and message: moved code is not new) | head |
-| `vuln-new`, `vuln-fixed` | reachable vulnerabilities (govulncheck) the change brings or closes | head |
+| `apidiff-exposed` | apidiff of a dependency package the module imports (tests included) when that package's types appear in the module's exported API (`go doc -all`): one finding per changed top-level symbol our code references as `pkg.Symbol`, one (`pkg.*`) for the rest; a package apidiff cannot compare is a finding too (the change is unknown). A break that stays inside the module is not reported | head |
 
-The gate marks a head finding whose key is also on base as already on the base branch (`preexisting`), so a build
-that was broken before does not block the change.
+The gate marks a head finding whose key is also on base as already on the base branch (`preexisting`), so a split
+or an exposed break that was already on the base branch does not block the change.
 
 ## go-consumers (`consumer-check.sh <consumer> <lib-base> <lib-head> <out> <name> [<tests>]`)
 
@@ -74,6 +65,5 @@ DEP_GATE_CONFIG=/tmp/gate-config.json .github/actions/go-dep-check/go-dep-check.
 go run github.com/Netcracker/qubership-core-infra/tools/dependency-gate@<sha> evaluate -repo <lib> -findings /tmp/findings
 ```
 
-Needs `go`, `jq`, and `apidiff`, `govulncheck`, `gotestsum` (consumer tests) and `dependency-gate` (`go build` of
-[`tools/dependency-gate`](../../../tools/dependency-gate), version comparison) in `$(go env GOPATH)/bin` (versions: see
+Needs `go`, `jq`, and `apidiff` (library checks) and `gotestsum` (consumer tests) in `$(go env GOPATH)/bin` (versions: see
 `action.yml`).

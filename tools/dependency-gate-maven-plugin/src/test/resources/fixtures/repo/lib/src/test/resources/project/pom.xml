@@ -1,0 +1,2 @@
+<project><modelVersion>4.0.0</modelVersion><groupId>x</groupId><artifactId>ignored-test-fixture</artifactId><version>1</version>
+<dependencies><dependency><groupId>com.rabbitmq</groupId><artifactId>amqp-client</artifactId><version>99.0.0</version></dependency></dependencies></project>

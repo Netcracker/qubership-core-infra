@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>io.quarkus.platform</groupId>
+    <artifactId>quarkus-operator-sdk-bom</artifactId>
+    <version>3.40.1</version>
+    <packaging>pom</packaging>
+    <dependencyManagement>
+        <dependencies>
+            <dependency><groupId>io.quarkiverse.operatorsdk</groupId><artifactId>quarkus-operator-sdk</artifactId><version>7.0.0</version></dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>

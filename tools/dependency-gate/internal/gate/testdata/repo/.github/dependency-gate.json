@@ -19,52 +19,6 @@
     }
   },
   "families": [
-    { "name": "kafka-go", "ecosystem": "go", "match": "^github\\.com/segmentio/kafka-go(/|$)" }
-  ],
-  "exceptions": [
-    {
-      "checks": ["pin-*", "feature-snapshot", "snapshot", "shared-property"],
-      "package": "com.rabbitmq:amqp-client",
-      "version": "5.37.0",
-      "reason": "CVE-2026-0001: fixed only in 5.37.0",
-      "until": "2027-01-31"
-    },
-    {
-      "checks": ["pin-*", "feature-snapshot", "snapshot", "shared-property"],
-      "package": "org.example:gone",
-      "version": "1.0.0",
-      "reason": "stale entry",
-      "until": "2027-01-31"
-    },
-    {
-      "checks": ["pin-*", "feature-snapshot", "snapshot", "shared-property"],
-      "package": "com.fasterxml.jackson:jackson-bom",
-      "version": "2.21.7",
-      "reason": "old",
-      "until": "2026-01-01"
-    },
-    {
-      "checks": ["pin-*", "feature-snapshot", "snapshot", "shared-property"],
-      "package": "org.slf4j:slf4j-api",
-      "version": "2.0.17"
-    },
-    {
-      "checks": ["pin-*", "feature-snapshot", "snapshot", "shared-property"],
-      "package": "com.google.guava:guava",
-      "reason": "no expiry date"
-    },
-    {
-      "checks": ["apidiff-exposed"],
-      "package": "github.com/opensearch-project/opensearch-go/v4",
-      "symbol": "/^opensearchapi\\./",
-      "reason": "Major bump coordinated with all consumers in the same release",
-      "until": "2026-11-05"
-    },
-    {
-      "checks": ["vuln-new"],
-      "vuln": "GHSA-xxxx-xxxx-xxxx",
-      "reason": "Vulnerable code path (XML parsing) is not reachable from our API",
-      "until": "2026-11-30"
-    }
+    { "name": "kafka-go", "ecosystem": "go", "match": "^github\\.com/segmentio/kafka-go(/|$)"     }
   ]
 }

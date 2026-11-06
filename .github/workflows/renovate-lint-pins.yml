@@ -21,7 +21,7 @@ jobs:
     name: Lint generated pins
     # the artifact is uploaded by the last step of a successful run
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    # runs the dependency-gate plugin, code of another repository: a read-only workflow token, no secrets
+    # builds the dependency-gate plugin from this revision: a read-only workflow token, no secrets
     permissions:
       contents: read
       packages: read
@@ -32,7 +32,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          sparse-checkout: .github/actions/maven-settings
           persist-credentials: false
 
       - name: Set up java
@@ -53,14 +52,23 @@ jobs:
         id: settings
         uses: ./.github/actions/maven-settings
 
+      - name: Install plugin
+        id: plugin
+        uses: ./.github/actions/dependency-gate-maven-plugin
+        env:
+          SETTINGS: ${{ steps.settings.outputs.path }}
+          MAVEN_USERNAME: ${{ github.actor }}
+          MAVEN_TOKEN: ${{ github.token }}
+
       - name: Lint
         env:
-          PINS_PLUGIN: com.netcracker.cloud.plugins:dependency-gate-maven-plugin:1.2.0-SNAPSHOT:lint
+          PLUGIN_VERSION: ${{ steps.plugin.outputs.version }}
           SETTINGS: ${{ steps.settings.outputs.path }}
           MAVEN_USERNAME: ${{ github.actor }}
           MAVEN_TOKEN: ${{ github.token }}
         run: |
           # outside the workspace: the lint needs no project
           cd "${RUNNER_TEMP}"
-          mvn -B -ntp -s "${SETTINGS}" "${PINS_PLUGIN}" "-Ddependency-gate.pins=${RUNNER_TEMP}/pins/renovate-core-config.json" \
+          mvn -B -ntp -s "${SETTINGS}" "com.netcracker.cloud.plugins:dependency-gate-maven-plugin:${PLUGIN_VERSION}:lint" \
+            "-Ddependency-gate.pins=${RUNNER_TEMP}/pins/renovate-core-config.json" \
             || echo "::warning::the dependency pins lint did not run"

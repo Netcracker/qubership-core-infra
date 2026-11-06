@@ -3,18 +3,11 @@
   "version": 1,
   "mode": "report",
   "protectedBranches": "^(main|master|release/.+|support/.+)$",
-  "maxExceptionDays": 180,
-  "locked": ["pin-exceeded", "pin-mismatch", "feature-snapshot", "exception-expired"],
+  "locked": ["pin-exceeded", "pin-mismatch", "feature-snapshot"],
   "ecosystems": {
     "maven": {
       "transitive": "warn",
       "pins": "https://raw.githubusercontent.com/Netcracker/qubership-core-infra/main/renovate-core-config.json"
-    }
-  },
-  "checks": {
-    "license-not-allowed": {
-      "level": "warn",
-      "allow": ["Apache-2.0", "MIT", "BSD-2-Clause", "BSD-3-Clause", "EPL-2.0"]
     }
   },
   "families": [
@@ -55,6 +48,10 @@
       { "repo": "Netcracker/qubership-core-lib-go-paas-mediation-client", "module": ".", "tests": true },
       { "repo": "Netcracker/qubership-core-lib-go-rest-utils", "module": ".", "tests": true },
       { "repo": "Netcracker/qubership-core-lib-go-stomp-websocket", "module": ".", "tests": true }
+    ],
+    "maven": [
+      { "repo": "Netcracker/qubership-core-config-server", "module": "." },
+      { "repo": "Netcracker/qubership-core-core-operator", "module": "." }
     ]
   }
 }

@@ -62,10 +62,6 @@ runs:
       run: |
         # tool versions are pinned; bump them together with the scripts
         GOTOOLCHAIN=local go install golang.org/x/exp/cmd/apidiff@v0.0.0-20260908205506-85c1c2202aba
-        GOTOOLCHAIN=local go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
-        # version comparison (dependency-gate compare), from the same infra revision as this action
-        (cd "$GITHUB_ACTION_PATH/../../../tools/dependency-gate" &&
-          GOTOOLCHAIN=local go build -trimpath -o "$(go env GOPATH)/bin/dependency-gate" .)
 
     - name: Library checks
       if: inputs.mode == 'library'

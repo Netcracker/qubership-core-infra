@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 var today = time.Date(2026, 10, 29, 0, 0, 0, 0, time.UTC)
@@ -155,22 +154,12 @@ func keys(r *Report) []string {
 	return out
 }
 
-// problems maps the configuration pointer of each problem of the policy to its check.
-func problems(p *Policy) map[string]string {
-	out := map[string]string{}
-	for _, f := range p.Problems {
-		_, pointer, _ := strings.Cut(f.Package, "#")
-		out["#"+pointer] = f.Check
-	}
-	return out
-}
-
 func TestDefaultsAreValid(t *testing.T) {
 	p := policy(t, "")
 	if len(p.Problems) > 0 {
 		t.Fatal(p.Problems)
 	}
-	if p.Config.Mode != ModeReport || p.Config.MaxExceptionDays != 180 {
+	if p.Config.Mode != ModeReport || p.Config.MaxExceptionDays != 0 {
 		t.Errorf("unexpected defaults: %+v", p.Config)
 	}
 	if !slices.Contains(p.Config.Locked, "pin-exceeded") {
@@ -181,46 +170,25 @@ func TestDefaultsAreValid(t *testing.T) {
 func TestFixturePolicy(t *testing.T) {
 	r := policy(t, repoFixture(t)).Evaluate(fixtures(t))
 	expectFindings(t, r,
-		// an exception wins over the baseline
-		want{"pin-exceeded", "amqp-client", Fail, Allowed},
-		// the matching exception expired: the finding counts again
+		// same key already on the base: preexisting, and a fail is capped at warn
+		want{"pin-exceeded", "amqp-client", Warn, Preexisting},
+		// a worse version than the base is a new fail
 		want{"pin-exceeded", "jackson-bom", Fail, New},
-		want{ExceptionExpired, "/exceptions/2", Fail, New},
-		// matches nothing although its checks ran
-		want{ExceptionUnused, "/exceptions/1", Warn, New},
-		// no reason and until; no until
-		want{ExceptionInvalid, "/exceptions/3", Fail, New},
-		want{ExceptionInvalid, "/exceptions/4", Fail, New},
 		want{"pin-lagging", "slf4j-api", Warn, New},
 		// an ignore rule of the check
 		want{"apidiff-internal", "openshift", Warn, Allowed},
-		// symbol regex; expires within two weeks
-		want{"apidiff-exposed", "opensearch-go", Fail, Allowed},
-		want{ExceptionExpiring, "/exceptions/5", Warn, New},
-		// vuln-new did not run in this change: its exception is not unused
-		want{check: ExceptionUnused, pkg: "/exceptions/6"},
+		want{"apidiff-exposed", "opensearch-go", Fail, New},
 		want{"pin-conflict", "opentelemetry", Warn, New},
 		want{"feature-snapshot", "consul", Fail, New},
 	)
 
-	amqp := find(t, r, "pin-exceeded", "amqp-client").Exception
-	if diff := cmp.Diff(&ExceptionRef{Source: RepoConfigFile + "#/exceptions/0", Until: "2027-01-31"}, amqp,
-		cmpopts.IgnoreFields(ExceptionRef{}, "Reason", "Issue")); diff != "" || !strings.Contains(amqp.Reason, "CVE-2026-0001") {
-		t.Errorf("exception of amqp-client %q (-want +got):\n%s", amqp.Reason, diff)
-	}
 	if got := find(t, r, "apidiff-internal", "openshift").Exception; got.Source != RepoConfigFile+"#/checks/apidiff-internal/ignore/0" || got.Until != "" {
 		t.Errorf("ignore rule: %+v", got)
-	}
-	if got := find(t, r, ExceptionUnused, "/exceptions/1").Locations; got[0].File != RepoConfigFile {
-		t.Errorf("unused exception location: %v", got)
-	}
-	if msg := find(t, r, ExceptionInvalid, "/exceptions/3").Message; !strings.Contains(msg, "missing properties 'reason', 'until'") {
-		t.Errorf("message %q", msg)
 	}
 	if r.Verdict != VerdictFail || r.Mode != ModeReport || r.Failed() {
 		t.Errorf("verdict %s in %s mode, failed %v", r.Verdict, r.Mode, r.Failed())
 	}
-	if r.Counts.Allowed != 3 || r.Counts.Preexisting != 0 {
+	if r.Counts.Allowed != 1 || r.Counts.Preexisting != 1 {
 		t.Errorf("counts %+v", r.Counts)
 	}
 	if diff := cmp.Diff([]string{"infra:defaults.json", RepoConfigFile}, r.Config); diff != "" {
@@ -291,12 +259,16 @@ func TestLabelLevels(t *testing.T) {
 		labels []string
 		level  Level
 	}{
-		{nil, Warn},
+		{nil, Off},
 		{[]string{"automerge", "security"}, Fail},
 	} {
 		t.Run(fmt.Sprint(tc.labels), func(t *testing.T) {
 			in := Input{Labels: tc.labels, Head: []*FindingsFile{headFile("go-library", Go, AdapterOK, []string{"vuln-new"},
 				Item{Check: "vuln-new", Package: "golang.org/x/net", Version: "v0.40.0", Vuln: "GO-2026-0001", Message: "reachable"})}}
+			if tc.level == Off {
+				expectFindings(t, p.Evaluate(in), want{check: "vuln-new", pkg: "x/net"})
+				return
+			}
 			expectFindings(t, p.Evaluate(in), want{"vuln-new", "x/net", tc.level, New})
 		})
 	}
@@ -313,16 +285,15 @@ func TestEcosystemLevels(t *testing.T) {
 	expectFindings(t, policy(t, `{"version": 1, "checks": {"downgrade": "off"}}`).Evaluate(both), want{check: "downgrade"})
 }
 
-// A raised go directive forces consumers onto a newer Go and fails; go-dep-check reports a lowered one as a
-// downgrade: it breaks no consumer.
+// go-directive and downgrade are outside this job: the default does not count them.
 func TestGoDirective(t *testing.T) {
 	r := policy(t, "").Evaluate(Input{Head: []*FindingsFile{headFile("go-library", Go, AdapterOK, []string{"go-directive", "downgrade"},
 		Item{Check: "go-directive", Package: "example.com/raised", Version: "1.23", From: "1.22", Message: "go directive raised"},
 		Item{Check: "downgrade", Package: "example.com/lowered", Version: "1.21", From: "1.22", Message: "go directive lowered"},
 	)}})
 	expectFindings(t, r,
-		want{"go-directive", "example.com/raised", Fail, New},
-		want{"downgrade", "example.com/lowered", Warn, New},
+		want{check: "go-directive", pkg: "example.com/raised"},
+		want{check: "downgrade", pkg: "example.com/lowered"},
 	)
 }
 
@@ -337,20 +308,19 @@ func TestToolErrors(t *testing.T) {
 	}
 	for _, tc := range []struct {
 		name, config string
-		// level of network-bound adapters
-		soft Level
 	}{
-		{"infra defaults", "", Warn},
-		{"raised by the repository", `{"version": 1, "checks": {"tool-error": "fail"}}`, Fail},
+		{"infra defaults", ""},
+		{"raised by the repository", `{"version": 1, "checks": {"tool-error": "fail"}}`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			r := policy(t, tc.config).Evaluate(in)
 			expectFindings(t, r,
-				// fail closed: a failed adapter, an adapter that wrote nothing, a broken contract
+				// fail closed: a failed adapter, an adapter that wrote nothing, a broken contract.
+				// go-consumers is the soft adapter: a skipped matrix is not an error.
 				want{ToolError, "maven-pins", Fail, New},
 				want{ToolError, "detect", Fail, New},
 				want{ToolError, "go-library", Fail, New},
-				want{ToolError, "osv", tc.soft, New},
+				want{ToolError, "osv", Fail, New},
 				want{check: ToolError, pkg: "go-consumers"},
 				want{check: ToolError, pkg: "go-other"},
 			)
@@ -392,6 +362,7 @@ func TestInvalidRepoConfig(t *testing.T) {
 		"locked by eco":      `{"version": 1, "ecosystems": {"maven": {"checks": {"pin-exceeded": "warn"}}}}`,
 		"locked by label":    `{"version": 1, "labels": {"levels": {"security": {"pin-exceeded": "warn"}}}}`,
 		"infra only":         `{"version": 1, "maxExceptionDays": 365}`,
+		"exceptions":         `{"version": 1, "exceptions": [{"checks": ["pin-*"], "package": "g:a", "version": "1", "reason": "r", "until": "2026-12-01"}]}`,
 		"pins":               `{"version": 1, "ecosystems": {"maven": {"pins": "pins.json"}}}`,
 		"bad regex":          `{"version": 1, "ecosystems": {"go": {"exclude": ["("]}}}`,
 		"root with comma":    `{"version": 1, "ecosystems": {"maven": {"roots": ["a,b"]}}}`,
@@ -413,25 +384,24 @@ func TestInvalidRepoConfig(t *testing.T) {
 	}
 }
 
-func TestExceptionDates(t *testing.T) {
-	p := policy(t, `{"version": 1, "exceptions": [
-		{"checks": ["vuln-*"], "vuln": "GHSA-1", "reason": "r", "until": "2027-06-01"},
-		{"checks": ["vuln-new"], "vuln": "GHSA-2", "reason": "r", "until": "2026-10-29"},
-		{"checks": ["vuln-new"], "vuln": "GHSA-3", "reason": "r", "until": "2026-10-28"},
-		{"checks": ["config-invalid"], "path": "x", "reason": "r", "until": "2026-12-01"},
-		{"checks": ["license-*"], "license": "/^BSL/i", "reason": "r", "until": "2026-12-01"}
+func TestExceptionsAreRejected(t *testing.T) {
+	p := policy(t, `{"version": 1, "mode": "enforce", "exceptions": [
+		{"checks": ["pin-*"], "package": "com.rabbitmq:amqp-client", "version": "5.37.0", "reason": "r", "until": "2026-12-01"}
 	]}`)
-	if diff := cmp.Diff(map[string]string{
-		"#/exceptions/0": ExceptionInvalid,  // more than maxExceptionDays ahead
-		"#/exceptions/1": ExceptionExpiring, // the last day still applies
-		"#/exceptions/2": ExceptionExpired,
-		"#/exceptions/3": ExceptionInvalid, // gate checks have no exceptions
-	}, problems(p)); diff != "" {
-		t.Errorf("problems (-want +got):\n%s", diff)
+	if len(p.Problems) != 1 || p.Problems[0].Check != ConfigInvalid || !strings.Contains(p.Problems[0].Message, "exceptions") {
+		t.Fatalf("%+v", p.Problems)
 	}
-	r := p.Evaluate(Input{Head: []*FindingsFile{headFile("osv", Maven, AdapterOK, []string{"license-changed"},
-		Item{Check: "license-changed", Package: "g:a", License: "bsl-1.1", Message: "relicensed"})}})
-	expectFindings(t, r, want{"license-changed", "g:a", Warn, Allowed})
+	if slices.Contains(p.Sources, RepoConfigFile) {
+		t.Fatal("a file with exceptions is ignored")
+	}
+	r := p.Evaluate(fixtures(t))
+	expectFindings(t, r,
+		want{"pin-exceeded", "amqp-client", Warn, Preexisting},
+		want{"pin-exceeded", "jackson-bom", Fail, New},
+	)
+	if r.Mode != ModeReport || r.Verdict != VerdictFail || r.Failed() {
+		t.Errorf("the ignored file must not switch the mode: %s %s failed=%v", r.Mode, r.Verdict, r.Failed())
+	}
 }
 
 func TestMerge(t *testing.T) {
@@ -440,15 +410,13 @@ func TestMerge(t *testing.T) {
 		"ecosystems": {"maven": {"pins": "infra.json", "checks": {"downgrade": {"level": "warn", "ignore": [{"package": "a", "reason": "infra"}]}}}},
 		"checks": {"license-not-allowed": {"level": "warn", "allow": ["MIT"]}},
 		"families": [{"name": "bun", "ecosystem": "go", "match": "^bun"}, {"name": "otel", "ecosystem": "go", "match": "^otel"}],
-		"consumers": {"go": [{"repo": "a/b", "module": "m"}]},
-		"exceptions": [{"checks": ["downgrade"], "package": "x", "reason": "infra", "until": "2026-11-20"}]}`
+		"consumers": {"go": [{"repo": "a/b", "module": "m"}]}}`
 	repo := `{"version": 1, "mode": "enforce",
 		"labels": {"levels": {"security": {"license-changed": "fail"}}},
 		"ecosystems": {"maven": {"roots": ["."], "checks": {"downgrade": {"level": "fail", "ignore": [{"package": "b", "reason": "repo"}]}}}},
 		"checks": {"license-not-allowed": {"allow": ["Apache-2.0"]}},
 		"families": [{"name": "otel", "ecosystem": "go", "match": "^go.opentelemetry.io/otel", "key": "stable"}],
-		"consumers": false,
-		"exceptions": [{"checks": ["downgrade"], "package": "y", "reason": "repo", "until": "2026-11-20"}]}`
+		"consumers": false}`
 	dir := t.TempDir()
 	writeFile(t, filepath.Join(dir, RepoConfigFile), repo)
 	p := load(t, LoadOptions{Defaults: []byte(infra), DefaultsName: "infra", RepoDir: dir})
@@ -486,8 +454,7 @@ func TestMerge(t *testing.T) {
 	if string(c.Consumers) != "false" {
 		t.Errorf("consumers %s", c.Consumers)
 	}
-	if len(c.Exceptions) != 2 || c.Exceptions[0].origin.String() != "infra#/exceptions/0" ||
-		c.Exceptions[1].origin.String() != RepoConfigFile+"#/exceptions/0" {
+	if len(c.Exceptions) != 0 {
 		t.Errorf("exceptions %+v", c.Exceptions)
 	}
 	// the effective configuration is valid config.v1 for the adapters
@@ -503,13 +470,9 @@ func TestMerge(t *testing.T) {
 	r := p.Evaluate(Input{Head: []*FindingsFile{headFile("maven-pins", Maven, AdapterOK, []string{"downgrade"},
 		Item{Check: "downgrade", Package: "a", Message: "m"}, Item{Check: "downgrade", Package: "b", Message: "m"},
 		Item{Check: "downgrade", Package: "y", Message: "m"})}})
-	expectFindings(t, r, want{"downgrade", "a", Fail, Allowed}, want{"downgrade", "b", Fail, Allowed}, want{"downgrade", "y", Fail, Allowed})
+	expectFindings(t, r, want{"downgrade", "a", Fail, Allowed}, want{"downgrade", "b", Fail, Allowed}, want{"downgrade", "y", Fail, New})
 	if got := find(t, r, "downgrade", "a").Exception.Source; got != "infra#/ecosystems/maven/checks/downgrade/ignore/0" {
 		t.Errorf("source %s", got)
-	}
-	// infra exceptions are reported without a repository location
-	if unused := find(t, r, ExceptionUnused, "infra#"); len(unused.Locations) != 0 {
-		t.Errorf("locations %v", unused.Locations)
 	}
 }
 
@@ -580,7 +543,7 @@ func TestAdapterOfSeveralEcosystems(t *testing.T) {
 	r := policy(t, `{"version": 1, "ecosystems": {"go": {"checks": {"vuln-new": "fail"}}}}`).Evaluate(
 		Input{Head: []*FindingsFile{osv}, Base: []*FindingsFile{base}})
 
-	expectFindings(t, r, want{"vuln-new", "snakeyaml", Warn, New}, want{"vuln-new", "x/net", Warn, Preexisting})
+	expectFindings(t, r, want{check: "vuln-new", pkg: "snakeyaml"}, want{"vuln-new", "x/net", Warn, Preexisting})
 	if netx := find(t, r, "vuln-new", "x/net"); netx.Ecosystem != Go || netx.Key != "go|vuln-new|golang.org/x/net|v0.40.0|" {
 		t.Errorf("%+v", netx)
 	}
@@ -588,45 +551,18 @@ func TestAdapterOfSeveralEcosystems(t *testing.T) {
 	for _, f := range matching(r, ToolError, "") {
 		toolErrors = append(toolErrors, f.Level.String()+" "+string(f.Status)+" "+f.Message)
 	}
-	if diff := cmp.Diff([]string{`warn new finding "vuln-new" has no ecosystem`, `warn new unknown go check "pin-exceeded"`}, toolErrors); diff != "" {
+	if diff := cmp.Diff([]string{`fail new finding "vuln-new" has no ecosystem`, `fail new unknown go check "pin-exceeded"`}, toolErrors); diff != "" {
 		t.Errorf("tool errors (-want +got):\n%s", diff)
 	}
 }
 
-// A repository can except a locked check only for one package version at a time, so it cannot switch the gate off
-// or let the next bump of the package through.
-func TestLockedExceptionsNeedAPackageVersion(t *testing.T) {
-	p := policy(t, `{"version": 1, "mode": "enforce", "exceptions": [
-		{"checks": ["*"], "package": "*", "version": "1.0", "reason": "r", "until": "2026-12-01"},
-		{"checks": ["pin-*"], "package": "/^com[.]rabbitmq:/", "version": "5.37.0", "reason": "r", "until": "2026-12-01"},
-		{"checks": ["feature-snapshot"], "path": "pom.xml", "reason": "r", "until": "2026-12-01"},
-		{"checks": ["pin-*"], "package": "com.rabbitmq:amqp-client", "reason": "any version", "until": "2026-12-01"},
-		{"checks": ["pin-*"], "package": "com.rabbitmq:amqp-client", "version": "*", "reason": "r", "until": "2026-12-01"},
-		{"checks": ["pin-*"], "package": "com.rabbitmq:amqp-client", "version": "/^5[.]/", "reason": "r", "until": "2026-12-01"},
-		{"checks": ["pin-lagging", "mod-*"], "package": "*", "reason": "not locked", "until": "2026-12-01"},
-		{"checks": ["*"], "package": "com.rabbitmq:amqp-client", "version": "5.37.0", "reason": "one version", "until": "2026-12-01"}
-	]}`)
-	if diff := cmp.Diff(map[string]string{
-		"#/exceptions/0": ExceptionInvalid, "#/exceptions/1": ExceptionInvalid, "#/exceptions/2": ExceptionInvalid,
-		"#/exceptions/3": ExceptionInvalid, "#/exceptions/4": ExceptionInvalid, "#/exceptions/5": ExceptionInvalid,
-	}, problems(p)); diff != "" {
-		t.Errorf("problems (-want +got):\n%s", diff)
-	}
-
-	r := p.Evaluate(fixtures(t))
-	expectFindings(t, r,
-		want{"pin-exceeded", "jackson-bom", Fail, New},
-		want{"pin-exceeded", "amqp-client", Fail, Allowed},
-		want{"pin-lagging", "slf4j-api", Warn, Allowed},
-	)
-	if r.Verdict != VerdictFail || !r.Failed() {
-		t.Errorf("verdict %s, failed %v: %v", r.Verdict, r.Failed(), keys(r))
-	}
-
+// Exceptions are not policy, including in the infra defaults: Load refuses them.
+func TestInfraExceptionsAreRejected(t *testing.T) {
 	infra := strings.Replace(string(infraDefaults(t)), `"version": 1,`,
-		`"version": 1, "exceptions": [{"checks": ["pin-*"], "package": "/^com[.]rabbitmq:/", "reason": "infra", "until": "2026-12-01"}],`, 1)
-	if q := load(t, LoadOptions{Defaults: []byte(infra), DefaultsName: "infra", RepoDir: t.TempDir()}); len(q.Problems) > 0 {
-		t.Error(q.Problems[0].Message)
+		`"version": 1, "exceptions": [{"checks": ["pin-*"], "package": "com.rabbitmq:amqp-client", "version": "5.37.0", "reason": "infra", "until": "2026-12-01"}],`, 1)
+	_, err := Load(LoadOptions{Schemas: testSchemas(t), Defaults: []byte(infra), DefaultsName: "infra", RepoDir: t.TempDir(), Today: today})
+	if err == nil || !strings.Contains(err.Error(), "exceptions") {
+		t.Fatalf("err = %v", err)
 	}
 }
 

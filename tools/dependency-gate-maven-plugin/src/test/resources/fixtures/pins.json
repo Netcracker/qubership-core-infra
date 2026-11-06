@@ -1,0 +1,21 @@
+{
+  "packageRules": [
+    {"matchPackageNames": ["/.*/"], "allowedVersions": "!/.*(redhat|-SNAPSHOT).*/"},
+    {"matchDatasources": ["maven"], "matchCurrentValue": "/-SNAPSHOT$/", "enabled": false},
+    {"matchDatasources": ["maven"], "matchPackageNames": ["/^io\\.quarkus\\.platform:/", "!io.quarkus.platform:quarkus-bom"], "enabled": false},
+    {"matchPackageNames": ["org.apache.maven.plugins:maven-surefire-plugin"], "allowedVersions": "!/^3\\.6\\.0$/"},
+    {"matchManagers": ["gomod"], "matchPackageNames": ["com.rabbitmq:amqp-client"], "allowedVersions": "/^9.9.9$/"},
+    {"matchPackageNames": ["com.fasterxml.jackson:jackson-bom"], "allowedVersions": "/^2.21.5$/"},
+    {"matchPackageNames": ["com.fasterxml.jackson.core:jackson-core", "com.fasterxml.jackson.core:jackson-databind"], "allowedVersions": "/^2.21.7$/"},
+    {"matchPackageNames": ["com.rabbitmq:amqp-client"], "allowedVersions": "/^5.30.0$/"},
+    {"matchPackageNames": ["org.springframework.boot:spring-boot", "org.springframework.boot:spring-boot-autoconfigure", "org.springframework.boot:spring-boot-dependencies"], "allowedVersions": "/^4.1.1$/"},
+    {"matchPackageNames": ["org.springframework:spring-core"], "allowedVersions": "/^7.0.9$/"},
+    {"matchPackageNames": ["io.quarkus:quarkus-maven-plugin", "io.quarkus:quarkus-core"], "allowedVersions": "/^3.33.4$/"},
+    {"matchPackageNames": ["io.quarkus.platform:quarkus-bom"], "allowedVersions": "/^3.33.4$/"},
+    {"matchPackageNames": ["org.slf4j:slf4j-api"], "allowedVersions": "/^2.0.18$/"},
+    {"matchPackageNames": ["org.projectlombok:lombok"], "allowedVersions": "/^1.18.46$/"},
+    {"matchPackageNames": ["com.google.guava:guava"], "allowedVersions": "/^33.5.0-jre$/"},
+    {"matchPackageNames": ["io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter"], "allowedVersions": "/^2.23.0$/"},
+    {"matchPackageNames": ["io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom"], "allowedVersions": "/^2\\.28\\./"}
+  ]
+}

@@ -1,0 +1,42 @@
+# $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-action.json
+name: "Maven consumer check"
+description: >
+  Builds one Maven consumer against a library revision installed into a local repository.
+  Writes findings.v1 for the Consumers check. See maven-consumer.sh.
+inputs:
+  consumer-dir:
+    description: "Consumer checkout"
+    required: true
+  consumer-name:
+    description: "<repo>/<module>, for the report"
+    required: true
+  head-tarball:
+    description: "Library artifacts installed from the head revision (tar.gz of the local repo paths)"
+    required: true
+  base-tarball:
+    description: "The same for the base revision; empty when there is no baseline"
+    required: false
+    default: ""
+  out-dir:
+    description: "Where the findings are written"
+    required: false
+    default: ""
+  settings:
+    description: "settings.xml for GitHub Packages"
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Check
+      shell: bash
+      env:
+        SCRIPTS: ${{ github.action_path }}
+        CONSUMER_DIR: ${{ inputs.consumer-dir }}
+        CONSUMER_NAME: ${{ inputs.consumer-name }}
+        HEAD: ${{ inputs.head-tarball }}
+        BASE: ${{ inputs.base-tarball }}
+        OUT_DIR: ${{ inputs.out-dir }}
+        SETTINGS: ${{ inputs.settings }}
+      run: |
+        bash "$SCRIPTS/maven-consumer.sh" "$CONSUMER_DIR" "$HEAD" "$BASE" \
+          "${OUT_DIR:-$RUNNER_TEMP/dependency-gate-findings}" "$CONSUMER_NAME"
