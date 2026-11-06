@@ -474,7 +474,7 @@ jobs:
           name: dependency-gate-m2-base
           path: ${{ runner.temp }}/m2-base
 
-      - name: Check
+      - name: Build against the library
         uses: $/.github/actions/maven-consumer
         with:
           consumer-dir: consumer/${{ matrix.consumer.module }}

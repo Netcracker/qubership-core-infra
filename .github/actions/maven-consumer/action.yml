@@ -27,7 +27,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Check
+    - name: Build against the library
       shell: bash
       env:
         SCRIPTS: ${{ github.action_path }}

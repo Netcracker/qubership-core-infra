@@ -30,8 +30,9 @@ def installed(repo: Path) -> dict[tuple[str, str], str]:
     return found
 
 
-def rewrite(text: str, gavs: dict[tuple[str, str], str]) -> tuple[str, bool]:
+def rewrite(text: str, gavs: dict[tuple[str, str], str]) -> tuple[str, bool, list[str]]:
     used = False
+    notes: list[str] = []
     props: dict[str, str] = {}
 
     def region(match: re.Match[str]) -> str:
@@ -41,15 +42,19 @@ def rewrite(text: str, gavs: dict[tuple[str, str], str]) -> tuple[str, bool]:
             nonlocal used
             group, artifact, version = (p.strip() for p in g.groups())
             want = gavs.get((group, artifact))
-            if want is None or version == want:
-                if want is not None:
-                    used = True
+            if want is None:
                 return g.group(0)
             used = True
+            ga = f"{group}:{artifact}"
+            if version == want:
+                notes.append(f"{ga} {version} (already)")
+                return g.group(0)
             prop = PROP.fullmatch(version)
             if prop:
                 props[prop.group(1)] = want
+                notes.append(f"{ga} ${{{prop.group(1)}}} -> {want}")
                 return g.group(0)
+            notes.append(f"{ga} {version} -> {want}")
             return g.group(0).replace(f"<version>{g.group(3)}</version>", f"<version>{want}</version>", 1)
 
         return GAV.sub(gav, match.group(0))
@@ -64,7 +69,8 @@ def rewrite(text: str, gavs: dict[tuple[str, str], str]) -> tuple[str, bool]:
         )
         if n == 0:
             sys.exit(f"version property {name} is not defined in this pom")
-    return text, used
+        notes.append(f"${{{name}}} -> {value}")
+    return text, used, notes
 
 
 def main() -> None:
@@ -74,14 +80,21 @@ def main() -> None:
     gavs = installed(repo)
     if not gavs:
         sys.exit("the library build installed nothing")
+    print(f"align: installed library has {len(gavs)} artifact(s)", file=sys.stderr)
     used = False
-    for pom in consumer.rglob("pom.xml"):
+    for pom in sorted(consumer.rglob("pom.xml")):
         text = pom.read_text(encoding="utf-8")
-        updated, hit = rewrite(text, gavs)
+        updated, hit, notes = rewrite(text, gavs)
         used = used or hit
+        if notes:
+            rel = pom.relative_to(consumer).as_posix()
+            print(f"align: {rel}", file=sys.stderr)
+            for line in notes:
+                print(f"align:   {line}", file=sys.stderr)
         if updated != text:
             pom.write_text(updated, encoding="utf-8")
     if not used:
+        print("align: no dependency, parent or plugin matches the installed library", file=sys.stderr)
         sys.exit(3)
 
 
