@@ -200,7 +200,7 @@ Before writing, the gate validates its own report against the schema.
 | `pin-lagging`, `shared-property` | maven | warn | below the pin; one property versions artifacts with different pins |
 | `pin-conflict` | maven | warn | a BOM allowed by its own rule manages versions above their pins |
 | `feature-snapshot` | maven | fail, locked, protected branches only | `X.Y.Z-<branch>-SNAPSHOT` versions |
-| `snapshot` | maven | off | any SNAPSHOT not built by the repository |
+| `snapshot` | maven | warn | any SNAPSHOT not built by the repository |
 | `api-exposed` | maven | off | kept in the catalog; this job does not count it |
 | `apidiff-exposed` / `apidiff-internal` | go | fail / off | incompatible dependency API visible in our API; an internal-only break is not counted |
 | `build`, `vet-new`, `tests-compile`, `init-all`, `go-directive`, `mod-verify`, `mod-tidy`, `pseudo-version`, `replace-local` | go | off | the repository's own build, vet and module checks cover these |

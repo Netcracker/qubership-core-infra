@@ -78,7 +78,7 @@ var catalog = map[string]checkDef{
 	"pin-conflict":     {levels: maven(Warn)},
 	"shared-property":  {levels: maven(Warn)},
 	"feature-snapshot": {levels: maven(Fail), protectedOnly: true},
-	"snapshot":         {levels: maven(Off)},
+	"snapshot":         {levels: maven(Warn)},
 	// outside this job: a repository may still name them, the default does not count them
 	"api-exposed": {levels: maven(Off)},
 
