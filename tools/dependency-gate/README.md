@@ -253,8 +253,8 @@ This call, with no `with`, no secret and no `.github/dependency-gate.json`, runs
 | the repository has Maven | `consumer-build`, `consumer-test` of `Netcracker/qubership-core-config-server` and `Netcracker/qubership-core-core-operator` (`mvn verify -DskipITs`). A consumer that does not reference this build is skipped. |
 | the repository has Go, and a reference consumer depends on it | `consumer-build`. A consumer the infra list marks with tests also runs `consumer-test` (`consumer-test-flaky` is info). |
 
-The same finding key on the base build is preexisting and does not block. A Maven consumer whose base build is
-missing counts a head failure as new.
+The same finding key on the base build is preexisting and does not block. The Maven base build runs only when
+the head build failed: a green head brought no regression. A missing base build counts a head failure as new.
 
 ### Repository nothing consumes
 

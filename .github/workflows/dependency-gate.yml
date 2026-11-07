@@ -486,6 +486,7 @@ jobs:
           strict: true
 
       - name: Build against the head library
+        id: head-build
         if: success() && steps.head.outputs.matched == 'true'
         uses: $/.github/actions/maven-consumer
         with:
@@ -509,7 +510,7 @@ jobs:
 
       - name: Point the consumer at the base library
         id: base
-        if: success() && steps.head.outputs.matched == 'true' && steps.base-library.outcome == 'success'
+        if: success() && steps.head-build.outputs.passed == 'false' && steps.base-library.outcome == 'success'
         uses: $/.github/actions/use-java-libs
         with:
           tarball: ${{ runner.temp }}/m2-base/m2-base.tgz
@@ -519,7 +520,7 @@ jobs:
           strict: true
 
       - name: Build against the base library
-        if: success() && steps.head.outputs.matched == 'true' && steps.base.outputs.matched == 'true'
+        if: success() && steps.head-build.outputs.passed == 'false' && steps.base.outputs.matched == 'true'
         uses: $/.github/actions/maven-consumer
         with:
           revision: base
@@ -529,8 +530,14 @@ jobs:
           settings: ${{ steps.settings.outputs.path }}
           out-dir: ${{ runner.temp }}/dependency-gate-findings
 
+      - name: Head built
+        if: success() && steps.head-build.outputs.passed == 'true'
+        shell: bash
+        run: |
+          echo "maven-consumer: head built, the base build is skipped"
+
       - name: No base library
-        if: success() && steps.head.outputs.matched == 'true' && steps.base-library.outcome != 'success'
+        if: success() && steps.head-build.outputs.passed == 'false' && steps.base-library.outcome != 'success'
         shell: bash
         run: |
           echo "maven-consumer: no base library build: a failure of this consumer counts as new"

@@ -24,10 +24,15 @@ inputs:
   settings:
     description: "settings.xml for GitHub Packages"
     required: true
+outputs:
+  passed:
+    description: "true when mvn verify succeeded. false when it failed. Empty when the consumer was skipped."
+    value: ${{ steps.verify.outputs.passed }}
 runs:
   using: composite
   steps:
     - name: Verify
+      id: verify
       shell: bash
       env:
         SCRIPTS: ${{ github.action_path }}

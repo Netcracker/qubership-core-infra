@@ -6,6 +6,7 @@
 # env:   SETTINGS  settings.xml (GitHub Packages). MAVEN_USERNAME and MAVEN_TOKEN are read by Maven.
 # out:   <out_dir>/maven-consumers-<name>-<revision>.json
 #        head + skip writes a skipped head file and does not run Maven
+#        GITHUB_OUTPUT passed=true when mvn verify succeeded, false when it failed
 # exit:  0 findings written (a failing build is a finding); 2 the adapter could not run
 set -uo pipefail
 revision=$1
@@ -17,6 +18,7 @@ mkdir -p "$out"
 file=$out/maven-consumers-${name//\//_}-${revision}.json
 TOOL="maven-consumer"
 log() { echo "maven-consumer: $*" >&2; }
+set_passed() { [[ -n ${GITHUB_OUTPUT:-} ]] && echo "passed=$1" >> "$GITHUB_OUTPUT"; }
 
 write_findings() {
   # <status> <reason> <checks> < <jsonl>
@@ -59,6 +61,7 @@ set -e
 if [[ $rc == 0 ]]; then
   log "$revision: built"
   write_findings ok "" "consumer-build consumer-test" < "$jsonl"
+  set_passed true
   exit 0
 fi
 echo "::group::$revision maven log"
@@ -72,3 +75,4 @@ else
   emit "$jsonl" consumer-build "build fails: $(grep -m1 -E 'ERROR|FAILURE' "$logf" | cut -c1-300)"
 fi
 write_findings ok "" "consumer-build consumer-test" < "$jsonl"
+set_passed false
