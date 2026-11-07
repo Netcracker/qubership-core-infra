@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CheckTest {
 
-    private static final String TOOL = "dependency-gate-maven-plugin 1.2.0";
+    private static final String TOOL = "dependency-gate-maven-plugin 0.1.0-SNAPSHOT";
 
     @TempDir
     static Path tmp;

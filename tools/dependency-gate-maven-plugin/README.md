@@ -83,7 +83,7 @@ modules). It needs no project and is not part of the gate.
 ```json
 {
   "schema": "dependency-gate-findings/v1",
-  "adapter": { "name": "maven-pins", "ecosystem": "maven", "tool": "dependency-gate-maven-plugin 1.2.0", "status": "ok",
+  "adapter": { "name": "maven-pins", "ecosystem": "maven", "tool": "dependency-gate-maven-plugin 0.1.0-SNAPSHOT", "status": "ok",
                "checks": ["pin-exceeded", "pin-mismatch", "pin-conflict", "pin-lagging", "feature-snapshot", "snapshot", "shared-property"] },
   "revision": "head",
   "findings": [

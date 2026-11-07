@@ -157,7 +157,7 @@ The version is part of the key: a violation that gets worse (log4j 2.26.1 → 2.
 ```json
 {
   "schema": "dependency-gate-findings/v1",
-  "adapter": { "name": "maven-pins", "ecosystem": "maven", "tool": "dependency-gate-maven-plugin 1.2.0", "status": "ok",
+  "adapter": { "name": "maven-pins", "ecosystem": "maven", "tool": "dependency-gate-maven-plugin 0.1.0-SNAPSHOT", "status": "ok",
                "checks": ["pin-exceeded", "pin-mismatch", "pin-lagging"] },
   "revision": "head",
   "findings": [

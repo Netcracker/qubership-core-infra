@@ -3,7 +3,7 @@
   "adapter": {
     "name": "maven-pins",
     "ecosystem": "maven",
-    "tool": "dependency-gate-maven-plugin 1.2.0",
+    "tool": "dependency-gate-maven-plugin 0.1.0-SNAPSHOT",
     "status": "ok",
     "checks": ["pin-exceeded", "pin-mismatch", "pin-lagging", "pin-conflict", "shared-property", "feature-snapshot"]
   },

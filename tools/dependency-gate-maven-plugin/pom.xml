@@ -4,27 +4,14 @@
 
     <groupId>com.netcracker.cloud.plugins</groupId>
     <artifactId>dependency-gate-maven-plugin</artifactId>
-    <version>1.2.0-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <description>Dependency gate adapter: finds dependency versions past the Renovate pins of qubership-core-infra and writes them as findings for the gate. Built from the same infra revision as the gate and not published.</description>
 
     <properties>
-        <cloud-core.core-internal-boms.version>1.2.0-SNAPSHOT</cloud-core.core-internal-boms.version>
         <maven.deploy.skip>true</maven.deploy.skip>
     </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.netcracker.cloud</groupId>
-                <artifactId>core-internal-bom</artifactId>
-                <version>${cloud-core.core-internal-boms.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <dependencies>
         <!-- 3rd party dependencies -->
@@ -61,12 +48,14 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
+            <version>2.21.7</version>
         </dependency>
 
         <!-- Test dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
+            <version>6.0.3</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -98,19 +87,5 @@
             </plugin>
         </plugins>
     </build>
-
-    <repositories>
-        <repository>
-            <id>central</id>
-            <url>https://repo.maven.apache.org/maven2</url>
-            <releases><enabled>true</enabled></releases>
-            <snapshots><enabled>false</enabled></snapshots>
-        </repository>
-        <repository>
-            <id>github</id>
-            <url>https://maven.pkg.github.com/netcracker/*</url>
-            <snapshots />
-        </repository>
-    </repositories>
 
 </project>
