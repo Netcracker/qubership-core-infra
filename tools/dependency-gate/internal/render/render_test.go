@@ -31,8 +31,6 @@ func report() *gate.Report {
 				Source: ".github/dependency-gate.json#/exceptions/5", Reason: "coordinated", Until: "2026-11-05"},
 				Item: gate.Item{Ecosystem: gate.Go, Check: "apidiff-exposed", Package: "github.com/opensearch-project/opensearch-go/v4", Message: "incompatible",
 					Locations: []gate.Location{{File: "go.mod", Line: 7}}}},
-			{Level: gate.Info, Status: gate.New, Item: gate.Item{Ecosystem: gate.Go,
-				Check: "dependency-diff", Package: "golang.org/x/net", Version: "v0.41.0", From: "v0.40.0", Message: "upgraded"}},
 			{Level: gate.Warn, Status: gate.New, Item: gate.Item{
 				Check: gate.ExceptionUnused, Package: ".github/dependency-gate.json#/exceptions/1", Message: "matches nothing"}},
 		},
@@ -54,8 +52,7 @@ func TestSummary(t *testing.T) {
 			"above the pin (transitive) (already on the base branch)",
 			"| ☑️ | apidiff-exposed |",
 			"(allowed: coordinated, until 2026-11-05, .github/dependency-gate.json#/exceptions/5)",
-			"from v0.40.0: upgraded",
-			"#### Gate\n", "#### Maven\n", "#### Go\n", "#### Dependency changes\n",
+			"#### Gate\n", "#### Maven\n", "#### Go\n",
 		}},
 		{"pilot", func(r *gate.Report) { r.Mode = gate.ModeReport }, "❌ Dependency gate (pilot): would fail", []string{"> Pilot"}},
 		{"pass", func(r *gate.Report) { r.Mode, r.Verdict, r.Findings = gate.ModeReport, gate.VerdictPass, nil },
@@ -84,7 +81,7 @@ func TestSummary(t *testing.T) {
 			}
 			if tc.name == "enforce" {
 				var at []int
-				for _, s := range []string{"#### Gate\n", "#### Maven\n", "#### Go\n", "#### Dependency changes\n"} {
+				for _, s := range []string{"#### Gate\n", "#### Maven\n", "#### Go\n"} {
 					at = append(at, strings.Index(md, s))
 				}
 				if slices.Contains(at, -1) || !slices.IsSorted(at) {
@@ -99,7 +96,7 @@ func TestComment(t *testing.T) {
 	r := report()
 	for i := range 25 {
 		r.Findings = append(r.Findings, &gate.Finding{Level: gate.Warn, Status: gate.New,
-			Item: gate.Item{Ecosystem: gate.Go, Check: "mod-tidy", Package: fmt.Sprint("m", i), Message: "untidy"}})
+			Item: gate.Item{Ecosystem: gate.Go, Check: "pin-lagging", Package: fmt.Sprint("m", i), Message: "untidy"}})
 	}
 	md := Comment(r, "https://github.com/o/r/actions/runs/1")
 	for _, want := range []string{Marker + "\n### ❌ Dependency gate: failed", "… and 7 more.", "[job summary](https://github.com/o/r/actions/runs/1)"} {
@@ -111,7 +108,7 @@ func TestComment(t *testing.T) {
 	if n := strings.Count(md, "\n| ❌ |") + strings.Count(md, "\n| ⚠️ |"); n != CommentLimit {
 		t.Errorf("%d rows", n)
 	}
-	for _, summaryOnly := range []string{"apidiff-exposed", "dependency-diff", "lombok"} {
+	for _, summaryOnly := range []string{"apidiff-exposed", "lombok"} {
 		if strings.Contains(md, summaryOnly) {
 			t.Errorf("%s belongs to the summary only", summaryOnly)
 		}

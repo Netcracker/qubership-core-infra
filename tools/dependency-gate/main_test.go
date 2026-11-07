@@ -372,15 +372,15 @@ write_findings "$out" go-library head "$status" "$reason" "$checks" < "$out.json
 		want                         []gate.Item
 		checksRan                    []string
 	}{
-		{"every key", "ok", "", "build vet-new build", "m", []string{"build", "go build ./... fails",
-			"package=example.com/m", "version=v1.2.0", "from=v1.1.0", "symbol=a=b", "vuln=GO-2026-0001",
+		{"every key", "ok", "", "apidiff-exposed family-split apidiff-exposed", "m", []string{"apidiff-exposed", "incompatible change",
+			"package=example.com/m", "version=v1.2.0", "from=v1.1.0", "symbol=T", "vuln=GO-2026-0001",
 			"note=x.go:1: undefined\ny.go:2: undefined", "loc=go.mod:7", "loc=sub/x.go"},
-			[]gate.Item{{Check: "build", Message: "go build ./... fails", Package: "example.com/m", Version: "v1.2.0",
-				From: "v1.1.0", Symbol: "a=b", Vuln: "GO-2026-0001", Note: "x.go:1: undefined\ny.go:2: undefined",
+			[]gate.Item{{Check: "apidiff-exposed", Message: "incompatible change", Package: "example.com/m", Version: "v1.2.0",
+				From: "v1.1.0", Symbol: "T", Vuln: "GO-2026-0001", Note: "x.go:1: undefined\ny.go:2: undefined",
 				Locations: []gate.Location{{File: "go.mod", Line: 7, Unit: "m"}, {File: "sub/x.go", Unit: "m"}}}},
-			[]string{"build", "vet-new"}},
-		{"empty values are left out", "ok", "", "mod-tidy", "", []string{"mod-tidy", "not tidy", "package=", "loc="},
-			[]gate.Item{{Check: "mod-tidy", Message: "not tidy"}}, []string{"mod-tidy"}},
+			[]string{"apidiff-exposed", "family-split"}},
+		{"empty values are left out", "ok", "", "family-split", "", []string{"family-split", "versions diverge", "package=", "loc="},
+			[]gate.Item{{Check: "family-split", Message: "versions diverge"}}, []string{"family-split"}},
 		{"error", "error", "go-library: interrupted", "", "", nil, []gate.Item{}, []string{}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

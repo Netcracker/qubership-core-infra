@@ -201,19 +201,12 @@ Before writing, the gate validates its own report against the schema.
 | `pin-conflict` | maven | warn | a BOM allowed by its own rule manages versions above their pins |
 | `feature-snapshot` | maven | fail, locked, protected branches only | `X.Y.Z-<branch>-SNAPSHOT` versions |
 | `snapshot` | maven | warn | any SNAPSHOT not built by the repository |
-| `api-exposed` | maven | off | kept in the catalog; this job does not count it |
-| `apidiff-exposed` / `apidiff-internal` | go | fail / off | incompatible dependency API visible in our API; an internal-only break is not counted |
-| `build`, `vet-new`, `tests-compile`, `init-all`, `go-directive`, `mod-verify`, `mod-tidy`, `pseudo-version`, `replace-local` | go | off | the repository's own build, vet and module checks cover these |
+| `apidiff-exposed` | go | fail | incompatible dependency API visible in our API |
 | `family-split` | maven / go | off / fail | Go modules released together end up on different versions |
 | `consumer-build` | maven / go | fail | a reference consumer no longer builds with the change |
 | `consumer-test` / `consumer-test-flaky` | maven / go | fail / info (flaky is Go) | a test of a reference consumer fails with the change / failed and passed on a rerun |
-| `downgrade`, `dependency-diff` | both | off | not part of this job |
-| `vuln-new`, `vuln-fixed`, `vuln-open` | both | off | a security bump past the pin is already `pin-exceeded` |
-| `license-not-allowed`, `license-changed`, `license-unknown` | both | off | not part of this job |
 | `config-invalid` | gate | fail | the repository configuration is invalid |
 | `tool-error` | gate | fail; warn for `go-consumers` and `maven-consumers` | an adapter failed or broke the contract |
-
-The catalog still names the off checks, so an old findings file stays valid. This job's adapters do not emit them.
 
 ## Enabling the checks
 

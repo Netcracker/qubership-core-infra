@@ -87,23 +87,20 @@ Scope: {{scope .}}
 {{end}}
 `))
 
-// Summary is the job summary: every finding by ecosystem, the dependency changes last.
+// Summary is the job summary: every finding by ecosystem.
 func Summary(r *gate.Report) string {
-	var gateFindings, diff []*gate.Finding
+	var gateFindings []*gate.Finding
 	byEco := map[string][]*gate.Finding{}
 	for _, f := range r.Findings {
-		switch {
-		case f.Check == "dependency-diff":
-			diff = append(diff, f)
-		case f.Ecosystem == "":
+		if f.Ecosystem == "" {
 			gateFindings = append(gateFindings, f)
-		default:
+		} else {
 			byEco[f.Ecosystem] = append(byEco[f.Ecosystem], f)
 		}
 	}
 	var sections []section
 	for _, s := range []section{
-		{"Gate", gateFindings}, {"Maven", byEco[gate.Maven]}, {"Go", byEco[gate.Go]}, {"Dependency changes", diff},
+		{"Gate", gateFindings}, {"Maven", byEco[gate.Maven]}, {"Go", byEco[gate.Go]},
 	} {
 		if len(s.Findings) > 0 {
 			sections = append(sections, s)

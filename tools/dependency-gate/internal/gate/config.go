@@ -86,10 +86,8 @@ func (e Ecosystem) Setting(key string, v any) error {
 
 // CheckSettings is written either as a level or as an object.
 type CheckSettings struct {
-	Level          Level    `json:"level,omitzero"`
-	Ignore         []Ignore `json:"ignore,omitempty"`
-	FailOnSeverity string   `json:"failOnSeverity,omitempty"`
-	Allow          []string `json:"allow,omitempty"`
+	Level  Level    `json:"level,omitzero"`
+	Ignore []Ignore `json:"ignore,omitempty"`
 }
 
 func (c *CheckSettings) UnmarshalJSON(data []byte) error {
@@ -523,12 +521,6 @@ func mergeCheck(a, b CheckSettings) CheckSettings {
 		out.Level = b.Level
 	}
 	out.Ignore = slices.Concat(a.Ignore, b.Ignore)
-	if b.FailOnSeverity != "" {
-		out.FailOnSeverity = b.FailOnSeverity
-	}
-	if b.Allow != nil {
-		out.Allow = b.Allow
-	}
 	return out
 }
 

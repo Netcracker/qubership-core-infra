@@ -176,13 +176,13 @@ func TestFixturePolicy(t *testing.T) {
 		want{"pin-exceeded", "jackson-bom", Fail, New},
 		want{"pin-lagging", "slf4j-api", Warn, New},
 		// an ignore rule of the check
-		want{"apidiff-internal", "openshift", Warn, Allowed},
+		want{"apidiff-exposed", "openshift", Fail, Allowed},
 		want{"apidiff-exposed", "opensearch-go", Fail, New},
 		want{"pin-conflict", "opentelemetry", Warn, New},
 		want{"feature-snapshot", "consul", Fail, New},
 	)
 
-	if got := find(t, r, "apidiff-internal", "openshift").Exception; got.Source != RepoConfigFile+"#/checks/apidiff-internal/ignore/0" || got.Until != "" {
+	if got := find(t, r, "apidiff-exposed", "openshift").Exception; got.Source != RepoConfigFile+"#/checks/apidiff-exposed/ignore/0" || got.Until != "" {
 		t.Errorf("ignore rule: %+v", got)
 	}
 	if r.Verdict != VerdictFail || r.Mode != ModeReport || r.Failed() {
@@ -201,7 +201,7 @@ func TestFixturePolicy(t *testing.T) {
 	}, r.Scope); diff != "" {
 		t.Errorf("scope (-want +got):\n%s", diff)
 	}
-	if r.Findings[0].Level != Fail || r.Findings[len(r.Findings)-1].Status != Allowed || !slices.IsSortedFunc(r.Findings, compareFindings) {
+	if r.Findings[0].Level != Fail || !slices.IsSortedFunc(r.Findings, compareFindings) {
 		t.Errorf("findings are not ordered by importance: %v", keys(r))
 	}
 }
@@ -254,7 +254,7 @@ func TestModes(t *testing.T) {
 }
 
 func TestLabelLevels(t *testing.T) {
-	p := policy(t, `{"version": 1, "labels": {"levels": {"security": {"vuln-new": "fail"}}}}`)
+	p := policy(t, `{"version": 1, "checks": {"pin-lagging": "off"}, "labels": {"levels": {"security": {"pin-lagging": "fail"}}}}`)
 	for _, tc := range []struct {
 		labels []string
 		level  Level
@@ -263,45 +263,33 @@ func TestLabelLevels(t *testing.T) {
 		{[]string{"automerge", "security"}, Fail},
 	} {
 		t.Run(fmt.Sprint(tc.labels), func(t *testing.T) {
-			in := Input{Labels: tc.labels, Head: []*FindingsFile{headFile("go-library", Go, AdapterOK, []string{"vuln-new"},
-				Item{Check: "vuln-new", Package: "golang.org/x/net", Version: "v0.40.0", Vuln: "GO-2026-0001", Message: "reachable"})}}
+			in := Input{Labels: tc.labels, Head: []*FindingsFile{headFile("maven-pins", Maven, AdapterOK, []string{"pin-lagging"},
+				Item{Check: "pin-lagging", Package: "org.slf4j:slf4j-api", Version: "2.0.17", Message: "below the pin"})}}
 			if tc.level == Off {
-				expectFindings(t, p.Evaluate(in), want{check: "vuln-new", pkg: "x/net"})
+				expectFindings(t, p.Evaluate(in), want{check: "pin-lagging", pkg: "slf4j-api"})
 				return
 			}
-			expectFindings(t, p.Evaluate(in), want{"vuln-new", "x/net", tc.level, New})
+			expectFindings(t, p.Evaluate(in), want{"pin-lagging", "slf4j-api", tc.level, New})
 		})
 	}
 }
 
 func TestEcosystemLevels(t *testing.T) {
-	item := Item{Check: "downgrade", Package: "p", Version: "1", Message: "down"}
-	both := Input{Head: []*FindingsFile{headFile("maven-pins", Maven, AdapterOK, nil, item), headFile("go-library", Go, AdapterOK, nil, item)}}
-	r := policy(t, `{"version": 1, "checks": {"downgrade": "fail"}, "ecosystems": {"go": {"checks": {"downgrade": "info"}}}}`).Evaluate(both)
-	if diff := cmp.Diff([]string{"maven|downgrade|p|1| fail new", "go|downgrade|p|1| info new"}, keys(r)); diff != "" {
+	item := Item{Check: "consumer-build", Package: "p", Version: "1", Message: "does not build"}
+	both := Input{Head: []*FindingsFile{headFile("maven-consumers", Maven, AdapterOK, nil, item), headFile("go-consumers", Go, AdapterOK, nil, item)}}
+	r := policy(t, `{"version": 1, "checks": {"consumer-build": "fail"}, "ecosystems": {"go": {"checks": {"consumer-build": "info"}}}}`).Evaluate(both)
+	if diff := cmp.Diff([]string{"maven|consumer-build|p|1| fail new", "go|consumer-build|p|1| info new"}, keys(r)); diff != "" {
 		t.Errorf("levels (-want +got):\n%s", diff)
 	}
 	// a check that is off is not reported at all
-	expectFindings(t, policy(t, `{"version": 1, "checks": {"downgrade": "off"}}`).Evaluate(both), want{check: "downgrade"})
-}
-
-// go-directive and downgrade are outside this job: the default does not count them.
-func TestGoDirective(t *testing.T) {
-	r := policy(t, "").Evaluate(Input{Head: []*FindingsFile{headFile("go-library", Go, AdapterOK, []string{"go-directive", "downgrade"},
-		Item{Check: "go-directive", Package: "example.com/raised", Version: "1.23", From: "1.22", Message: "go directive raised"},
-		Item{Check: "downgrade", Package: "example.com/lowered", Version: "1.21", From: "1.22", Message: "go directive lowered"},
-	)}})
-	expectFindings(t, r,
-		want{check: "go-directive", pkg: "example.com/raised"},
-		want{check: "downgrade", pkg: "example.com/lowered"},
-	)
+	expectFindings(t, policy(t, `{"version": 1, "checks": {"consumer-build": "off"}}`).Evaluate(both), want{check: "consumer-build"})
 }
 
 func TestToolErrors(t *testing.T) {
 	in := Input{
 		Head: []*FindingsFile{
 			headFile("osv", Maven, AdapterError, nil),
-			headFile("go-library", Go, AdapterOK, []string{"build"}, Item{Check: "pin-exceeded", Message: "wrong ecosystem"}),
+			headFile("go-library", Go, AdapterOK, []string{"apidiff-exposed"}, Item{Check: "pin-exceeded", Message: "wrong ecosystem"}),
 			headFile("go-consumers", Go, AdapterSkipped, nil),
 		},
 		Expected: map[string]string{"maven-pins": "failure", "detect": "success", "go-consumers": "success", "go-other": "skipped"},
@@ -406,15 +394,15 @@ func TestExceptionsAreRejected(t *testing.T) {
 
 func TestMerge(t *testing.T) {
 	infra := `{"version": 1, "mode": "report", "protectedBranches": "^main$", "maxExceptionDays": 30,
-		"labels": {"levels": {"security": {"vuln-new": "fail"}}},
-		"ecosystems": {"maven": {"pins": "infra.json", "checks": {"downgrade": {"level": "warn", "ignore": [{"package": "a", "reason": "infra"}]}}}},
-		"checks": {"license-not-allowed": {"level": "warn", "allow": ["MIT"]}},
+		"labels": {"levels": {"security": {"pin-lagging": "fail"}}},
+		"ecosystems": {"maven": {"pins": "infra.json", "checks": {"pin-lagging": {"level": "warn", "ignore": [{"package": "a", "reason": "infra"}]}}}},
+		"checks": {"snapshot": "warn"},
 		"families": [{"name": "bun", "ecosystem": "go", "match": "^bun"}, {"name": "otel", "ecosystem": "go", "match": "^otel"}],
 		"consumers": {"go": [{"repo": "a/b", "module": "m"}]}}`
 	repo := `{"version": 1, "mode": "enforce",
-		"labels": {"levels": {"security": {"license-changed": "fail"}}},
-		"ecosystems": {"maven": {"roots": ["."], "checks": {"downgrade": {"level": "fail", "ignore": [{"package": "b", "reason": "repo"}]}}}},
-		"checks": {"license-not-allowed": {"allow": ["Apache-2.0"]}},
+		"labels": {"levels": {"security": {"apidiff-exposed": "fail"}}},
+		"ecosystems": {"maven": {"roots": ["."], "checks": {"pin-lagging": {"level": "fail", "ignore": [{"package": "b", "reason": "repo"}]}}}},
+		"checks": {"snapshot": "info"},
 		"families": [{"name": "otel", "ecosystem": "go", "match": "^go.opentelemetry.io/otel", "key": "stable"}],
 		"consumers": false}`
 	dir := t.TempDir()
@@ -427,10 +415,10 @@ func TestMerge(t *testing.T) {
 	if c.Mode != ModeEnforce || c.MaxExceptionDays != 30 {
 		t.Errorf("scalars: %+v", c)
 	}
-	if diff := cmp.Diff(map[string]map[string]Level{"security": {"vuln-new": Fail, "license-changed": Fail}}, c.Labels.Levels); diff != "" {
+	if diff := cmp.Diff(map[string]map[string]Level{"security": {"pin-lagging": Fail, "apidiff-exposed": Fail}}, c.Labels.Levels); diff != "" {
 		t.Errorf("label levels (-want +got):\n%s", diff)
 	}
-	down := c.Ecosystems[Maven].Checks["downgrade"]
+	down := c.Ecosystems[Maven].Checks["pin-lagging"]
 	if down.Level != Fail || len(down.Ignore) != 2 {
 		t.Errorf("ecosystem check %+v", down)
 	}
@@ -442,8 +430,8 @@ func TestMerge(t *testing.T) {
 	if err := c.Ecosystems[Maven].Setting("roots", &roots); err != nil || !slices.Equal(roots, []string{"."}) {
 		t.Errorf("roots %v %v", roots, err)
 	}
-	if diff := cmp.Diff(CheckSettings{Level: Warn, Allow: []string{"Apache-2.0"}}, c.Checks["license-not-allowed"]); diff != "" {
-		t.Errorf("license check (-want +got):\n%s", diff)
+	if diff := cmp.Diff(CheckSettings{Level: Info}, c.Checks["snapshot"]); diff != "" {
+		t.Errorf("snapshot check (-want +got):\n%s", diff)
 	}
 	if diff := cmp.Diff([]Family{
 		{Name: "bun", Ecosystem: Go, Match: "^bun"},
@@ -467,11 +455,11 @@ func TestMerge(t *testing.T) {
 	}
 
 	// infra and repository ignore rules both apply, with their sources
-	r := p.Evaluate(Input{Head: []*FindingsFile{headFile("maven-pins", Maven, AdapterOK, []string{"downgrade"},
-		Item{Check: "downgrade", Package: "a", Message: "m"}, Item{Check: "downgrade", Package: "b", Message: "m"},
-		Item{Check: "downgrade", Package: "y", Message: "m"})}})
-	expectFindings(t, r, want{"downgrade", "a", Fail, Allowed}, want{"downgrade", "b", Fail, Allowed}, want{"downgrade", "y", Fail, New})
-	if got := find(t, r, "downgrade", "a").Exception.Source; got != "infra#/ecosystems/maven/checks/downgrade/ignore/0" {
+	r := p.Evaluate(Input{Head: []*FindingsFile{headFile("maven-pins", Maven, AdapterOK, []string{"pin-lagging"},
+		Item{Check: "pin-lagging", Package: "a", Message: "m"}, Item{Check: "pin-lagging", Package: "b", Message: "m"},
+		Item{Check: "pin-lagging", Package: "y", Message: "m"})}})
+	expectFindings(t, r, want{"pin-lagging", "a", Fail, Allowed}, want{"pin-lagging", "b", Fail, Allowed}, want{"pin-lagging", "y", Fail, New})
+	if got := find(t, r, "pin-lagging", "a").Exception.Source; got != "infra#/ecosystems/maven/checks/pin-lagging/ignore/0" {
 		t.Errorf("source %s", got)
 	}
 }
@@ -531,27 +519,28 @@ func TestTransitive(t *testing.T) {
 }
 
 func TestAdapterOfSeveralEcosystems(t *testing.T) {
-	osv := headFile("osv", "", AdapterOK, []string{"vuln-new"},
-		Item{Ecosystem: Maven, Check: "vuln-new", Package: "org.yaml:snakeyaml", Version: "2.4", Vuln: "GHSA-1", Message: "new advisory"},
-		Item{Ecosystem: Go, Check: "vuln-new", Package: "golang.org/x/net", Version: "v0.40.0", Vuln: "GO-2026-1", Message: "new advisory"},
-		Item{Check: "vuln-new", Package: "left-pad", Message: "no ecosystem"},
+	osv := headFile("osv", "", AdapterOK, []string{"family-split"},
+		Item{Ecosystem: Maven, Check: "family-split", Package: "org.yaml:snakeyaml", Version: "2.4", Message: "versions diverge"},
+		Item{Ecosystem: Go, Check: "family-split", Package: "golang.org/x/net", Version: "v0.40.0", Message: "versions diverge"},
+		Item{Check: "family-split", Package: "left-pad", Message: "no ecosystem"},
 		Item{Ecosystem: Go, Check: "pin-exceeded", Package: "x", Message: "a maven check"},
 	)
 	base := headFile("osv", "", AdapterOK, nil,
-		Item{Ecosystem: Go, Check: "vuln-new", Package: "golang.org/x/net", Version: "v0.40.0", Vuln: "GO-2026-1", Message: "old"})
+		Item{Ecosystem: Go, Check: "family-split", Package: "golang.org/x/net", Version: "v0.40.0", Message: "old"})
 	base.Revision = Base
-	r := policy(t, `{"version": 1, "ecosystems": {"go": {"checks": {"vuln-new": "fail"}}}}`).Evaluate(
+	r := policy(t, `{"version": 1, "ecosystems": {"go": {"checks": {"family-split": "fail"}}}}`).Evaluate(
 		Input{Head: []*FindingsFile{osv}, Base: []*FindingsFile{base}})
 
-	expectFindings(t, r, want{check: "vuln-new", pkg: "snakeyaml"}, want{"vuln-new", "x/net", Warn, Preexisting})
-	if netx := find(t, r, "vuln-new", "x/net"); netx.Ecosystem != Go || netx.Key != "go|vuln-new|golang.org/x/net|v0.40.0|" {
+	// family-split is off for Maven, so that finding is dropped; the Go one is already on the base
+	expectFindings(t, r, want{check: "family-split", pkg: "snakeyaml"}, want{"family-split", "x/net", Warn, Preexisting})
+	if netx := find(t, r, "family-split", "x/net"); netx.Ecosystem != Go || netx.Key != "go|family-split|golang.org/x/net|v0.40.0|" {
 		t.Errorf("%+v", netx)
 	}
 	var toolErrors []string
 	for _, f := range matching(r, ToolError, "") {
 		toolErrors = append(toolErrors, f.Level.String()+" "+string(f.Status)+" "+f.Message)
 	}
-	if diff := cmp.Diff([]string{`fail new finding "vuln-new" has no ecosystem`, `fail new unknown go check "pin-exceeded"`}, toolErrors); diff != "" {
+	if diff := cmp.Diff([]string{`fail new finding "family-split" has no ecosystem`, `fail new unknown go check "pin-exceeded"`}, toolErrors); diff != "" {
 		t.Errorf("tool errors (-want +got):\n%s", diff)
 	}
 }

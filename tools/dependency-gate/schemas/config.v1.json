@@ -206,13 +206,7 @@
           "additionalProperties": false,
           "properties": {
             "level": { "$ref": "#/$defs/level" },
-            "ignore": { "type": "array", "items": { "$ref": "#/$defs/ignore" } },
-            "failOnSeverity": { "enum": ["critical", "high", "medium", "low"] },
-            "allow": {
-              "description": "Allowed SPDX license ids",
-              "type": "array",
-              "items": { "type": "string", "minLength": 1 }
-            }
+            "ignore": { "type": "array", "items": { "$ref": "#/$defs/ignore" } }
           }
         }
       ]

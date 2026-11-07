@@ -9,10 +9,7 @@
     "go": { "modules": ["."] }
   },
   "checks": {
-    "api-exposed": "fail",
-    "vuln-new": { "level": "warn", "failOnSeverity": "critical" },
-    "apidiff-internal": {
-      "level": "warn",
+    "apidiff-exposed": {
       "ignore": [
         { "package": "/^github\\.com/openshift/api//", "reason": "Breaks in every release; used internally only, never exposed" }
       ]

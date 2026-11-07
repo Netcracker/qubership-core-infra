@@ -5,12 +5,12 @@
     "ecosystem": "go",
     "tool": "go-dep-check",
     "status": "ok",
-    "checks": ["apidiff-exposed", "apidiff-internal", "build", "family-split", "mod-tidy"]
+    "checks": ["apidiff-exposed", "family-split"]
   },
   "revision": "head",
   "findings": [
     {
-      "check": "apidiff-internal",
+      "check": "apidiff-exposed",
       "package": "github.com/openshift/api/config/v1",
       "version": "v0.0.0-20261001000000-abcdef012345",
       "symbol": "ClusterVersionStatus.History",
@@ -24,11 +24,6 @@
       "symbol": "opensearchapi.SearchReq",
       "message": "incompatible change in an exported type of our API",
       "locations": [{ "file": "go.mod", "line": 7, "unit": "." }]
-    },
-    {
-      "check": "mod-tidy",
-      "message": "go mod tidy changes go.sum",
-      "locations": [{ "file": "go.sum" }]
     }
   ]
 }
