@@ -247,7 +247,7 @@ class CheckTest {
     @ParameterizedTest(name = "{0}: {1}:{2}")
     @CsvSource({
             "pin-exceeded|com.rabbitmq:amqp-client|5.37.0,           bom/pom.xml,         10",
-            "pin-exceeded|io.quarkus:quarkus-core|3.40.1,            quarkus-app/pom.xml,   ",
+            "pin-exceeded|io.quarkus:quarkus-core|3.40.1,            quarkus-app/pom.xml, 26",
             "pin-exceeded|io.quarkus:quarkus-core|3.33.5|transitive, lib/pom.xml,           "})
     void firstLocation(String key, String file, Integer line) {
         JsonNode location = written.get(key).path("locations").get(0);

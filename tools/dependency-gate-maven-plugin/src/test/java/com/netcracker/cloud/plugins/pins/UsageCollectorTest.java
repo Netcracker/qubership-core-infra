@@ -83,7 +83,7 @@ class UsageCollectorTest {
     @CsvSource(delimiter = '|', textBlock = """
             # project   | GA                                             | version | kind                 | properties                               | where
             repo        | com.rabbitmq:amqp-client                       | 5.37.0  | MANAGED              | rabbitmq.version                         | bom/pom.xml:10 (${rabbitmq.version}) <- bom/pom.xml:34
-            repo        | io.quarkus:quarkus-universe-bom                | 3.40.1  | IMPORT               | quarkus.platform.version quarkus.version | quarkus-app/pom.xml:8 (${quarkus.version}) <- quarkus-app/pom.xml:16
+            repo        | io.quarkus:quarkus-universe-bom                | 3.40.1  | MANAGED             | quarkus.platform.version quarkus.version | quarkus-app/pom.xml:8 (${quarkus.version}) <- quarkus-app/pom.xml:16
             repo        | org.apache.maven.plugins:maven-surefire-plugin | 3.6.0   | PLUGIN               | surefire.version                         | lib/pom.xml:12 (${surefire.version}) <- lib/pom.xml:35
             repo        | org.projectlombok:lombok                       | 1.18.48 | ANNOTATION_PROCESSOR |                                          | lib/pom.xml:45
             # an active profile of the child overrides the parent
