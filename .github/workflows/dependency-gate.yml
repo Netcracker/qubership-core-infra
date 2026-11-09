@@ -209,8 +209,8 @@ jobs:
           if-no-files-found: ignore
 
   maven-snapshot:
-    # installs the pull request as X.Y.Z-<branch>-SNAPSHOT, and its base as the versions on that revision.
-    # the consumer matrix builds against the branch snapshot. starts with the pin check. nothing is published.
+    # installs the pull request as X.Y.Z-<branch>-SNAPSHOT. the consumer matrix builds against that
+    # snapshot only: a failed verify is a new finding. starts with the pin check. nothing is published.
     name: Maven library build
     needs: [detect]
     if: ${{ needs.detect.outputs.maven == 'true' && github.event_name == 'pull_request' }}
@@ -234,7 +234,6 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           path: repo
-          fetch-depth: 2
           persist-credentials: false
 
       - name: Set up Java
@@ -250,10 +249,6 @@ jobs:
         if: steps.plan.outputs.consumers != '[]'
         id: settings
         uses: $/.github/actions/maven-settings
-
-      - name: Library at base
-        if: steps.plan.outputs.consumers != '[]'
-        run: git -C repo worktree add --detach "$RUNNER_TEMP/lib-base" HEAD^1
 
       - name: Install
         if: steps.plan.outputs.consumers != '[]'
@@ -279,18 +274,11 @@ jobs:
             echo "::error::no X.Y.Z-SNAPSHOT version to isolate on this branch"
             exit 1
           fi
-          install() {
-            local src=$1 dest=$2
-            rm -rf "$dest" "$dest.tgz"
-            mkdir -p "$dest"
-            mvn -B -ntp -s "$SETTINGS" -Dmaven.repo.local="$dest" -f "$src/pom.xml" -DskipTests install || return 1
-            (cd "$dest" && find . -name maven-metadata-local.xml -printf '%h\n' | tar -czf "$dest.tgz" -T -)
-          }
-          if ! install "$RUNNER_TEMP/lib-base" "$RUNNER_TEMP/m2-base"; then
-            echo "::warning::the base library could not be installed, consumer failures count as new"
-            rm -f "$RUNNER_TEMP/m2-base.tgz"
-          fi
-          install repo "$RUNNER_TEMP/m2-head"
+          dest="$RUNNER_TEMP/m2-head"
+          rm -rf "$dest" "$dest.tgz"
+          mkdir -p "$dest"
+          mvn -B -ntp -s "$SETTINGS" -Dmaven.repo.local="$dest" -f repo/pom.xml -DskipTests install
+          (cd "$dest" && find . -name maven-metadata-local.xml -printf '%h\n' | tar -czf "$dest.tgz" -T -)
 
       - name: Upload head build
         if: ${{ always() }}
@@ -298,14 +286,6 @@ jobs:
         with:
           name: dependency-gate-m2-head
           path: ${{ runner.temp }}/m2-head.tgz
-          if-no-files-found: ignore
-
-      - name: Upload base build
-        if: ${{ always() }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: dependency-gate-m2-base
-          path: ${{ runner.temp }}/m2-base.tgz
           if-no-files-found: ignore
 
   go-library:
@@ -467,14 +447,6 @@ jobs:
           name: dependency-gate-m2-head
           path: ${{ runner.temp }}/m2-head
 
-      - name: Download base library
-        id: base-library
-        continue-on-error: true
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
-        with:
-          name: dependency-gate-m2-base
-          path: ${{ runner.temp }}/m2-base
-
       - name: Point the consumer at the head library
         id: head
         uses: $/.github/actions/use-java-libs
@@ -507,40 +479,6 @@ jobs:
           maven-repo: skip
           settings: ${{ steps.settings.outputs.path }}
           out-dir: ${{ runner.temp }}/dependency-gate-findings
-
-      - name: Point the consumer at the base library
-        id: base
-        if: success() && steps.head-build.outputs.passed == 'false' && steps.base-library.outcome == 'success'
-        uses: $/.github/actions/use-java-libs
-        with:
-          tarball: ${{ runner.temp }}/m2-base/m2-base.tgz
-          repository: ${{ runner.temp }}/repo-base
-          path: consumer/${{ matrix.consumer.module }}
-          poms: all
-          strict: true
-
-      - name: Build against the base library
-        if: success() && steps.head-build.outputs.passed == 'false' && steps.base.outputs.matched == 'true'
-        uses: $/.github/actions/maven-consumer
-        with:
-          revision: base
-          consumer-dir: consumer/${{ matrix.consumer.module }}
-          consumer-name: ${{ matrix.consumer.repo }}/${{ matrix.consumer.module }}
-          maven-repo: ${{ runner.temp }}/repo-base
-          settings: ${{ steps.settings.outputs.path }}
-          out-dir: ${{ runner.temp }}/dependency-gate-findings
-
-      - name: Head built
-        if: success() && steps.head-build.outputs.passed == 'true'
-        shell: bash
-        run: |
-          echo "maven-consumer: head built, the base build is skipped"
-
-      - name: No base library
-        if: success() && steps.head-build.outputs.passed == 'false' && steps.base-library.outcome != 'success'
-        shell: bash
-        run: |
-          echo "maven-consumer: no base library build: a failure of this consumer counts as new"
 
       - name: Report a failed run
         if: ${{ failure() }}

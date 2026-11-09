@@ -8,8 +8,8 @@ consumer. Automerge waits for both; neither verdict waits for the other.
 adapters (find)                          gate (decide)
   maven-pins     ─┐                        levels, locked
   go-library     ─┴─ findings.v1       ─▶  ignore rules, baseline,   ─▶ Dependency gate
-  maven-consumers ─┐  (head, base)         mode                         report, summary, comment
-  go-consumers   ─┘                    ─▶  the same policy          ─▶ Consumers
+  maven-consumers ─┐  (head)               mode                         report, summary, comment
+  go-consumers   ─┘  (head, base)      ─▶  the same policy          ─▶ Consumers
                         infra defaults.json + .github/dependency-gate.json (config.v1)
 ```
 
@@ -253,8 +253,8 @@ This call, with no `with`, no secret and no `.github/dependency-gate.json`, runs
 | the repository has Maven | `consumer-build`, `consumer-test` of `Netcracker/qubership-core-config-server` and `Netcracker/qubership-core-core-operator` (`mvn verify -DskipITs`). A consumer that does not reference this build is skipped. |
 | the repository has Go, and a reference consumer depends on it | `consumer-build`. A consumer the infra list marks with tests also runs `consumer-test` (`consumer-test-flaky` is info). |
 
-The same finding key on the base build is preexisting and does not block. The Maven base build runs only when
-the head build failed: a green head brought no regression. A missing base build counts a head failure as new.
+A Go consumer finding with the same key on the base build is preexisting and does not block. A Maven consumer
+has no base build: a failed `mvn verify` against the pull request is new.
 
 ### Repository nothing consumes
 

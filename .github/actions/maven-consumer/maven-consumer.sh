@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
-# maven-consumers adapter: mvn verify for one revision whose poms already point at the library.
-# use-java-libs installs that library and rewrites the poms. This script only runs the build and
-# writes findings.v1.
-# usage: maven-consumer.sh <head|base> <consumer_dir> <maven_repo|skip> <out_dir> <name>
+# maven-consumers adapter: mvn verify for the pull request. use-java-libs installs the library
+# and rewrites the poms. This script only runs the build and writes findings.v1.
+# usage: maven-consumer.sh head <consumer_dir> <maven_repo|skip> <out_dir> <name>
 # env:   SETTINGS  settings.xml (GitHub Packages). MAVEN_USERNAME and MAVEN_TOKEN are read by Maven.
-# out:   <out_dir>/maven-consumers-<name>-<revision>.json
+# out:   <out_dir>/maven-consumers-<name>-head.json
 #        head + skip writes a skipped head file and does not run Maven
-#        GITHUB_OUTPUT passed=true when mvn verify succeeded, false when it failed
 # exit:  0 findings written (a failing build is a finding); 2 the adapter could not run
 set -uo pipefail
 revision=$1
@@ -18,7 +16,6 @@ mkdir -p "$out"
 file=$out/maven-consumers-${name//\//_}-${revision}.json
 TOOL="maven-consumer"
 log() { echo "maven-consumer: $*" >&2; }
-set_passed() { [[ -n ${GITHUB_OUTPUT:-} ]] && echo "passed=$1" >> "$GITHUB_OUTPUT"; }
 
 write_findings() {
   # <status> <reason> <checks> < <jsonl>
@@ -37,15 +34,11 @@ emit() {
 }
 
 [[ -n ${SETTINGS:-} && -f $SETTINGS ]] || { log "SETTINGS is not a settings.xml"; exit 2; }
-[[ $revision == head || $revision == base ]] || { log "revision must be head or base"; exit 2; }
+[[ $revision == head ]] || { log "revision must be head"; exit 2; }
 
 if [[ $repo == skip || -z $repo ]]; then
-  if [[ $revision == head ]]; then
-    log "head: skipped, $name does not reference the installed library"
-    write_findings skipped "$name does not use this library build" "" < /dev/null
-  else
-    log "no base library build: a failure of this consumer counts as new"
-  fi
+  log "head: skipped, $name does not reference the installed library"
+  write_findings skipped "$name does not use this library build" "" < /dev/null
   exit 0
 fi
 [[ -d $repo ]] || { log "maven repository not found: $repo"; exit 2; }
@@ -61,7 +54,6 @@ set -e
 if [[ $rc == 0 ]]; then
   log "$revision: built"
   write_findings ok "" "consumer-build consumer-test" < "$jsonl"
-  set_passed true
   exit 0
 fi
 echo "::group::$revision maven log"
@@ -75,4 +67,3 @@ else
   emit "$jsonl" consumer-build "build fails: $(grep -m1 -E 'ERROR|FAILURE' "$logf" | cut -c1-300)"
 fi
 write_findings ok "" "consumer-build consumer-test" < "$jsonl"
-set_passed false
