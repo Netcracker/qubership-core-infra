@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +11,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+
+	"github.com/Netcracker/qubership-core-infra/tools/dependency-gate/internal/render"
 )
 
 // api serves GitHub API routes under /api/v3, the prefix go-github adds to enterprise URLs.
@@ -73,6 +76,81 @@ func replyStatus(status int, v any) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(status)
 		_ = json.NewEncoder(w).Encode(v)
+	}
+}
+
+func TestMergeComment(t *testing.T) {
+	const marker = "<!-- dependency-gate -->"
+	pin := marker + "\n### pin\n"
+	note := "**Consumers:** would fail (2 fail). [job summary](https://github.com/o/r/actions/runs/9/job/2)"
+	stored := pin
+	var a *api
+	comments := func(w http.ResponseWriter, _ *http.Request) {
+		body := "[]"
+		if stored != "" {
+			body = fmt.Sprintf(`[{"id":2,"body":%q,"user":{"login":"github-actions[bot]","type":"Bot"}}]`, stored)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(body))
+	}
+	save := func(w http.ResponseWriter, _ *http.Request) {
+		stored = a.body
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":2}`))
+	}
+	del := func(w http.ResponseWriter, _ *http.Request) {
+		stored = ""
+		w.WriteHeader(http.StatusNoContent)
+	}
+	a = newAPI(t, map[string]http.HandlerFunc{
+		"GET /repos/o/r/issues/7/comments":    comments,
+		"PATCH /repos/o/r/issues/comments/2":  save,
+		"POST /repos/o/r/issues/7/comments":   save,
+		"DELETE /repos/o/r/issues/comments/2": del,
+		"GET /repos/o/r/actions/runs/9/jobs": func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"jobs":[
+				{"id":1,"name":"Dependency gate","html_url":"https://github.com/o/r/actions/runs/9/job/1"},
+				{"id":2,"name":"Consumers","html_url":"https://github.com/o/r/actions/runs/9/job/2"}]}`))
+		},
+	})
+	c := a.client(t)
+	if err := c.mergePin(t.Context(), 7, pin, true); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.mergeNote(t.Context(), 7, note); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(stored, "### pin") || !strings.Contains(stored, note) {
+		t.Fatalf("note lost the pin part: %q", stored)
+	}
+	// the pin check finishes again and must keep the line
+	if err := c.mergePin(t.Context(), 7, pin, true); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(stored, note) {
+		t.Fatalf("pin rewrite dropped the line: %q", stored)
+	}
+	if err := c.mergeNote(t.Context(), 7, ""); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(stored, "Consumers") || !strings.Contains(stored, "### pin") {
+		t.Fatalf("clearing the line: %q", stored)
+	}
+	if err := c.mergeNote(t.Context(), 7, note); err != nil {
+		t.Fatal(err)
+	}
+	// a comment that was only the line goes away when the check no longer fails
+	stored = render.JoinComment("", note)
+	if err := c.mergeNote(t.Context(), 7, ""); err != nil {
+		t.Fatal(err)
+	}
+	if stored != "" {
+		t.Fatalf("note-only comment left behind: %q", stored)
+	}
+	page, err := c.jobURL(t.Context(), 9, "Consumers")
+	if err != nil || page != "https://github.com/o/r/actions/runs/9/job/2" {
+		t.Fatalf("job page %q %v", page, err)
 	}
 }
 

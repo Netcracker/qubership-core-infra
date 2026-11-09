@@ -166,7 +166,9 @@ func evaluate(ctx context.Context, args []string, stdout io.Writer) error {
 		in.Expected[name] = result
 		return nil
 	})
-	comment := fs.Bool("comment", false, "create or update the sticky PR comment (GitHub Actions, needs GITHUB_TOKEN)")
+	comment := fs.Bool("comment", false, "create or update the pin part of the sticky PR comment (GitHub Actions, needs GITHUB_TOKEN)")
+	commentNote := fs.Bool("comment-note", false, "set the consumers line of the sticky PR comment, without the findings table")
+	commentJob := fs.String("comment-job", "", "with -comment-note, Actions job name whose page has the findings")
 	gateVersion := fs.String("gate", "qubership-core-infra@"+version(), "gate version written to the report")
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -236,8 +238,15 @@ func evaluate(ctx context.Context, args []string, stdout io.Writer) error {
 	} else {
 		fmt.Fprint(stdout, summary)
 	}
-	if *comment && pr != 0 && !fork {
-		if err := stickyComment(ctx, gh, pr, commentBody, render.NeedsComment(report)); err != nil {
+	if pr != 0 && !fork && (*comment || *commentNote) {
+		var err error
+		switch {
+		case *comment:
+			err = stickyComment(ctx, gh, pr, commentBody, render.NeedsComment(report))
+		default:
+			err = stickyConsumerNote(ctx, gh, pr, report, *commentJob, runURL)
+		}
+		if err != nil {
 			// the verdict stands without the comment
 			actions.Warningf("cannot update the PR comment: %v", err)
 		}

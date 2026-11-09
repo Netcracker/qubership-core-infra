@@ -16,6 +16,10 @@ import (
 // Marker identifies the sticky comment of the gate.
 const Marker = "<!-- dependency-gate -->"
 
+// ConsumerMarker starts the one line about Consumers. The pin check and the consumers check
+// rewrite only their own part, so whichever finishes last keeps the other.
+const ConsumerMarker = "<!-- dependency-gate-consumers -->"
+
 // CommentLimit is how many findings the PR comment lists; the summary has them all.
 const CommentLimit = 20
 
@@ -34,11 +38,11 @@ type view struct {
 }
 
 var funcs = template.FuncMap{
-	"title":   title,
-	"icon":    icon,
-	"problem": problem,
-	"where":   where,
-	"code":    code,
+	"title":    title,
+	"icon":     icon,
+	"problem":  problem,
+	"where":    where,
+	"code":     code,
 	"cell":     cell,
 	"scope":    scope,
 	"adapters": adapters,
@@ -130,6 +134,53 @@ func Comment(r *gate.Report, runURL string) string {
 // an existing one is always updated.
 func NeedsComment(r *gate.Report) bool {
 	return slices.ContainsFunc(r.Findings, brought)
+}
+
+// SplitComment separates the pin part of a sticky comment from the consumers line.
+func SplitComment(body string) (pin, note string) {
+	pin, note, found := strings.Cut(body, ConsumerMarker)
+	if !found {
+		return strings.TrimRight(body, "\n"), ""
+	}
+	return strings.TrimRight(pin, "\n"), strings.TrimSpace(note)
+}
+
+// JoinComment builds the sticky comment. An empty note drops the consumers line.
+// A comment that would be only the marker is empty: there is nothing to post.
+func JoinComment(pin, note string) string {
+	pin = strings.TrimRight(pin, "\n")
+	note = strings.TrimSpace(note)
+	if note == "" {
+		if strings.TrimSpace(pin) == "" || strings.TrimSpace(pin) == Marker {
+			return ""
+		}
+		return pin + "\n"
+	}
+	if strings.TrimSpace(pin) == "" {
+		pin = Marker
+	}
+	return pin + "\n\n" + ConsumerMarker + "\n" + note + "\n"
+}
+
+// ConsumerLine is the consumers line of the sticky comment: the fail fact and a link to the job
+// summary. A pass or a warning leaves it empty, so a later run drops the line.
+func ConsumerLine(r *gate.Report, detailsURL string) string {
+	if r == nil || r.Verdict != gate.VerdictFail {
+		return ""
+	}
+	verb := "failed"
+	if r.Mode == gate.ModeReport {
+		verb = "would fail"
+	}
+	line := "**Consumers:** " + verb
+	if n := r.Counts.Fail; n > 0 {
+		line += fmt.Sprintf(" (%d fail)", n)
+	}
+	line += "."
+	if detailsURL != "" {
+		line += " [job summary](" + detailsURL + ")"
+	}
+	return line
 }
 
 // brought reports a warn or fail finding that this change introduces.

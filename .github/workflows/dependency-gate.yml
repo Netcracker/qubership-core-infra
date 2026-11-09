@@ -42,7 +42,7 @@ on:
   workflow_call:
     inputs:
       comment:
-        description: "Keep a sticky PR comment with the findings (created on warn or fail, updated afterwards)"
+        description: "Sticky PR comment of the pin check. Consumers adds one line to it when that check would fail"
         type: boolean
         default: true
       java-version:
@@ -58,8 +58,8 @@ on:
         description: "Maven: read-only GitHub Packages token (read:packages), only when the workflow token cannot read a package; never one that can write or delete"
         required: false
 
-# adapter jobs run the pull request's code (build extensions, init(), tests): each job gets only what it needs and
-# only `gate` may write to the pull request
+# adapter jobs run the pull request's code (build extensions, init(), tests): each job gets only what it needs.
+# `gate` writes the sticky comment. `consumers` may add one line to that same comment. The matrix jobs write nothing.
 permissions:
   contents: read
 
@@ -566,12 +566,15 @@ jobs:
   consumers:
     # the second check Renovate waits for. It starts when the matrix finishes, not when the pin check does.
     # An empty Go plan still reports: the summary names why nobody was planned.
-    # comment stays off: the sticky marker belongs to the pin check.
+    # The sticky comment stays the pin check's. This job only sets one line on it when the verdict is fail,
+    # and links its own summary, where the findings are listed.
     name: Consumers
     needs: [go-library, go-consumers, maven-snapshot, maven-consumers]
     if: ${{ !cancelled() && (needs.go-consumers.result != 'skipped' || needs.maven-consumers.result != 'skipped' || ((needs.go-library.result == 'success' || needs.go-library.result == 'failure') && needs.go-library.outputs.skip-reason != '')) }}
     permissions:
       contents: read
+      actions: read
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -604,6 +607,8 @@ jobs:
           findings-dir: ${{ runner.temp }}/dependency-gate-findings
           out-dir: ${{ runner.temp }}/dependency-gate-consumers
           comment: false
+          comment-note: ${{ inputs.comment }}
+          comment-job: Consumers
           gate-ref: ${{ job.workflow_sha }}
           expect: |
             go-consumers=${{ needs.go-consumers.result }}${{ (needs.go-library.result == 'success' || needs.go-library.result == 'failure') && needs.go-library.outputs.skip-reason != '' && format(': {0}', needs.go-library.outputs.skip-reason) || '' }}

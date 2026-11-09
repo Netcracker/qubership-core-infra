@@ -28,9 +28,17 @@ inputs:
     required: false
     default: ""
   comment:
-    description: "evaluate: keep the sticky PR comment up to date"
+    description: "evaluate: keep the pin part of the sticky PR comment up to date"
     required: false
     default: "true"
+  comment-note:
+    description: "evaluate: set the consumers line of the sticky comment, without the findings table"
+    required: false
+    default: "false"
+  comment-job:
+    description: "evaluate: with comment-note, Actions job name whose page lists the findings"
+    required: false
+    default: ""
   gate-ref:
     description: "Revision of qubership-core-infra, written to the report"
     required: false
@@ -95,6 +103,8 @@ runs:
         EXPECT: ${{ inputs.expect }}
         OUT_DIR: ${{ inputs.out-dir }}
         COMMENT: ${{ inputs.comment }}
+        COMMENT_NOTE: ${{ inputs.comment-note }}
+        COMMENT_JOB: ${{ inputs.comment-job }}
         GATE_REF: ${{ inputs.gate-ref }}
       run: |
         args=(evaluate -repo "$REPO_DIR" -out "${OUT_DIR:-$RUNNER_TEMP/dependency-gate}")
@@ -104,4 +114,6 @@ runs:
           if [ -n "$e" ]; then args+=(-expect "$e"); fi
         done <<< "$EXPECT"
         if [ "$COMMENT" = true ]; then args+=(-comment); fi
+        if [ "$COMMENT_NOTE" = true ]; then args+=(-comment-note); fi
+        if [ -n "$COMMENT_JOB" ]; then args+=(-comment-job "$COMMENT_JOB"); fi
         "$RUNNER_TEMP/dependency-gate-bin/dependency-gate" "${args[@]}"

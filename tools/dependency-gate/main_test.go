@@ -192,6 +192,37 @@ func TestEvaluateComment(t *testing.T) {
 	}
 }
 
+// The consumers check adds one line to the sticky comment and does not paste its findings there.
+func TestEvaluateCommentNote(t *testing.T) {
+	a := newAPI(t, map[string]http.HandlerFunc{
+		"GET /repos/o/r/issues/7/comments":  reply([]any{}),
+		"POST /repos/o/r/issues/7/comments": replyStatus(http.StatusCreated, map[string]any{"id": 1}),
+		"GET /repos/o/r/actions/runs/9/jobs": func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"jobs":[{"id":2,"name":"Consumers","html_url":"https://github.com/o/r/actions/runs/9/job/2"}]}`))
+		},
+	})
+	repo := pullRequestRepo(t, `{"version": 1}`, `{"version": 1}`)
+	work := t.TempDir()
+	githubEnv(t, map[string]string{
+		"GITHUB_ACTIONS": "true", "GITHUB_EVENT_NAME": "pull_request", "GITHUB_REPOSITORY": "o/r", "GITHUB_TOKEN": "token",
+		"GITHUB_API_URL": a.url, "GITHUB_EVENT_PATH": eventFile(t, "main"), "GITHUB_RUN_ID": "9",
+		"GITHUB_SERVER_URL": "https://github.com",
+		"GITHUB_OUTPUT":     filepath.Join(work, "output"), "GITHUB_STEP_SUMMARY": filepath.Join(work, "summary"),
+	})
+	var stdout bytes.Buffer
+	if err := run(t.Context(), "evaluate", []string{"-repo", repo, "-findings", fixtures, "-today", "2026-10-29",
+		"-comment-note", "-comment-job", "Consumers"}, &stdout); err != nil {
+		t.Fatalf("%v\n%s", err, stdout.String())
+	}
+	if !strings.Contains(a.body, "**Consumers:** would fail") || !strings.Contains(a.body, "https://github.com/o/r/actions/runs/9/job/2") {
+		t.Errorf("consumers line:\n%s", a.body)
+	}
+	if strings.Contains(a.body, "pin-exceeded") {
+		t.Errorf("the line lists findings:\n%s", a.body)
+	}
+}
+
 // Labels of the event and of -label reach labels.levels of the repository file.
 func TestEvaluateLabelLevels(t *testing.T) {
 	const config = `{"version": 1, "labels": {"levels": {"security": {"pin-lagging": "fail"}}}}`
