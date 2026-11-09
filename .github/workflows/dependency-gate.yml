@@ -566,14 +566,14 @@ jobs:
   consumers:
     # the second check Renovate waits for. It starts when the matrix finishes, not when the pin check does.
     # An empty Go plan still reports: the summary names why nobody was planned.
-    # The sticky comment stays the pin check's. This job only sets one line on it when the verdict is fail,
-    # and links its own summary, where the findings are listed.
+    # The sticky comment stays the pin check's. This job only sets one line on it when the verdict is fail.
+    # The link is the workflow run: a job-page link would need actions: read, which callers do not grant,
+    # and a nested job cannot ask for a permission the caller did not allow.
     name: Consumers
     needs: [go-library, go-consumers, maven-snapshot, maven-consumers]
     if: ${{ !cancelled() && (needs.go-consumers.result != 'skipped' || needs.maven-consumers.result != 'skipped' || ((needs.go-library.result == 'success' || needs.go-library.result == 'failure') && needs.go-library.outputs.skip-reason != '')) }}
     permissions:
       contents: read
-      actions: read
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
@@ -608,7 +608,6 @@ jobs:
           out-dir: ${{ runner.temp }}/dependency-gate-consumers
           comment: false
           comment-note: ${{ inputs.comment }}
-          comment-job: Consumers
           gate-ref: ${{ job.workflow_sha }}
           expect: |
             go-consumers=${{ needs.go-consumers.result }}${{ (needs.go-library.result == 'success' || needs.go-library.result == 'failure') && needs.go-library.outputs.skip-reason != '' && format(': {0}', needs.go-library.outputs.skip-reason) || '' }}
