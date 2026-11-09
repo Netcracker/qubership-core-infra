@@ -31,7 +31,7 @@ cleanup() {
   git -C "$repo" worktree remove -f "$work/old" > /dev/null 2>&1; git -C "$repo" worktree remove -f "$work/new" > /dev/null 2>&1
   rm -rf "$work"
 }
-on_exit "$out/go-library-head.json" go-library
+on_exit "$out/go-library-head.json" go-library go
 command -v "$AD" > /dev/null || fail "apidiff is not installed: $AD"
 
 git -C "$repo" worktree add -q --detach "$work/new" "$head" || fail "cannot check out $head"
@@ -64,99 +64,114 @@ imports() {
     | awk -v own="$2" '$0 != own && index($0, own "/") != 1' | sort -u
 }
 
-# --- checks of one revision; the gate compares their findings with the base
-# state <dir> <jsonl> <prefix>
-state() {
-  local d=$1 f=$2 p=$3 name re key note
-  (cd "$d" && go mod download) > /dev/null 2>&1
+module_versions() {
+  local d=$1 p=$2
   if ! (cd "$d" && go list -m -f '{{.Path}} {{.Version}}' all 2> "$p.mods.err" | sort > "$p.mods"); then
     fail "go list -m all fails: $(excerpt < "$p.mods.err")"
   fi
+}
 
-  # module families must keep one version, indirect ones included
-  if [[ -s $work/families ]]; then
-    did family-split
-    while IFS=$'\t' read -r name re key note; do
-      re="$re" awk '$1 ~ ENVIRON["re"]' "$p.mods" > "$p.fam"
-      [[ -s $p.fam ]] || continue
-      case $key in  # what has to be equal
-        minor) cut -d' ' -f2 "$p.fam" | sed -E 's/^(v[0-9]+\.[0-9]+).*/\1/' ;;
-        stable) cut -d' ' -f2 "$p.fam" | grep -v '^v0\.' ;;  # otel: v1 modules share a version, v0 ones do not
-        *) cut -d' ' -f2 "$p.fam" ;;
-      esac | sort -u > "$p.famv"
-      [[ $(wc -l < "$p.famv") -gt 1 ]] \
-        && emit "$f" family-split "versions diverge (Renovate does not update indirect dependencies by default): $(awk '{print $1 "@" $2}' "$p.fam" | joinl ', ')" \
-          package="$name" note="$note" loc="${mp}go.mod"
+family_split() {
+  local f=$1 p=$2 name re key note
+  [[ -s $work/families ]] || return 0
+  did family-split
+  while IFS=$'\t' read -r name re key note; do
+    re="$re" awk '$1 ~ ENVIRON["re"]' "$p.mods" > "$p.fam"
+    [[ -s $p.fam ]] || continue
+    case $key in
+      minor) cut -d' ' -f2 "$p.fam" | sed -E 's/^(v[0-9]+\.[0-9]+).*/\1/' ;;
+      stable) cut -d' ' -f2 "$p.fam" | grep -v '^v0\.' ;;
+      *) cut -d' ' -f2 "$p.fam" ;;
+    esac | sort -u > "$p.famv"
+    [[ $(wc -l < "$p.famv") -gt 1 ]] \
+      && emit "$f" family-split "versions diverge (Renovate does not update indirect dependencies by default): $(awk '{print $1 "@" $2}' "$p.fam" | joinl ', ')" \
+        package="$name" note="$note" loc="${mp}go.mod"
     done < "$work/families"
-  fi
   return 0
 }
 
-# --- checks that compare base and head; report on head
-# diffs <old dir> <new dir> <old prefix> <new prefix> <prefix>
-diffs() {
-  local O=$1 N=$2 po=$3 pn=$4 p=$5 own mo vo vn mn x opkg npkg owner
-  own=$(cd "$N" && go list -m)
-  did apidiff-exposed
+state() {
+  module_versions "$1" "$3"
+  family_split "$2" "$3"
+}
+
+version_pairs() {
+  local po=$1 pn=$2 p=$3 mo vo mn vn
   join "$po.mods" "$pn.mods" | awk '$2 != $3' > "$p.changed"
   join -v1 "$po.mods" "$pn.mods" > "$p.removed"
   join -v2 "$po.mods" "$pn.mods" > "$p.added"
-  # a major bump changes the module path (x/v4 -> x/v5): pair added paths with old ones by their stem
-  # (the old path may stay in the graph as an indirect dependency, so look at changed modules too)
   { cat "$p.removed"; awk '{print $1, $2}' "$p.changed"; } | while read -r mo vo; do
     while read -r mn vn; do
       [[ ${mn%/v+([0-9])} == "${mo%/v+([0-9])}" ]] && echo "$mo $vo $vn $mn"
     done < "$p.added"
   done > "$p.major"
   { awk '{print $1, $2, $3, $1}' "$p.changed"; cat "$p.major"; } > "$p.pairs"
+}
 
-  # apidiff of the dependency packages this module imports; a major bump is compared across the path change
-  imports "$O" "$own" > "$p.imp.old"; imports "$N" "$own" > "$p.imp.new"
+apidiff_module() {
+  local O=$1 N=$2 p=$3 mo=$4 vo=$5 vn=$6 mn=$7 opkg npkg owner x
+  while read -r opkg; do
+    npkg=$mn${opkg#"$mo"}
+    grep -qxF -- "$npkg" "$p.imp.new" || continue
+    owner=$(cd "$O" && go list -f '{{.Module.Path}}' "$opkg" 2> /dev/null); [[ -n $owner && $owner != "$mo" ]] && continue
+    x=$p.ad_$(tr '/.' '__' <<< "$opkg")
+    if ! (cd "$O" && "$AD" -w "$x.old" "$opkg" 2> "$x.err") || ! (cd "$N" && "$AD" -w "$x.new" "$npkg" 2>> "$x.err"); then
+      emit "$H" apidiff-exposed "apidiff cannot compare the package, check its API by hand" package="$mn" version="$vn" from="$vo" \
+        symbol="$npkg" note="$(head -c 300 "$x.err" | tr '\n' ' ')" loc="$(modloc "$N" "$mn")"
+      continue
+    fi
+    "$AD" -incompatible "$x.old" "$x.new" 2> /dev/null | sed -n 's/^- //p' > "$x.res"
+    [[ -s $x.res ]] && echo "$mo $vo $vn $mn $npkg $x.res" >> "$p.incompat"
+  done < <(grep -E "^${mo//./\\.}(/|$)" "$p.imp.old")
+}
+
+diffs() {
+  local O=$1 N=$2 po=$3 pn=$4 p=$5 own mo vo vn mn
+  own=$(cd "$N" && go list -m)
+  did apidiff-exposed
+  version_pairs "$po" "$pn" "$p"
+  imports "$O" "$own" > "$p.imp.old"
+  imports "$N" "$own" > "$p.imp.new"
   : > "$p.incompat"
   while read -r mo vo vn mn; do
-    while read -r opkg; do
-      npkg=$mn${opkg#"$mo"}
-      grep -qxF -- "$npkg" "$p.imp.new" || continue  # head no longer imports it (e.g. moved to the /vN path)
-      # packages of a nested module have their own row
-      owner=$(cd "$O" && go list -f '{{.Module.Path}}' "$opkg" 2> /dev/null); [[ -n $owner && $owner != "$mo" ]] && continue
-      x=$p.ad_$(tr '/.' '__' <<< "$opkg")
-      if ! (cd "$O" && "$AD" -w "$x.old" "$opkg" 2> "$x.err") || ! (cd "$N" && "$AD" -w "$x.new" "$npkg" 2>> "$x.err"); then
-        # the API change is unknown: fail closed
-        emit "$H" apidiff-exposed "apidiff cannot compare the package, check its API by hand" package="$mn" version="$vn" from="$vo" \
-          symbol="$npkg" note="$(head -c 300 "$x.err" | tr '\n' ' ')" loc="$(modloc "$N" "$mn")"
-        continue
-      fi
-      "$AD" -incompatible "$x.old" "$x.new" 2> /dev/null | sed -n 's/^- //p' > "$x.res"
-      [[ -s $x.res ]] && echo "$mo $vo $vn $mn $npkg $x.res" >> "$p.incompat"
-    done < <(grep -E "^${mo//./\\.}(/|$)" "$p.imp.old")
+    apidiff_module "$O" "$N" "$p" "$mo" "$vo" "$vn" "$mn"
   done < "$p.pairs"
   [[ -s $p.incompat ]] && apidiff_findings "$N" "$p"
 }
 
-# apidiff_findings <new dir> <prefix>: one finding per changed top-level symbol that our code references, one for the rest
+import_names() {
+  local N=$1 npkg=$2 name=$3
+  (echo "$name"
+   cd "$N" && grep -rhoE "^[[:space:]]*(import[[:space:]]+)?[A-Za-z_][A-Za-z0-9_]*[[:space:]]+\"${npkg//./\\.}\"" --include='*.go' . \
+     | awk '{print $(NF-1)}') | sort -u | joinl '|'
+}
+
+exposed_hit() {
+  local N=$1 p=$2 npkg=$3 ids=$4 ownpkg d
+  while read -r ownpkg; do
+    (cd "$N" && go list -f '{{join .Imports " "}}' "$ownpkg" 2> /dev/null) | tr ' ' '\n' | grep -qxF -- "$npkg" || continue
+    d=$(cd "$N" && go doc -all "$ownpkg" 2> /dev/null | grep -m1 -E "(^|[^A-Za-z0-9_.])($ids)\.[A-Z]" | sed -E 's/^[[:space:]]+//')
+    if [[ -n $d ]]; then echo "$ownpkg: $d"; return 0; fi
+  done < "$p.ownpkgs"
+  return 1
+}
+
+referenced_symbols() {
+  local N=$1 p=$2 ids=$3
+  (cd "$N" && grep -rnoE "(^|[^A-Za-z0-9_.])($ids)\.[A-Z][A-Za-z0-9_]*" --include='*.go' . | grep -v '^\./vendor/') \
+    | sed -E 's#^\./##; s#^([^:]+:[0-9]+):.*\.([A-Za-z0-9_]+)$#\2 \1#' | sort -u > "$p.uses"
+}
+
 apidiff_findings() {
-  local N=$1 p=$2 mo vo vn mn npkg res name ids hit ownpkg d check note top n uses
+  local N=$1 p=$2 mo vo vn mn npkg res name ids hit check note top n uses
   (cd "$N" && go list -f '{{if not .Standard}}{{.ImportPath}}{{end}}' ./... 2> /dev/null) | grep -vE '/internal(/|$)|/mocks?(/|$)' > "$p.ownpkgs"
   while read -r mo vo vn mn npkg res; do
     name=$(cd "$N" && go list -f '{{.Name}}' "$npkg" 2> /dev/null); [[ -z $name ]] && continue
-    # identifiers the package is imported as: its name and any aliases
-    ids=$( (echo "$name"; cd "$N" && grep -rhoE "^[[:space:]]*(import[[:space:]]+)?[A-Za-z_][A-Za-z0-9_]*[[:space:]]+\"${npkg//./\\.}\"" --include='*.go' . \
-      | awk '{print $(NF-1)}') | sort -u | joinl '|')
-    # exposed: the package's types appear in the exported API of one of our packages, so consumers see the break
-    hit=""
-    while read -r ownpkg; do
-      (cd "$N" && go list -f '{{join .Imports " "}}' "$ownpkg" 2> /dev/null) | tr ' ' '\n' | grep -qxF -- "$npkg" || continue
-      d=$(cd "$N" && go doc -all "$ownpkg" 2> /dev/null | grep -m1 -E "(^|[^A-Za-z0-9_.])($ids)\.[A-Z]" | sed -E 's/^[[:space:]]+//')
-      [[ -n $d ]] && { hit="$ownpkg: $d"; break; }
-    done < "$p.ownpkgs"
-    [[ -n $hit ]] || continue
+    ids=$(import_names "$N" "$npkg" "$name")
+    hit=$(exposed_hit "$N" "$p" "$npkg" "$ids") || continue
     check=apidiff-exposed note="types appear in our exported API ($hit)"
     [[ $mo != "$mn" ]] && note="from $mo; $note"
-
-    # where our code references the changed top-level symbols as pkg.Sym; method calls on values are not found
-    (cd "$N" && grep -rnoE "(^|[^A-Za-z0-9_.])($ids)\.[A-Z][A-Za-z0-9_]*" --include='*.go' . | grep -v '^\./vendor/') \
-      | sed -E 's#^\./##; s#^([^:]+:[0-9]+):.*\.([A-Za-z0-9_]+)$#\2 \1#' | sort -u > "$p.uses"
-    # (*Client).Do, Client.Transport, Client -> Client
+    referenced_symbols "$N" "$p" "$ids"
     sed -E 's/^\(?\*?([A-Za-z0-9_]+).*/\1/' "$res" | paste -d' ' - "$res" > "$p.tops"
     : > "$p.unused"
     while read -r top; do
@@ -193,10 +208,10 @@ for m in "${modules[@]}"; do
 done
 
 if [[ $checked == 0 ]]; then
-  write_findings "$out/go-library-head.json" go-library head skipped "go.mod/go.sum unchanged" "" < /dev/null
+  write_findings "$out/go-library-head.json" go-library go head skipped "go.mod/go.sum unchanged" "" < /dev/null
 else
-  write_findings "$out/go-library-head.json" go-library head ok "" "$ran" < "$H"
-  [[ -n $base ]] && write_findings "$out/go-library-base.json" go-library base ok "" "$ran" < "$B"
+  write_findings "$out/go-library-head.json" go-library go head ok "" "$ran" < "$H"
+  [[ -n $base ]] && write_findings "$out/go-library-base.json" go-library go base ok "" "$ran" < "$B"
 fi
 written=1
 log "$(jq -r '"\(.findings | length) finding(s) on head: \([.findings[].check] | group_by(.) | map("\(.[0]) \(length)") | join(", "))"' "$out/go-library-head.json")"

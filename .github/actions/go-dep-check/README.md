@@ -24,8 +24,12 @@ or an exposed break that was already on the base branch does not block the chang
 ## go-consumers (`consumer-check.sh <consumer> <lib-base> <lib-head> <out> <name> [<tests>]`)
 
 Reference consumers (`consumers.go` in the infra defaults) are the Go services and every `qubership-core-lib-go*`
-library. The `plan` mode of the action keeps those whose go.sum mentions the library (a library is never in its own
-go.sum); the consumer job confirms with `go list -deps -test` (a failing `go list` is an error, not a skip) and
+library. `plan` compares each module's non-test build list with the base: the `go` and `toolchain` lines, and
+`module@version` of every module selected by packages reachable from non-test code (a replace is part of the
+line). A package imported only by tests is not in the list, and neither is a package reached only through it.
+An unchanged list plans nobody. A changed list keeps the consumers whose go.sum mentions the library (a library
+is never in its own go.sum); a go.sum that cannot be read is kept. `"consumers": false` plans nobody. The
+consumer job confirms with `go list -deps -test` (a failing `go list` is an error, not a skip) and
 builds the consumer with `replace <lib> => <lib at base>` and `=> <lib at head>` (+ `go mod tidy`, so MVS raises
 the library's own dependencies like a real bump). `consumer-build` findings, with the aspect as `symbol`: `build`
 and `tests` (compile, test-binary init) on both revisions, `vet` (new findings) on head. The matrix runs at most 10
@@ -52,9 +56,10 @@ build and vet of base and head take 8–33 s per library consumer; with tests 8�
 (`renovate-main/major-go-major`) and dbaas-base-client `main` gave no new findings.
 
 In CI a consumer job adds checkout, setup-go, a cold module cache and container image pulls: about 3–6 min, up to
-~10 min for maas-bg-segmentio (Kafka). A lib-go change has 28 consumers (10 services, 18 libraries): three waves of
-10, about 15–25 min until the gate and 100–170 runner minutes. dbaas-base-client has 9 consumers in one wave, about
-6–10 min. Failing tests add their reruns on head and one run on base.
+~10 min for maas-bg-segmentio (Kafka). A lib-go change that moves the non-test build list has 28 consumers
+(10 services, 18 libraries): three waves of 10, about 15–25 min until the gate and 100–170 runner minutes.
+A test-only dependency does not. dbaas-base-client has 9 consumers in one wave, about 6–10 min. Failing tests
+add their reruns on head and one run on base.
 
 ## Run locally
 

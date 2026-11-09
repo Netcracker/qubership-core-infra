@@ -22,8 +22,8 @@ t=$(mktemp -d) reason="" written="" US=$'\x1f'
 
 restore() { git -C "$cdir" checkout -q -- . ; git -C "$cdir" clean -fdq -- . ; }
 cleanup() { restore; rm -rf "$t"; }
-on_exit "$file-head.json" go-consumers "$name: "
-skip() { write_findings "$file-head.json" go-consumers head skipped "$name: $1" "" < /dev/null; written=1; exit 0; }
+on_exit "$file-head.json" go-consumers go "$name: "
+skip() { write_findings "$file-head.json" go-consumers go head skipped "$name: $1" "" < /dev/null; written=1; exit 0; }
 
 if [[ ! -f $lh/go.mod ]] || ! mod=$(cd "$lh" && go list -m); then reason="no library module in $3"; exit 2; fi
 if [[ $tests == true ]] && ! command -v gotestsum > /dev/null; then reason="gotestsum is not installed"; exit 2; fi
@@ -53,29 +53,10 @@ check() {  # check <lib_dir> <prefix>
   (cd "$cdir" && go test -count=1 -run '^$' ./... 2>&1 | grep -vE '^(ok|\?|go: downloading)[[:space:]]|^FAIL$') > "$p.test"
 }
 
-# gotestsum --jsonfile → one line per top-level test that failed (a failed subtest fails its parent; the last run
-# decides between consumer-test and consumer-test-flaky) or per package that failed without a failed test:
-# check, package, test (empty for a package), output excerpt, separated by \x1f
-# shellcheck disable=SC2016
-results='
-  def excerpt: [.[].Output // empty | select(test("^\\s*(=== |--- )|^\\s*\\S+\\.go:[0-9]+:\\s*$") | not)
-    | select(test("\\.go:[0-9]+|panic|[Ee]rror|timed out|expected|actual")) | gsub("/[^\\s:]+/"; "") | gsub("\\s+"; " ")
-    | ltrimstr(" ") | rtrimstr(" ") | .[:300]] | reduce .[] as $l ([]; if any(.[]; . == $l) then . else . + [$l] end)
-    | .[:4] | join("; ");
-  map(select(.Package)) | group_by(.Package)[] | . as $p
-  | (map(select(.Test and (.Test | contains("/") | not) and (.Action == "pass" or .Action == "fail")))
-     | group_by(.Test) | map(select(any(.Action == "fail")))) as $failed
-  | if $failed != [] then
-      $failed[] | .[0].Test as $t
-      | [if last.Action == "fail" then "consumer-test" else "consumer-test-flaky" end, $p[0].Package, $t,
-         ($p | map(select(.Test == $t or (.Test // "" | startswith($t + "/")))) | excerpt)]
-    elif any($p[]; .Action == "fail") then ["consumer-test", $p[0].Package, "", ($p | map(select(.Test == null)) | excerpt)]
-    else empty end
-  | join("\u001f")'
-run_tests() {  # run_tests <prefix> <packages> [<go test flags>...]
+run_tests() {
   local p=$1 pkgs=$2; shift 2
   (cd "$cdir" && gotestsum --jsonfile "$p.json" --rerun-fails=2 --packages "$pkgs" -- -count=1 -timeout 15m "$@") >&2
-  [[ -s $p.json ]] && jq -rs "$results" "$p.json" > "$p.tests"
+  [[ -s $p.json ]] && jq -rsf "$here/test-results.jq" "$p.json" > "$p.tests"
 }
 
 check "$lb" "$t/b"; check "$lh" "$t/h"
@@ -99,25 +80,26 @@ fi
 short() { excerpt | sed -E 's#^[^[:space:]]*/##' | joinl '; '; }
 mvs=$(diff <(sort "$t/b.mvs") <(sort "$t/h.mvs") | sed -n 's/^> //p' | tr -s '[:space:]' ' ' | head -8 | joinl '; ')
 note="$kind consumer${mvs:+; MVS also changes: $mvs}"
-# the aspect is the symbol, so a build broken on head is not hidden by tests already failing on base
-for r in b h; do
-  [[ $r == b ]] && what="the library at base" || what="this change"
-  [[ $(cat "$t/$r.rc") != 0 ]] \
-    && emit "$t/$r.jsonl" consumer-build "does not build with $what: $(short < "$t/$r.build")" package="$name" symbol=build note="$note"
-  [[ -s $t/$r.test ]] \
-    && emit "$t/$r.jsonl" consumer-build "tests do not compile or test binaries fail to start with $what: $(short < "$t/$r.test")" \
+report() {
+  local prefix=$1 what=$2 check pkg test text msg
+  [[ $(cat "$prefix.rc") != 0 ]] \
+    && emit "$prefix.jsonl" consumer-build "does not build with $what: $(short < "$prefix.build")" package="$name" symbol=build note="$note"
+  [[ -s $prefix.test ]] \
+    && emit "$prefix.jsonl" consumer-build "tests do not compile or test binaries fail to start with $what: $(short < "$prefix.test")" \
       package="$name" symbol=tests note="$note"
-  while IFS=$US read -r check pkg test excerpt; do
+  while IFS=$US read -r check pkg test text; do
     [[ $check == consumer-test ]] && msg="${test:-the package} fails with $what" \
       || msg="${test:-the package} failed and passed on a rerun with $what"
-    emit "$t/$r.jsonl" "$check" "$msg${excerpt:+: $excerpt}" package="$name" symbol="$pkg${test:+.$test}" note="$note"
-  done < "$t/$r.tests"
-done
+    emit "$prefix.jsonl" "$check" "$msg${text:+: $text}" package="$name" symbol="$pkg${test:+.$test}" note="$note"
+  done < "$prefix.tests"
+}
+report "$t/b" "the library at base"
+report "$t/h" "this change"
 nv=$(newvet "$t/b.vet" "$t/h.vet")
 [[ -n $nv ]] && emit "$t/h.jsonl" consumer-build "new go vet findings with this change: $(short <<< "$nv")" package="$name" symbol=vet note="$note"
 
 testchecks=" consumer-test consumer-test-flaky"
-write_findings "$file-head.json" go-consumers head ok "" "consumer-build${ran_h:+$testchecks}" < "$t/h.jsonl"
-write_findings "$file-base.json" go-consumers base ok "" "consumer-build${ran_b:+$testchecks}" < "$t/b.jsonl"
+write_findings "$file-head.json" go-consumers go head ok "" "consumer-build${ran_h:+$testchecks}" < "$t/h.jsonl"
+write_findings "$file-base.json" go-consumers go base ok "" "consumer-build${ran_b:+$testchecks}" < "$t/b.jsonl"
 written=1
 echo "$name: $kind consumer, $(jq '.findings | length' "$file-head.json") finding(s) on head, $(jq '.findings | length' "$file-base.json") on base" >&2

@@ -39,8 +39,9 @@ var funcs = template.FuncMap{
 	"problem": problem,
 	"where":   where,
 	"code":    code,
-	"cell":    cell,
-	"scope":   scope,
+	"cell":     cell,
+	"scope":    scope,
+	"adapters": adapters,
 }
 
 var templates = template.Must(template.New("").Funcs(funcs).Parse(`
@@ -62,7 +63,7 @@ var templates = template.Must(template.New("").Funcs(funcs).Parse(`
 {{- define "summary" -}}
 {{template "head" .}}
 
-Adapters: {{range $i, $a := .Adapters}}{{if $i}} · {{end}}` + "`{{$a.Name}}`" + ` {{$a.Status}}{{with $a.Reason}} ({{cell .}}){{end}}{{else}}none{{end}}
+Adapters: {{adapters .Adapters}}
 {{- with .Scope}}
 
 Scope: {{scope .}}
@@ -268,6 +269,37 @@ func scope(s map[string]gate.Scope) string {
 			what = append(what, "transitive findings at most "+t.String())
 		}
 		parts = append(parts, eco+": "+strings.Join(what, "; "))
+	}
+	return strings.Join(parts, " · ")
+}
+
+// adapters collapses repeated runs of one adapter. Each consumer writes its own findings file, so a lib-go
+// matrix is dozens of identical go-consumers entries; the summary counts them.
+func adapters(list []gate.Adapter) string {
+	if len(list) == 0 {
+		return "none"
+	}
+	type key struct{ name, status, reason string }
+	var order []key
+	count := map[key]int{}
+	for _, a := range list {
+		k := key{a.Name, string(a.Status), a.Reason}
+		if count[k] == 0 {
+			order = append(order, k)
+		}
+		count[k]++
+	}
+	var parts []string
+	for _, k := range order {
+		text := code(k.name) + " "
+		if n := count[k]; n > 1 {
+			text += fmt.Sprintf("%d ", n)
+		}
+		text += k.status
+		if k.reason != "" {
+			text += " (" + cell(k.reason) + ")"
+		}
+		parts = append(parts, text)
 	}
 	return strings.Join(parts, " · ")
 }

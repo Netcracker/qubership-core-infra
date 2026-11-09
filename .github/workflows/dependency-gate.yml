@@ -329,6 +329,8 @@ jobs:
           mode: plan
           config: ${{ needs.detect.outputs.config }}
           modules: ${{ needs.detect.outputs.go-modules }}
+          # the merge commit against its base: consumers run only when the non-test build list moved
+          base-ref: HEAD^1
 
       - name: Upload findings
         if: ${{ always() }}

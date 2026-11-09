@@ -364,7 +364,7 @@ func TestFindingsScript(t *testing.T) {
 	const sh = `. "$0"; out=$1 status=$2 reason=$3 checks=$4 UNIT=$5; shift 5
 : > "$out.jsonl"
 if [ $# -gt 0 ]; then emit "$out.jsonl" "$@"; fi
-write_findings "$out" go-library head "$status" "$reason" "$checks" < "$out.jsonl"`
+write_findings "$out" go-library go head "$status" "$reason" "$checks" < "$out.jsonl"`
 	for _, tc := range []struct {
 		name                         string
 		status, reason, checks, unit string
@@ -588,4 +588,164 @@ func TestFlaky(t *testing.T) {
 			}
 		})
 	}
+}
+
+// plan-consumers.sh: the matrix follows the non-test build list. A dependency imported only by tests, or only
+// by a package that only tests import, does not plan a consumer. curl is a fake on PATH.
+func TestPlanConsumers(t *testing.T) {
+	needTools(t, "bash", "jq", "git", "go")
+	script, _ := goDepCheck(t, "plan-consumers.sh")
+	dir := t.TempDir()
+	repo := filepath.Join(dir, "repo")
+	bin := filepath.Join(dir, "bin")
+	write(t, filepath.Join(bin, "curl"), "#!/bin/sh\nurl=\nfor a in \"$@\"; do\n  case $a in http*) url=$a ;; esac\ndone\n"+
+		"case \"${PLAN_CURL:-fail}\" in\n  hit) printf '%s\\n' \"example.com/lib v0.1.0 h1:x\" ;;\n"+
+		"  miss) printf '%s\\n' \"example.com/other v0.1.0 h1:x\" ;;\n  *) exit 1 ;;\nesac\n")
+	if err := os.Chmod(filepath.Join(bin, "curl"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"prod", "onlytest", "helponly"} {
+		write(t, filepath.Join(repo, "third", name, "go.mod"), "module example.com/"+name+"\n\ngo 1.22\n")
+		write(t, filepath.Join(repo, "third", name, "p.go"), "package "+name+"\n\nfunc V() int { return 1 }\n")
+	}
+	const baseMod = `module example.com/lib
+
+go 1.22
+
+require (
+	example.com/helponly v0.1.0
+	example.com/onlytest v0.1.0
+	example.com/prod v0.1.0
+)
+
+replace example.com/helponly => ./third/helponly
+
+replace example.com/onlytest => ./third/onlytest
+
+replace example.com/prod => ./third/prod
+`
+	write(t, filepath.Join(repo, "go.mod"), baseMod)
+	write(t, filepath.Join(repo, "use.go"), "package lib\n\nimport \"example.com/prod\"\n\nfunc Use() int { return prod.V() }\n")
+	write(t, filepath.Join(repo, "extra", "extra.go"), "package extra\n\nimport _ \"example.com/helponly\"\n")
+	write(t, filepath.Join(repo, "use_test.go"), "package lib\n\nimport (\n\t_ \"example.com/lib/extra\"\n\t_ \"example.com/onlytest\"\n\t\"testing\"\n)\n\nfunc TestUse(t *testing.T) {\n\tif Use() != 1 {\n\t\tt.Fatal(Use())\n\t}\n}\n")
+	tidy := func() {
+		t.Helper()
+		cmd := exec.Command("go", "mod", "tidy")
+		cmd.Dir = repo
+		cmd.Env = append(os.Environ(), "GOPROXY=off", "GOSUMDB=off", "GOWORK=off", "GOTOOLCHAIN=local")
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("tidy: %v\n%s", err, out)
+		}
+	}
+	tidy()
+	git := func(args ...string) {
+		t.Helper()
+		cmd := exec.Command("git", append([]string{"-C", repo, "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"}, args...)...)
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
+	git("init", "-q")
+	git("add", ".")
+	git("commit", "-q", "-m", "base")
+
+	config := `{"consumers":{"go":[{"repo":"example/missing","module":".","tests":true}]}}`
+	one := []map[string]any{{"repo": "example/missing", "module": ".", "tests": true, "lib": "."}}
+	plan := func(cfg, base, curl string) (stdout, stderr string) {
+		t.Helper()
+		cmd := exec.Command("bash", script)
+		cmd.Env = append(os.Environ(),
+			"PATH="+bin+string(os.PathListSeparator)+os.Getenv("PATH"),
+			"REPO_DIR="+filepath.ToSlash(repo),
+			`MODULES=["."]`,
+			"CONFIG="+cfg,
+			"BASE_REF="+base,
+			"PLAN_CURL="+curl,
+			"CURL="+filepath.ToSlash(filepath.Join(bin, "curl")),
+			"GOPROXY=off", "GOSUMDB=off", "GOWORK=off", "GOTOOLCHAIN=local",
+		)
+		var out, errb bytes.Buffer
+		cmd.Stdout, cmd.Stderr = &out, &errb
+		if err := cmd.Run(); err != nil {
+			t.Fatalf("plan: %v\n%s", err, errb.String())
+		}
+		return out.String(), errb.String()
+	}
+	none := func(stdout, stderr, note string) {
+		t.Helper()
+		if strings.TrimSpace(stdout) != "[]" {
+			t.Fatalf("%s: got %s\n%s", note, stdout, stderr)
+		}
+	}
+	some := func(stdout, stderr, note string) {
+		t.Helper()
+		var got []map[string]any
+		if err := json.Unmarshal([]byte(stdout), &got); err != nil {
+			t.Fatalf("%s: %v\n%s\n%s", note, err, stdout, stderr)
+		}
+		if diff := cmp.Diff(one, got); diff != "" {
+			t.Errorf("%s (-want +got):\n%s\n%s", note, diff, stderr)
+		}
+	}
+
+	stdout, stderr := plan(`{"consumers":false}`, "HEAD", "hit")
+	none(stdout, stderr, "consumers false")
+
+	stdout, stderr = plan(config, "", "hit")
+	some(stdout, stderr, "no base")
+
+	stdout, stderr = plan(config, "HEAD", "hit")
+	none(stdout, stderr, "same revision")
+	if !strings.Contains(stderr, "unchanged") {
+		t.Fatalf("same revision: stderr %s", stderr)
+	}
+
+	modPath := filepath.Join(repo, "go.mod")
+	committed, err := os.ReadFile(modPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(committed), "go 1.22") {
+		t.Fatalf("go.mod has no go line:\n%s", committed)
+	}
+	write(t, modPath, strings.Replace(string(committed), "go 1.22", "go 1.23", 1))
+	stdout, stderr = plan(config, "HEAD", "hit")
+	some(stdout, stderr, "go line")
+	write(t, modPath, string(committed))
+
+	bump := func(pairs ...string) {
+		t.Helper()
+		text, err := os.ReadFile(filepath.Join(repo, "go.mod"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		s := string(text)
+		for i := 0; i < len(pairs); i += 2 {
+			if !strings.Contains(s, pairs[i]) {
+				t.Fatalf("go.mod has no %s\n%s", pairs[i], s)
+			}
+			s = strings.ReplaceAll(s, pairs[i], pairs[i+1])
+		}
+		write(t, filepath.Join(repo, "go.mod"), s)
+		tidy()
+		git("add", ".")
+		git("commit", "-q", "-m", "bump")
+	}
+	bump("example.com/onlytest v0.1.0", "example.com/onlytest v0.2.0", "example.com/helponly v0.1.0", "example.com/helponly v0.2.0")
+	stdout, stderr = plan(config, "HEAD^1", "hit")
+	none(stdout, stderr, "test-only deps")
+	if !strings.Contains(stderr, "unchanged") {
+		t.Fatalf("test-only deps: stderr %s", stderr)
+	}
+
+	bump("example.com/prod v0.1.0", "example.com/prod v0.2.0")
+	stdout, stderr = plan(config, "HEAD^1", "hit")
+	some(stdout, stderr, "prod bump")
+	if !strings.Contains(stderr, "changed") {
+		t.Fatalf("prod bump: stderr %s", stderr)
+	}
+	stdout, stderr = plan(config, "HEAD^1", "miss")
+	none(stdout, stderr, "prod bump, go.sum does not name the library")
+	stdout, stderr = plan(config, "HEAD^1", "fail")
+	some(stdout, stderr, "prod bump, go.sum unreadable")
 }

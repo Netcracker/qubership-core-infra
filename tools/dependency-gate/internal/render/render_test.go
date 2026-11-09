@@ -57,6 +57,17 @@ func TestSummary(t *testing.T) {
 		{"pilot", func(r *gate.Report) { r.Mode = gate.ModeReport }, "❌ Dependency gate (pilot): would fail", []string{"> Pilot"}},
 		{"pass", func(r *gate.Report) { r.Mode, r.Verdict, r.Findings = gate.ModeReport, gate.VerdictPass, nil },
 			"✅ Dependency gate: passed", nil},
+		{"consumer matrix", func(r *gate.Report) {
+			r.Adapters = nil
+			for range 28 {
+				r.Adapters = append(r.Adapters, gate.Adapter{Name: "go-consumers", Status: gate.AdapterOK})
+			}
+			r.Adapters = append(r.Adapters,
+				gate.Adapter{Name: "go-consumers", Status: gate.AdapterError, Reason: "a/b: the job failed"},
+				gate.Adapter{Name: "maven-consumers", Status: gate.AdapterSkipped, Reason: "job skipped"})
+		}, "❌ Dependency gate: failed", []string{
+			"`go-consumers` 28 ok · `go-consumers` error (a/b: the job failed) · `maven-consumers` skipped (job skipped)",
+		}},
 		{"scope", func(r *gate.Report) {
 			r.Scope = map[string]gate.Scope{
 				gate.Maven: {Roots: []string{"core"}, Exclude: []string{"^a/", "^b|c/"}, Transitive: gate.Warn},
