@@ -264,7 +264,7 @@ These do not choose which checks run.
 
 | Input | Default | Effect |
 |---|---|---|
-| `comment` | `true` | sticky comment of **Dependency gate** (`<!-- dependency-gate -->`): created when the change brings a new warn or fail, updated afterwards, never on a fork. `false` leaves the job summary and the annotations. **Consumers** adds one line to that comment when its verdict is fail: the fact and a link to its job summary, not the findings. A later run that does not fail removes the line. |
+| `comment` | `true` | two sticky pull request comments, never on a fork. **Dependency gate** (`<!-- dependency-gate -->`) is created when the change brings a new warn or fail and updated afterwards; a run with nothing new refreshes an existing comment and does not create one. **Consumers** (`<!-- dependency-gate-consumers -->`) is its own comment: the fail fact and a link to the run. A later run whose verdict is not fail deletes it. `false` leaves the job summary and the annotations. |
 | `java-version` | `"21"` | JDK for the Maven library build and the Maven consumer builds |
 | `maven-username` | the actor | GitHub Packages user of `MAVEN_TOKEN` |
 | secret `MAVEN_TOKEN` | the workflow token | read-only token (`read:packages`) when the workflow token cannot read a package. Do not pass a token that can write or delete packages: the Maven job runs build extensions from the pull request. A fork pull request gets no secrets; Maven still reads packages with the read-only workflow token, and the comment is skipped. |

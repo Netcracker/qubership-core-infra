@@ -7,7 +7,6 @@ import (
 	"flag"
 	"io"
 	"io/fs"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -153,69 +152,113 @@ func TestEvaluatePullRequest(t *testing.T) {
 	if !slices.Equal(r.Config, []string{"infra:defaults.json@dev", gate.RepoConfigFile + "@HEAD^1"}) || r.Mode != gate.ModeEnforce {
 		t.Errorf("config %v, mode %s", r.Config, r.Mode)
 	}
-	if !strings.Contains(stdout.String(), "::error file=") || !strings.Contains(stdout.String(), "::warning::cannot update the PR comment") {
-		t.Errorf("annotations and the comment warning:\n%s", stdout.String())
+	if !strings.Contains(stdout.String(), "::error file=") || strings.Contains(stdout.String(), "cannot update the PR comment") {
+		t.Errorf("annotations:\n%s", stdout.String())
 	}
-	output, _ := os.ReadFile(env["GITHUB_OUTPUT"])
+	output := githubOutput(t, env["GITHUB_OUTPUT"])
 	summary, _ := os.ReadFile(env["GITHUB_STEP_SUMMARY"])
-	lines := strings.Fields(string(output))
-	if len(lines) != 3 || !strings.HasPrefix(lines[0], "verdict<<") || lines[1] != "fail" ||
+	if output["verdict"] != "fail" || output["comment"] != "post" ||
 		!strings.HasPrefix(string(summary), "### ❌ Dependency gate: failed") {
-		t.Errorf("output %q, summary %q", output, summary)
+		t.Errorf("output %v, summary %q", output, summary)
+	}
+	comment, err := os.ReadFile(filepath.Join(out, "comment.md"))
+	if err != nil || !strings.Contains(string(comment), "<!-- dependency-gate -->") {
+		t.Errorf("comment.md: %v\n%s", err, comment)
 	}
 }
 
-// With a token the sticky comment is created.
+// -comment writes the Dependency gate comment and says whether to create it.
+// -comment-note writes the Consumers comment: the fail fact and the run link.
 func TestEvaluateComment(t *testing.T) {
-	a := newAPI(t, map[string]http.HandlerFunc{
-		"GET /repos/o/r/issues/7/comments":  reply([]any{}),
-		"POST /repos/o/r/issues/7/comments": replyStatus(http.StatusCreated, map[string]any{"id": 1}),
-	})
 	repo := pullRequestRepo(t, `{"version": 1}`, `{"version": 1}`)
 	work := t.TempDir()
+	out := t.TempDir()
 	githubEnv(t, map[string]string{
-		"GITHUB_ACTIONS": "true", "GITHUB_EVENT_NAME": "pull_request", "GITHUB_REPOSITORY": "o/r", "GITHUB_TOKEN": "token",
-		"GITHUB_API_URL": a.url, "GITHUB_EVENT_PATH": eventFile(t, "main"),
-		"GITHUB_OUTPUT": filepath.Join(work, "output"), "GITHUB_STEP_SUMMARY": filepath.Join(work, "summary"),
-	})
-	var stdout bytes.Buffer
-	if err := run(t.Context(), "evaluate", []string{"-repo", repo, "-findings", fixtures, "-today", "2026-10-29", "-comment"}, &stdout); err != nil {
-		t.Fatalf("%v\n%s", err, stdout.String())
-	}
-	if !slices.Contains(a.calls, "POST /repos/o/r/issues/7/comments") {
-		t.Errorf("new findings create the comment: %v", a.calls)
-	}
-}
-
-// The consumers check adds one line to the sticky comment and does not paste its findings there.
-func TestEvaluateCommentNote(t *testing.T) {
-	a := newAPI(t, map[string]http.HandlerFunc{
-		"GET /repos/o/r/issues/7/comments":  reply([]any{}),
-		"POST /repos/o/r/issues/7/comments": replyStatus(http.StatusCreated, map[string]any{"id": 1}),
-		"GET /repos/o/r/actions/runs/9/jobs": func(w http.ResponseWriter, _ *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"jobs":[{"id":2,"name":"Consumers","html_url":"https://github.com/o/r/actions/runs/9/job/2"}]}`))
-		},
-	})
-	repo := pullRequestRepo(t, `{"version": 1}`, `{"version": 1}`)
-	work := t.TempDir()
-	githubEnv(t, map[string]string{
-		"GITHUB_ACTIONS": "true", "GITHUB_EVENT_NAME": "pull_request", "GITHUB_REPOSITORY": "o/r", "GITHUB_TOKEN": "token",
-		"GITHUB_API_URL": a.url, "GITHUB_EVENT_PATH": eventFile(t, "main"), "GITHUB_RUN_ID": "9",
-		"GITHUB_SERVER_URL": "https://github.com",
+		"GITHUB_ACTIONS": "true", "GITHUB_EVENT_NAME": "pull_request", "GITHUB_REPOSITORY": "o/r",
+		"GITHUB_EVENT_PATH": eventFile(t, "main"),
 		"GITHUB_OUTPUT":     filepath.Join(work, "output"), "GITHUB_STEP_SUMMARY": filepath.Join(work, "summary"),
 	})
 	var stdout bytes.Buffer
-	if err := run(t.Context(), "evaluate", []string{"-repo", repo, "-findings", fixtures, "-today", "2026-10-29",
-		"-comment-note", "-comment-job", "Consumers"}, &stdout); err != nil {
+	if err := run(t.Context(), "evaluate", []string{"-repo", repo, "-findings", fixtures, "-out", out, "-today", "2026-10-29", "-comment"}, &stdout); err != nil {
 		t.Fatalf("%v\n%s", err, stdout.String())
 	}
-	if !strings.Contains(a.body, "**Consumers:** would fail") || !strings.Contains(a.body, "https://github.com/o/r/actions/runs/9/job/2") {
-		t.Errorf("consumers line:\n%s", a.body)
+	if got := githubOutput(t, filepath.Join(work, "output"))["comment"]; got != "post" {
+		t.Errorf("new findings post the comment: %q", got)
 	}
-	if strings.Contains(a.body, "apidiff-exposed") {
-		t.Errorf("the line lists findings:\n%s", a.body)
+	comment, _ := os.ReadFile(filepath.Join(out, "comment.md"))
+	if !strings.HasPrefix(string(comment), "<!-- dependency-gate -->\n") || !strings.Contains(string(comment), "apidiff-exposed") {
+		t.Errorf("gate comment:\n%s", comment)
 	}
+
+	work, out = t.TempDir(), t.TempDir()
+	githubEnv(t, map[string]string{
+		"GITHUB_ACTIONS": "true", "GITHUB_EVENT_NAME": "pull_request", "GITHUB_REPOSITORY": "o/r",
+		"GITHUB_EVENT_PATH": eventFile(t, "main"), "GITHUB_RUN_ID": "9", "GITHUB_SERVER_URL": "https://github.com",
+		"GITHUB_OUTPUT": filepath.Join(work, "output"), "GITHUB_STEP_SUMMARY": filepath.Join(work, "summary"),
+	})
+	stdout.Reset()
+	if err := run(t.Context(), "evaluate", []string{"-repo", repo, "-findings", fixtures, "-out", out, "-today", "2026-10-29", "-comment-note"}, &stdout); err != nil {
+		t.Fatalf("%v\n%s", err, stdout.String())
+	}
+	if got := githubOutput(t, filepath.Join(work, "output"))["comment"]; got != "post" {
+		t.Errorf("a failing consumers check posts its comment: %q", got)
+	}
+	comment, _ = os.ReadFile(filepath.Join(out, "comment.md"))
+	text := string(comment)
+	if !strings.HasPrefix(text, "<!-- dependency-gate-consumers -->\n**Consumers:** would fail") ||
+		!strings.Contains(text, "https://github.com/o/r/actions/runs/9") || strings.Contains(text, "apidiff-exposed") {
+		t.Errorf("consumers comment:\n%s", text)
+	}
+
+	work, out = t.TempDir(), t.TempDir()
+	githubEnv(t, map[string]string{
+		"GITHUB_ACTIONS": "true", "GITHUB_EVENT_NAME": "pull_request", "GITHUB_REPOSITORY": "o/r",
+		"GITHUB_EVENT_PATH": eventFile(t, "main"),
+		"GITHUB_OUTPUT":     filepath.Join(work, "output"), "GITHUB_STEP_SUMMARY": filepath.Join(work, "summary"),
+	})
+	stdout.Reset()
+	if err := run(t.Context(), "evaluate", []string{"-repo", repo, "-out", out, "-today", "2026-10-29", "-comment"}, &stdout); err != nil {
+		t.Fatalf("%v\n%s", err, stdout.String())
+	}
+	if got := githubOutput(t, filepath.Join(work, "output"))["comment"]; got != "update" {
+		t.Errorf("nothing new only refreshes an existing comment: %q", got)
+	}
+	stdout.Reset()
+	if err := run(t.Context(), "evaluate", []string{"-repo", repo, "-out", out, "-today", "2026-10-29", "-comment-note"}, &stdout); err != nil {
+		t.Fatalf("%v\n%s", err, stdout.String())
+	}
+	if got := githubOutput(t, filepath.Join(work, "output"))["comment"]; got != "delete" {
+		t.Errorf("a consumers check that does not fail deletes its comment: %q", got)
+	}
+	comment, _ = os.ReadFile(filepath.Join(out, "comment.md"))
+	if string(comment) != "" {
+		t.Errorf("empty consumers comment:\n%s", comment)
+	}
+}
+
+func githubOutput(t *testing.T, path string) map[string]string {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := map[string]string{}
+	lines := strings.Split(string(data), "\n")
+	for i := 0; i < len(lines); i++ {
+		name, delim, ok := strings.Cut(lines[i], "<<")
+		if !ok {
+			continue
+		}
+		var b strings.Builder
+		for i++; i < len(lines) && lines[i] != delim; i++ {
+			if b.Len() > 0 {
+				b.WriteByte('\n')
+			}
+			b.WriteString(lines[i])
+		}
+		out[name] = strings.TrimRight(b.String(), "\r")
+	}
+	return out
 }
 
 // Labels of the event and of -label reach labels.levels of the repository file.

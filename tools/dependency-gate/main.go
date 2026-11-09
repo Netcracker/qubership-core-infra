@@ -73,7 +73,7 @@ func main() {
 func run(ctx context.Context, cmd string, args []string, stdout io.Writer) error {
 	switch cmd {
 	case "evaluate":
-		return evaluate(ctx, args, stdout)
+		return evaluate(args, stdout)
 	case "detect":
 		return detectCmd(args, stdout)
 	case "compare":
@@ -146,7 +146,7 @@ func (o *options) load() (*gate.Schemas, *gate.Policy, error) {
 	return s, p, err
 }
 
-func evaluate(ctx context.Context, args []string, stdout io.Writer) error {
+func evaluate(args []string, stdout io.Writer) error {
 	var o options
 	in := gate.Input{Expected: map[string]string{}}
 	fs := flag.NewFlagSet("evaluate", flag.ContinueOnError)
@@ -166,9 +166,8 @@ func evaluate(ctx context.Context, args []string, stdout io.Writer) error {
 		in.Expected[name] = result
 		return nil
 	})
-	comment := fs.Bool("comment", false, "create or update the pin part of the sticky PR comment (GitHub Actions, needs GITHUB_TOKEN)")
-	commentNote := fs.Bool("comment-note", false, "set the consumers line of the sticky PR comment, without the findings table")
-	commentJob := fs.String("comment-job", "", "with -comment-note, Actions job name whose page has the findings")
+	comment := fs.Bool("comment", false, "this run owns the Dependency gate comment: comment.md, output comment=post or update")
+	commentNote := fs.Bool("comment-note", false, "this run owns the Consumers comment: comment.md is the fail fact and the run link, output comment=post or delete")
 	gateVersion := fs.String("gate", "qubership-core-infra@"+version(), "gate version written to the report")
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -185,20 +184,15 @@ func evaluate(ctx context.Context, args []string, stdout io.Writer) error {
 		return err
 	}
 	var pr int
-	var fork bool
 	base, head := "", gh.SHA
 	if pullRequest() {
 		ev, err := pullRequestEvent(gh.EventPath)
 		if err != nil {
 			return fmt.Errorf("pull request event: %w", err)
 		}
-		p := ev.GetPullRequest()
-		pr, base, head = p.GetNumber(), p.GetBase().GetSHA(), p.GetHead().GetSHA()
-		fork = p.GetHead().GetRepo().GetFullName() != p.GetBase().GetRepo().GetFullName()
-		in.Branch = cmp.Or(in.Branch, p.GetBase().GetRef())
-		for _, l := range p.Labels {
-			in.Labels = append(in.Labels, l.GetName())
-		}
+		pr, base, head = ev.Number, ev.BaseSHA, ev.HeadSHA
+		in.Branch = cmp.Or(in.Branch, ev.BaseRef)
+		in.Labels = append(in.Labels, ev.Labels...)
 	} else {
 		in.Branch = cmp.Or(in.Branch, gh.RefName)
 	}
@@ -222,7 +216,23 @@ func evaluate(ctx context.Context, args []string, stdout io.Writer) error {
 	if gh.RunID != 0 {
 		runURL = fmt.Sprintf("%s/%s/actions/runs/%d", gh.ServerURL, gh.Repository, gh.RunID)
 	}
+	// The workflow step publishes comment.md. This process only chooses the body and whether to
+	// create, refresh or delete that comment.
 	commentBody := render.Comment(report, runURL)
+	commentMode := ""
+	switch {
+	case *comment:
+		commentMode = "update"
+		if render.NeedsComment(report) {
+			commentMode = "post"
+		}
+	case *commentNote:
+		commentBody = render.ConsumerComment(report, runURL)
+		commentMode = "delete"
+		if commentBody != "" {
+			commentMode = "post"
+		}
+	}
 	if *outDir != "" {
 		if err := writeFiles(*outDir, map[string]string{
 			"report.json": string(data) + "\n", "summary.md": summary, "comment.md": commentBody,
@@ -235,21 +245,11 @@ func evaluate(ctx context.Context, args []string, stdout io.Writer) error {
 		actions.AddStepSummary(summary)
 		render.Annotate(actions, report)
 		actions.SetOutput("verdict", string(report.Verdict))
+		if commentMode != "" {
+			actions.SetOutput("comment", commentMode)
+		}
 	} else {
 		fmt.Fprint(stdout, summary)
-	}
-	if pr != 0 && !fork && (*comment || *commentNote) {
-		var err error
-		switch {
-		case *comment:
-			err = stickyComment(ctx, gh, pr, commentBody, render.NeedsComment(report))
-		default:
-			err = stickyConsumerNote(ctx, gh, pr, report, *commentJob, runURL)
-		}
-		if err != nil {
-			// the verdict stands without the comment
-			actions.Warningf("cannot update the PR comment: %v", err)
-		}
 	}
 	slog.Info("dependency gate", "mode", report.Mode, "verdict", report.Verdict, "fail", report.Counts.Fail,
 		"warn", report.Counts.Warn, "preexisting", report.Counts.Preexisting, "allowed", report.Counts.Allowed)
@@ -257,6 +257,49 @@ func evaluate(ctx context.Context, args []string, stdout io.Writer) error {
 		return errFailed
 	}
 	return nil
+}
+
+// prEvent is the part of a pull_request payload the gate reads: the number, the base
+// branch and the labels. The workflow posts the comments.
+type prEvent struct {
+	Number  int
+	BaseRef string
+	BaseSHA string
+	HeadSHA string
+	Labels  []string
+}
+
+func pullRequestEvent(path string) (prEvent, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return prEvent{}, err
+	}
+	var raw struct {
+		PullRequest struct {
+			Number int `json:"number"`
+			Base   struct {
+				Ref string `json:"ref"`
+				SHA string `json:"sha"`
+			} `json:"base"`
+			Head struct {
+				SHA string `json:"sha"`
+			} `json:"head"`
+			Labels []struct {
+				Name string `json:"name"`
+			} `json:"labels"`
+		} `json:"pull_request"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return prEvent{}, err
+	}
+	ev := prEvent{
+		Number: raw.PullRequest.Number, BaseRef: raw.PullRequest.Base.Ref,
+		BaseSHA: raw.PullRequest.Base.SHA, HeadSHA: raw.PullRequest.Head.SHA,
+	}
+	for _, l := range raw.PullRequest.Labels {
+		ev.Labels = append(ev.Labels, l.Name)
+	}
+	return ev, nil
 }
 
 func writeFiles(dir string, files map[string]string) error {

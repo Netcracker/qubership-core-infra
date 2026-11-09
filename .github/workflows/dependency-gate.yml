@@ -43,7 +43,7 @@ on:
   workflow_call:
     inputs:
       comment:
-        description: "Sticky PR comment of Dependency gate. Consumers adds one line to it when that check would fail"
+        description: "Sticky PR comments. Dependency gate posts its findings. Consumers posts its own comment when that check would fail"
         type: boolean
         default: true
       java-version:
@@ -60,7 +60,7 @@ on:
         required: false
 
 # adapter jobs run the pull request's code (build extensions, init(), tests): each job gets only what it needs.
-# `gate` writes the sticky comment. `consumers` may add one line to that same comment. The matrix jobs write nothing.
+# `gate` posts the Dependency gate sticky comment. `consumers` posts its own. The matrix jobs write nothing.
 permissions:
   contents: read
 
@@ -427,6 +427,7 @@ jobs:
           merge-multiple: true
 
       - name: Evaluate
+        id: report
         uses: $/.github/actions/dependency-gate
         with:
           command: evaluate
@@ -439,6 +440,20 @@ jobs:
             ${{ needs.detect.result != 'success' && format('detect={0}', needs.detect.result) || '' }}
             go-library=${{ needs.go-library.result }}
 
+      - name: Pull request comment
+        if: >-
+          (success() || failure()) &&
+          inputs.comment &&
+          steps.report.outputs.comment != '' &&
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+        with:
+          header: dependency-gate
+          path: ${{ runner.temp }}/dependency-gate/comment.md
+          only_update: ${{ steps.report.outputs.comment == 'update' }}
+
       - name: Upload report
         if: ${{ always() }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
@@ -450,9 +465,7 @@ jobs:
   consumers:
     # the second check Renovate waits for. It starts when the matrix finishes, not when Dependency gate does.
     # An empty Go plan still reports: the summary names why nobody was planned.
-    # The sticky comment stays Dependency gate's. This job only sets one line on it when the verdict is fail.
-    # The link is the workflow run: a job-page link would need actions: read, which callers do not grant,
-    # and a nested job cannot ask for a permission the caller did not allow.
+    # Its sticky comment is separate: the fail fact and the run link. A later run that does not fail deletes it.
     name: Consumers
     needs: [go-library, go-consumers, maven-snapshot, maven-consumers]
     if: ${{ !cancelled() && (needs.go-consumers.result != 'skipped' || needs.maven-consumers.result != 'skipped' || ((needs.go-library.result == 'success' || needs.go-library.result == 'failure') && needs.go-library.outputs.skip-reason != '')) }}
@@ -484,6 +497,7 @@ jobs:
           merge-multiple: true
 
       - name: Evaluate
+        id: report
         uses: $/.github/actions/dependency-gate
         with:
           command: evaluate
@@ -496,6 +510,20 @@ jobs:
           expect: |
             go-consumers=${{ needs.go-consumers.result }}${{ (needs.go-library.result == 'success' || needs.go-library.result == 'failure') && needs.go-library.outputs.skip-reason != '' && format(': {0}', needs.go-library.outputs.skip-reason) || '' }}
             maven-consumers=${{ needs.maven-consumers.result }}
+
+      - name: Pull request comment
+        if: >-
+          (success() || failure()) &&
+          inputs.comment &&
+          steps.report.outputs.comment != '' &&
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+        with:
+          header: dependency-gate-consumers
+          path: ${{ runner.temp }}/dependency-gate-consumers/comment.md
+          delete: ${{ steps.report.outputs.comment == 'delete' }}
 
       - name: Upload report
         if: ${{ always() }}

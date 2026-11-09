@@ -13,11 +13,10 @@ import (
 	"github.com/Netcracker/qubership-core-infra/tools/dependency-gate/internal/gate"
 )
 
-// Marker identifies the sticky comment of the gate.
+// Marker identifies the sticky comment of Dependency gate.
 const Marker = "<!-- dependency-gate -->"
 
-// ConsumerMarker starts the one line about Consumers. The pin check and the consumers check
-// rewrite only their own part, so whichever finishes last keeps the other.
+// ConsumerMarker identifies the sticky comment of Consumers.
 const ConsumerMarker = "<!-- dependency-gate-consumers -->"
 
 // CommentLimit is how many findings the PR comment lists; the summary has them all.
@@ -136,34 +135,17 @@ func NeedsComment(r *gate.Report) bool {
 	return slices.ContainsFunc(r.Findings, brought)
 }
 
-// SplitComment separates the pin part of a sticky comment from the consumers line.
-func SplitComment(body string) (pin, note string) {
-	pin, note, found := strings.Cut(body, ConsumerMarker)
-	if !found {
-		return strings.TrimRight(body, "\n"), ""
+// ConsumerComment is the Consumers sticky comment: the fail fact and a link to the run.
+// A pass or a warning is empty, so the workflow deletes the comment.
+func ConsumerComment(r *gate.Report, detailsURL string) string {
+	line := ConsumerLine(r, detailsURL)
+	if line == "" {
+		return ""
 	}
-	return strings.TrimRight(pin, "\n"), strings.TrimSpace(note)
+	return ConsumerMarker + "\n" + line + "\n"
 }
 
-// JoinComment builds the sticky comment. An empty note drops the consumers line.
-// A comment that would be only the marker is empty: there is nothing to post.
-func JoinComment(pin, note string) string {
-	pin = strings.TrimRight(pin, "\n")
-	note = strings.TrimSpace(note)
-	if note == "" {
-		if strings.TrimSpace(pin) == "" || strings.TrimSpace(pin) == Marker {
-			return ""
-		}
-		return pin + "\n"
-	}
-	if strings.TrimSpace(pin) == "" {
-		pin = Marker
-	}
-	return pin + "\n\n" + ConsumerMarker + "\n" + note + "\n"
-}
-
-// ConsumerLine is the consumers line of the sticky comment: the fail fact and a link to the job
-// summary. A pass or a warning leaves it empty, so a later run drops the line.
+// ConsumerLine is the body of the Consumers comment. A pass or a warning leaves it empty.
 func ConsumerLine(r *gate.Report, detailsURL string) string {
 	if r == nil || r.Verdict != gate.VerdictFail {
 		return ""

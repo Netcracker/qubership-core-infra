@@ -138,25 +138,14 @@ func TestConsumerLine(t *testing.T) {
 	if got := ConsumerLine(r, ""); got != "**Consumers:** failed (12 fail)." {
 		t.Errorf("enforce line %q", got)
 	}
+	body := ConsumerComment(r, "https://github.com/o/r/actions/runs/1/job/2")
+	want := "**Consumers:** failed (12 fail). [job summary](https://github.com/o/r/actions/runs/1/job/2)"
+	if body != ConsumerMarker+"\n"+want+"\n" {
+		t.Errorf("consumers comment %q", body)
+	}
 	r.Verdict = gate.VerdictPass
-	if ConsumerLine(r, "https://example") != "" {
-		t.Error("a pass has no consumers line")
-	}
-	pin := Comment(report(), "https://github.com/o/r/actions/runs/1")
-	with := JoinComment(pin, line)
-	gotPin, gotNote := SplitComment(with)
-	if gotPin != strings.TrimRight(pin, "\n") || gotNote != line {
-		t.Errorf("split pin %q note %q", gotPin, gotNote)
-	}
-	if back := JoinComment(gotPin, ""); back != strings.TrimRight(pin, "\n")+"\n" || strings.Contains(back, ConsumerMarker) {
-		t.Errorf("clearing the note: %q", back)
-	}
-	only := JoinComment("", line)
-	if !strings.HasPrefix(only, Marker+"\n\n"+ConsumerMarker+"\n") {
-		t.Errorf("note without a pin part: %q", only)
-	}
-	if JoinComment(Marker, "") != "" {
-		t.Error("a marker alone is not a comment")
+	if ConsumerLine(r, "https://example") != "" || ConsumerComment(r, "https://example") != "" {
+		t.Error("a pass has no consumers comment")
 	}
 }
 
