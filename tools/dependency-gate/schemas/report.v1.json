@@ -32,13 +32,9 @@
             "items": { "type": "string" }
           },
           "exclude": {
-            "description": "Patterns of poms (maven excludes) or module directories (go exclude) not checked",
+            "description": "RE2 regexes of Go module directories not checked",
             "type": "array",
             "items": { "type": "string" }
-          },
-          "transitive": {
-            "description": "Highest level of findings only the resolved dependency tree shows",
-            "enum": ["fail", "warn", "info", "off"]
           }
         }
       }
@@ -85,7 +81,7 @@
       "required": ["key", "check", "level", "status", "message"],
       "additionalProperties": false,
       "properties": {
-        "key": { "description": "ecosystem|check|package|version|symbol, plus |transitive: what the baseline compares", "type": "string" },
+        "key": { "description": "ecosystem|check|package|version|symbol: what the baseline compares", "type": "string" },
         "ecosystem": { "description": "Absent for findings of the gate itself", "enum": ["maven", "go"] },
         "adapter": { "type": "string" },
         "check": { "type": "string" },
@@ -115,7 +111,6 @@
             }
           }
         },
-        "transitive": { "description": "Found only in the resolved dependency tree", "type": "boolean" },
         "exception": {
           "description": "The exception or ignore rule that allowed the finding",
           "type": "object",

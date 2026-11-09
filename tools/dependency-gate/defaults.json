@@ -2,14 +2,6 @@
   "$schema": "./schemas/config.v1.json",
   "version": 1,
   "mode": "report",
-  "protectedBranches": "^(main|master|release/.+|support/.+)$",
-  "locked": ["pin-exceeded", "pin-mismatch", "feature-snapshot"],
-  "ecosystems": {
-    "maven": {
-      "transitive": "warn",
-      "pins": "https://raw.githubusercontent.com/Netcracker/qubership-core-infra/main/renovate-core-config.json"
-    }
-  },
   "families": [
     { "name": "bun", "ecosystem": "go", "match": "^github\\.com/uptrace/bun(/|$)", "note": "dialects and drivers check bun's version in init()" },
     { "name": "otel", "ecosystem": "go", "match": "^go\\.opentelemetry\\.io/otel(/|$)", "key": "stable", "note": "stable (v1) otel modules are released together; v0 ones (prometheus exporter, log) are not compared" },

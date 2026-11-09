@@ -131,10 +131,7 @@ func (p *Policy) Evaluate(in Input) *Report {
 
 	used := map[*rule]bool{}
 	for _, f := range found {
-		f.Level = p.Level(f.Check, f.Ecosystem, f.Adapter, in.Labels, in.Branch)
-		if limit := p.Scope[f.Ecosystem].Transitive; limit != 0 && f.Transitive {
-			f.Level = min(f.Level, limit)
-		}
+		f.Level = p.Level(f.Check, f.Ecosystem, f.Adapter, in.Labels)
 		rule := p.allowedBy(f)
 		if rule != nil {
 			used[rule] = true
@@ -167,7 +164,7 @@ func (p *Policy) Evaluate(in Input) *Report {
 		}
 	}
 	for _, f := range gate {
-		f.Level = p.Level(f.Check, "", f.Adapter, in.Labels, in.Branch)
+		f.Level = p.Level(f.Check, "", f.Adapter, in.Labels)
 		f.Key = key(f.Item)
 		f.Status = New
 		r.Findings = append(r.Findings, f)
@@ -179,13 +176,8 @@ func (p *Policy) Evaluate(in Input) *Report {
 }
 
 // key identifies a finding across revisions: without locations, with the version, so a worse violation is new.
-// A transitive finding is keyed apart from a declared one of the same version.
 func key(i Item) string {
-	k := strings.Join([]string{i.Ecosystem, i.Check, i.Package, i.Version, i.Symbol}, "|")
-	if i.Transitive {
-		k += "|transitive"
-	}
-	return k
+	return strings.Join([]string{i.Ecosystem, i.Check, i.Package, i.Version, i.Symbol}, "|")
 }
 
 // unknown explains why an adapter finding breaks the contract, or returns "".

@@ -104,13 +104,12 @@ func TestEvaluateLocal(t *testing.T) {
 	repo, out := t.TempDir(), t.TempDir()
 	var stdout bytes.Buffer
 	err := run(t.Context(), "evaluate", []string{"-repo", repo, "-findings", fixtures, "-out", out, "-today", "2026-10-29",
-		"-branch", "feature/x", "-expect", "maven-pins=success"}, &stdout)
+		"-branch", "feature/x", "-expect", "go-library=success"}, &stdout)
 	if err != nil {
 		t.Fatal(err)
 	}
 	r := readReport(t, out)
-	// feature SNAPSHOT versions are allowed outside protected branches
-	if r.Mode != gate.ModeReport || has(r, "feature-snapshot") {
+	if r.Mode != gate.ModeReport || !has(r, "apidiff-exposed") {
 		t.Errorf("report: mode %s, findings %d", r.Mode, len(r.Findings))
 	}
 	if !strings.HasPrefix(stdout.String(), "### ") || strings.Contains(stdout.String(), "::") {
@@ -153,10 +152,6 @@ func TestEvaluatePullRequest(t *testing.T) {
 	}
 	if !slices.Equal(r.Config, []string{"infra:defaults.json@dev", gate.RepoConfigFile + "@HEAD^1"}) || r.Mode != gate.ModeEnforce {
 		t.Errorf("config %v, mode %s", r.Config, r.Mode)
-	}
-	// the target branch comes from the event
-	if has(r, "feature-snapshot") {
-		t.Error("feature-snapshot on a feature branch")
 	}
 	if !strings.Contains(stdout.String(), "::error file=") || !strings.Contains(stdout.String(), "::warning::cannot update the PR comment") {
 		t.Errorf("annotations and the comment warning:\n%s", stdout.String())
@@ -218,14 +213,14 @@ func TestEvaluateCommentNote(t *testing.T) {
 	if !strings.Contains(a.body, "**Consumers:** would fail") || !strings.Contains(a.body, "https://github.com/o/r/actions/runs/9/job/2") {
 		t.Errorf("consumers line:\n%s", a.body)
 	}
-	if strings.Contains(a.body, "pin-exceeded") {
+	if strings.Contains(a.body, "apidiff-exposed") {
 		t.Errorf("the line lists findings:\n%s", a.body)
 	}
 }
 
 // Labels of the event and of -label reach labels.levels of the repository file.
 func TestEvaluateLabelLevels(t *testing.T) {
-	const config = `{"version": 1, "labels": {"levels": {"security": {"pin-lagging": "fail"}}}}`
+	const config = `{"version": 1, "checks": {"family-split": "warn"}, "labels": {"levels": {"security": {"family-split": "fail"}}}}`
 	for _, tc := range []struct {
 		name  string
 		args  []string
@@ -238,28 +233,35 @@ func TestEvaluateLabelLevels(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			repo := pullRequestRepo(t, config, config)
+			found := t.TempDir()
+			write(t, filepath.Join(found, "go-library-head.json"), `{
+				"schema": "dependency-gate-findings/v1",
+				"adapter": {"name": "go-library", "ecosystem": "go", "status": "ok", "checks": ["family-split"]},
+				"revision": "head",
+				"findings": [{"check": "family-split", "package": "github.com/example/mod", "message": "versions diverge"}]
+			}`)
 			env := map[string]string{}
 			if tc.event != nil {
 				env = map[string]string{"GITHUB_EVENT_NAME": "pull_request", "GITHUB_EVENT_PATH": eventFile(t, "main", tc.event...)}
 			}
 			githubEnv(t, env)
 			out := t.TempDir()
-			args := append([]string{"-repo", repo, "-findings", fixtures, "-out", out, "-today", "2026-10-29"}, tc.args...)
+			args := append([]string{"-repo", repo, "-findings", found, "-out", out, "-today", "2026-10-29"}, tc.args...)
 			if err := run(t.Context(), "evaluate", args, io.Discard); err != nil {
 				t.Fatal(err)
 			}
 			r := readReport(t, out)
-			i := slices.IndexFunc(r.Findings, func(f *gate.Finding) bool { return f.Check == "pin-lagging" })
+			i := slices.IndexFunc(r.Findings, func(f *gate.Finding) bool { return f.Check == "family-split" })
 			if i < 0 || r.Findings[i].Level != tc.want {
-				t.Errorf("pin-lagging at %d of %+v, want level %s", i, r.Findings, tc.want)
+				t.Errorf("family-split at %d of %+v, want level %s", i, r.Findings, tc.want)
 			}
 		})
 	}
 }
 
 func TestDetect(t *testing.T) {
-	repo := pullRequestRepo(t, `{"version": 1, "ecosystems": {"maven": {"excludes": ["^base/"]}}}`,
-		`{"version": 1, "ecosystems": {"maven": {"excludes": ["^head/"]}}}`)
+	repo := pullRequestRepo(t, `{"version": 1, "ecosystems": {"maven": {"roots": ["base"]}}}`,
+		`{"version": 1, "ecosystems": {"maven": {"roots": ["head"]}}}`)
 	outputs := func() map[string]string {
 		t.Helper()
 		var stdout bytes.Buffer
@@ -275,15 +277,15 @@ func TestDetect(t *testing.T) {
 
 	githubEnv(t, map[string]string{"GITHUB_EVENT_NAME": "pull_request"})
 	o := outputs()
-	if o["maven"] != "true" || o["maven-roots"] != `["."]` || o["go"] != "false" || o["go-modules"] != "[]" {
+	if o["maven"] != "true" || o["maven-roots"] != `["base"]` || o["go"] != "false" || o["go-modules"] != "[]" {
 		t.Errorf("pull request: %v", o)
 	}
-	if !strings.Contains(o["config"], `"^base/"`) {
+	if !strings.Contains(o["config"], `"base"`) {
 		t.Errorf("config %s", o["config"])
 	}
 
 	githubEnv(t, map[string]string{"GITHUB_EVENT_NAME": "push"})
-	if o := outputs(); o["maven"] != "true" || !strings.Contains(o["config"], `"^head/"`) {
+	if o := outputs(); o["maven"] != "true" || !strings.Contains(o["config"], `"head"`) {
 		t.Errorf("push: %v", o)
 	}
 
@@ -309,7 +311,7 @@ func TestFlags(t *testing.T) {
 		want      string
 	}{
 		{"help", "evaluate", []string{"-h"}, flag.ErrHelp, ""},
-		{"expect", "evaluate", []string{"-expect", "maven-pins"}, nil, "want adapter=result"},
+		{"expect", "evaluate", []string{"-expect", "go-library"}, nil, "want adapter=result"},
 		{"unknown command", "check", nil, errUsage, ""},
 		// an unreadable repository file is a finding of the gate, not an error
 		{"config at rev", "evaluate", []string{"-config-rev", "no-such-rev", "-out", t.TempDir()}, nil, ""},

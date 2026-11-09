@@ -13,10 +13,6 @@
       "description": "report: the check is always green, the verdict is only reported; enforce: a fail verdict fails the check",
       "enum": ["report", "enforce"]
     },
-    "protectedBranches": {
-      "description": "Infra only. RE2 regex of target branches where protected-only checks (feature-snapshot) apply",
-      "type": "string"
-    },
     "maxExceptionDays": {
       "description": "Infra only. Longest allowed distance from today to an exception's until date",
       "type": "integer",
@@ -56,20 +52,6 @@
               "type": "array",
               "minItems": 1,
               "items": { "$ref": "#/$defs/directory" }
-            },
-            "excludes": {
-              "description": "Java regexes (java.util.regex) of repository-relative pom paths not to check, applied by the Maven plugin",
-              "type": "array",
-              "items": { "type": "string", "pattern": "^[^\r\n]+$" }
-            },
-            "transitive": {
-              "description": "Highest level of findings only the resolved dependency tree shows (transitive); off drops them",
-              "$ref": "#/$defs/level"
-            },
-            "pins": {
-              "description": "renovate-core-config.json to check against: URL or repository path",
-              "type": "string",
-              "minLength": 1
             },
             "checks": { "$ref": "#/$defs/checks" }
           }
@@ -134,7 +116,7 @@
   "$defs": {
     "checkId": { "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
     "checkPattern": {
-      "description": "Check id or a glob over check ids, e.g. pin-* or *",
+      "description": "Check id or a glob over check ids, e.g. consumer-* or *",
       "type": "string",
       "pattern": "^[a-z0-9*?-]+$"
     },

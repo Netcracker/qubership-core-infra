@@ -53,11 +53,7 @@
           "license": { "description": "SPDX license id", "type": ["string", "null"] },
           "message": { "type": "string", "minLength": 1 },
           "note": { "type": ["string", "null"] },
-          "locations": { "type": "array", "items": { "$ref": "#/$defs/location" } },
-          "transitive": {
-            "description": "Found only in the resolved dependency tree: not declared or managed by the repository",
-            "type": "boolean"
-          }
+          "locations": { "type": "array", "items": { "$ref": "#/$defs/location" } }
         }
       }
     }

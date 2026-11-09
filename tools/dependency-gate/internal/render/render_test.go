@@ -17,16 +17,16 @@ func report() *gate.Report {
 		Mode:    gate.ModeEnforce,
 		Verdict: gate.VerdictFail,
 		Adapters: []gate.Adapter{
-			{Name: "maven-pins", Status: gate.AdapterOK},
+			{Name: "maven-consumers", Status: gate.AdapterOK},
 			{Name: "go-library", Status: gate.AdapterSkipped, Reason: "go.mod unchanged"},
 		},
 		Findings: []*gate.Finding{
 			{Level: gate.Fail, Status: gate.New, Item: gate.Item{Ecosystem: gate.Maven,
-				Check: "pin-exceeded", Package: "com.rabbitmq:amqp-client", Version: "5.37.0", Message: "above the pin 5.30.0",
-				Note: "a|b", Locations: []gate.Location{{File: "bom/pom.xml", Line: 10}, {File: "lib/pom.xml"}}}},
-			{Level: gate.Warn, Status: gate.Preexisting, Item: gate.Item{Ecosystem: gate.Maven,
-				Check: "pin-exceeded", Package: "org.projectlombok:lombok", Version: "1.18.48", Message: "above the pin", Transitive: true,
-				Locations: []gate.Location{{File: "lib/pom.xml", Line: 27}}}},
+				Check: "consumer-build", Package: "Netcracker/qubership-core-config-server", Version: "1", Message: "does not build",
+				Note: "a|b", Locations: []gate.Location{{File: "pom.xml", Line: 10}, {File: "lib/pom.xml"}}}},
+			{Level: gate.Warn, Status: gate.Preexisting, Item: gate.Item{Ecosystem: gate.Go,
+				Check: "family-split", Package: "github.com/uptrace/bun", Version: "v1.2.0", Message: "versions diverge",
+				Locations: []gate.Location{{File: "go.mod", Line: 7}}}},
 			{Level: gate.Fail, Status: gate.Allowed, Exception: &gate.ExceptionRef{
 				Source: ".github/dependency-gate.json#/exceptions/5", Reason: "coordinated", Until: "2026-11-05"},
 				Item: gate.Item{Ecosystem: gate.Go, Check: "apidiff-exposed", Package: "github.com/opensearch-project/opensearch-go/v4", Message: "incompatible",
@@ -47,9 +47,9 @@ func TestSummary(t *testing.T) {
 	}{
 		{"enforce", func(*gate.Report) {}, "❌ Dependency gate: failed", []string{
 			"1 fail, 1 warn, 1 already on the base branch, 1 allowed",
-			"`maven-pins` ok · `go-library` skipped (go.mod unchanged)",
-			"| ❌ | pin-exceeded | `com.rabbitmq:amqp-client` | `5.37.0` | above the pin 5.30.0 — a\\|b | `bom/pom.xml:10` +1 |",
-			"above the pin (transitive) (already on the base branch)",
+			"`maven-consumers` ok · `go-library` skipped (go.mod unchanged)",
+			"| ❌ | consumer-build | `Netcracker/qubership-core-config-server` | `1` | does not build — a\\|b | `pom.xml:10` +1 |",
+			"versions diverge (already on the base branch)",
 			"| ☑️ | apidiff-exposed |",
 			"(allowed: coordinated, until 2026-11-05, .github/dependency-gate.json#/exceptions/5)",
 			"#### Gate\n", "#### Maven\n", "#### Go\n",
@@ -70,12 +70,12 @@ func TestSummary(t *testing.T) {
 		}},
 		{"scope", func(r *gate.Report) {
 			r.Scope = map[string]gate.Scope{
-				gate.Maven: {Roots: []string{"core"}, Exclude: []string{"^a/", "^b|c/"}, Transitive: gate.Warn},
-				gate.Go:    {Modules: []string{".", "tools"}, Transitive: gate.Off},
+				gate.Maven: {Roots: []string{"core"}},
+				gate.Go:    {Modules: []string{".", "tools"}, Exclude: []string{"^a/", "^b|c/"}},
 			}
 		}, "❌ Dependency gate: failed", []string{
-			"\n\nScope: go: only modules `.`, `tools`; transitive findings dropped · " +
-				"maven: only roots `core`; not checked `^a/`, `^b\\|c/`; transitive findings at most warn\n",
+			"\n\nScope: go: only modules `.`, `tools`; not checked `^a/`, `^b\\|c/` · " +
+				"maven: only roots `core`\n",
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -107,7 +107,7 @@ func TestComment(t *testing.T) {
 	r := report()
 	for i := range 25 {
 		r.Findings = append(r.Findings, &gate.Finding{Level: gate.Warn, Status: gate.New,
-			Item: gate.Item{Ecosystem: gate.Go, Check: "pin-lagging", Package: fmt.Sprint("m", i), Message: "untidy"}})
+			Item: gate.Item{Ecosystem: gate.Go, Check: "family-split", Package: fmt.Sprint("m", i), Message: "untidy"}})
 	}
 	md := Comment(r, "https://github.com/o/r/actions/runs/1")
 	for _, want := range []string{Marker + "\n### ❌ Dependency gate: failed", "… and 7 more.", "[job summary](https://github.com/o/r/actions/runs/1)"} {
@@ -178,8 +178,8 @@ func TestAnnotations(t *testing.T) {
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
 	// the new failure and the preexisting warning; the allowed finding and those without a line are left out
 	want := []string{
-		"::error file=bom/pom.xml,line=10,title=dependency-gate/pin-exceeded::com.rabbitmq:amqp-client:5.37.0 - above the pin 5.30.0",
-		"::warning file=lib/pom.xml,line=27,",
+		"::error file=pom.xml,line=10,title=dependency-gate/consumer-build::Netcracker/qubership-core-config-server:1 - does not build",
+		"::warning file=go.mod,line=7,",
 	}
 	if len(lines) != len(want) {
 		t.Fatalf("got:\n%s", out.String())

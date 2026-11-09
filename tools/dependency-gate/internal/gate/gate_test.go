@@ -159,27 +159,16 @@ func TestDefaultsAreValid(t *testing.T) {
 	if len(p.Problems) > 0 {
 		t.Fatal(p.Problems)
 	}
-	if p.Config.Mode != ModeReport || p.Config.MaxExceptionDays != 0 {
+	if p.Config.Mode != ModeReport || p.Config.MaxExceptionDays != 0 || len(p.Config.Locked) != 0 {
 		t.Errorf("unexpected defaults: %+v", p.Config)
-	}
-	if !slices.Contains(p.Config.Locked, "pin-exceeded") {
-		t.Error("pin-exceeded must be locked")
 	}
 }
 
 func TestFixturePolicy(t *testing.T) {
 	r := policy(t, repoFixture(t)).Evaluate(fixtures(t))
 	expectFindings(t, r,
-		// same key already on the base: preexisting, and a fail is capped at warn
-		want{"pin-exceeded", "amqp-client", Warn, Preexisting},
-		// a worse version than the base is a new fail
-		want{"pin-exceeded", "jackson-bom", Fail, New},
-		want{"pin-lagging", "slf4j-api", Warn, New},
-		// an ignore rule of the check
 		want{"apidiff-exposed", "openshift", Fail, Allowed},
 		want{"apidiff-exposed", "opensearch-go", Fail, New},
-		want{"pin-conflict", "opentelemetry", Warn, New},
-		want{"feature-snapshot", "consul", Fail, New},
 	)
 
 	if got := find(t, r, "apidiff-exposed", "openshift").Exception; got.Source != RepoConfigFile+"#/checks/apidiff-exposed/ignore/0" || got.Until != "" {
@@ -188,7 +177,7 @@ func TestFixturePolicy(t *testing.T) {
 	if r.Verdict != VerdictFail || r.Mode != ModeReport || r.Failed() {
 		t.Errorf("verdict %s in %s mode, failed %v", r.Verdict, r.Mode, r.Failed())
 	}
-	if r.Counts.Allowed != 1 || r.Counts.Preexisting != 1 {
+	if r.Counts.Allowed != 1 || r.Counts.Preexisting != 0 {
 		t.Errorf("counts %+v", r.Counts)
 	}
 	if diff := cmp.Diff([]string{"infra:defaults.json", RepoConfigFile}, r.Config); diff != "" {
@@ -196,8 +185,7 @@ func TestFixturePolicy(t *testing.T) {
 	}
 	// the repository narrows what the adapters check, locked checks included: the report shows it
 	if diff := cmp.Diff(map[string]Scope{
-		Maven: {Exclude: []string{"^core-maven-plugins/.*/src/test/resources/"}, Transitive: Warn},
-		Go:    {Modules: []string{"."}},
+		Go: {Modules: []string{"."}},
 	}, r.Scope); diff != "" {
 		t.Errorf("scope (-want +got):\n%s", diff)
 	}
@@ -207,43 +195,29 @@ func TestFixturePolicy(t *testing.T) {
 }
 
 func TestBaseline(t *testing.T) {
-	r := policy(t, "").Evaluate(fixtures(t))
+	old := Item{Check: "apidiff-exposed", Package: "github.com/example/old", Version: "v1.0.0", Symbol: "T", Message: "removed"}
+	bumped := Item{Check: "apidiff-exposed", Package: "github.com/example/new", Version: "v1.1.0", Symbol: "T", Message: "removed"}
+	base := headFile("go-library", Go, AdapterOK, nil, old)
+	base.Revision = Base
+	r := policy(t, "").Evaluate(Input{
+		Head: []*FindingsFile{headFile("go-library", Go, AdapterOK, []string{"apidiff-exposed"}, old, bumped)},
+		Base: []*FindingsFile{base},
+	})
 	expectFindings(t, r,
-		// on the base branch with the same key
-		want{"pin-exceeded", "amqp-client", Warn, Preexisting},
-		want{"pin-exceeded", "jackson-bom", Fail, New},
-		// the version is part of the key: a worse violation of an old problem is new
-		want{"pin-exceeded", "lombok", Fail, New},
-		// only the resolved dependency tree shows it: at most a warning by the infra defaults
-		want{"pin-exceeded", "jackson-databind", Warn, New},
+		want{"apidiff-exposed", "example/old", Warn, Preexisting},
+		want{"apidiff-exposed", "example/new", Fail, New},
 	)
 	if r.Counts.Preexisting != 1 {
 		t.Errorf("counts %+v", r.Counts)
 	}
-	if got := find(t, r, "pin-exceeded", "amqp-client").Key; got != "maven|pin-exceeded|com.rabbitmq:amqp-client|5.37.0|" {
+	if got := find(t, r, "apidiff-exposed", "example/old").Key; got != "go|apidiff-exposed|github.com/example/old|v1.0.0|T" {
 		t.Errorf("key %q", got)
 	}
 }
 
-func TestProtectedOnlyChecks(t *testing.T) {
-	for _, tc := range []struct {
-		name, branch string
-		want         want
-	}{
-		{"feature branch", "feature/consul-auth", want{check: "feature-snapshot", pkg: "consul"}},
-		{"release branch", "release/2026.4", want{"feature-snapshot", "consul", Fail, New}},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			in := fixtures(t)
-			in.Branch = tc.branch
-			expectFindings(t, policy(t, "").Evaluate(in), tc.want)
-		})
-	}
-}
-
 func TestModes(t *testing.T) {
-	found := Input{Head: []*FindingsFile{headFile("maven-pins", Maven, AdapterOK, []string{"pin-exceeded"},
-		Item{Check: "pin-exceeded", Package: "g:a", Version: "2", Message: "above the pin 1"})}}
+	found := Input{Head: []*FindingsFile{headFile("go-library", Go, AdapterOK, []string{"apidiff-exposed"},
+		Item{Check: "apidiff-exposed", Package: "g", Version: "v2", Symbol: "T", Message: "removed"})}}
 	// report mode stays green with a fail verdict — covered by TestFixturePolicy
 	if r := policy(t, `{"version": 1, "mode": "enforce"}`).Evaluate(found); r.Verdict != VerdictFail || !r.Failed() {
 		t.Errorf("enforce: verdict %s, failed %v", r.Verdict, r.Failed())
@@ -254,7 +228,7 @@ func TestModes(t *testing.T) {
 }
 
 func TestLabelLevels(t *testing.T) {
-	p := policy(t, `{"version": 1, "checks": {"pin-lagging": "off"}, "labels": {"levels": {"security": {"pin-lagging": "fail"}}}}`)
+	p := policy(t, `{"version": 1, "checks": {"family-split": "off"}, "labels": {"levels": {"security": {"family-split": "fail"}}}}`)
 	for _, tc := range []struct {
 		labels []string
 		level  Level
@@ -263,13 +237,13 @@ func TestLabelLevels(t *testing.T) {
 		{[]string{"automerge", "security"}, Fail},
 	} {
 		t.Run(fmt.Sprint(tc.labels), func(t *testing.T) {
-			in := Input{Labels: tc.labels, Head: []*FindingsFile{headFile("maven-pins", Maven, AdapterOK, []string{"pin-lagging"},
-				Item{Check: "pin-lagging", Package: "org.slf4j:slf4j-api", Version: "2.0.17", Message: "below the pin"})}}
+			in := Input{Labels: tc.labels, Head: []*FindingsFile{headFile("go-library", Go, AdapterOK, []string{"family-split"},
+				Item{Check: "family-split", Package: "github.com/example/mod", Message: "versions diverge"})}}
 			if tc.level == Off {
-				expectFindings(t, p.Evaluate(in), want{check: "pin-lagging", pkg: "slf4j-api"})
+				expectFindings(t, p.Evaluate(in), want{check: "family-split", pkg: "example/mod"})
 				return
 			}
-			expectFindings(t, p.Evaluate(in), want{"pin-lagging", "slf4j-api", tc.level, New})
+			expectFindings(t, p.Evaluate(in), want{"family-split", "example/mod", tc.level, New})
 		})
 	}
 }
@@ -289,10 +263,10 @@ func TestToolErrors(t *testing.T) {
 	in := Input{
 		Head: []*FindingsFile{
 			headFile("osv", Maven, AdapterError, nil),
-			headFile("go-library", Go, AdapterOK, []string{"apidiff-exposed"}, Item{Check: "pin-exceeded", Message: "wrong ecosystem"}),
+			headFile("go-library", Go, AdapterOK, []string{"apidiff-exposed"}, Item{Check: "no-such-check", Message: "wrong check"}),
 			headFile("go-consumers", Go, AdapterSkipped, nil),
 		},
-		Expected: map[string]string{"maven-pins": "failure", "detect": "success", "go-consumers": "success", "go-other": "skipped", "go-plan": "skipped: non-test build list unchanged"},
+		Expected: map[string]string{"missing": "failure", "detect": "success", "go-consumers": "success", "go-other": "skipped", "go-plan": "skipped: non-test build list unchanged"},
 	}
 	for _, tc := range []struct {
 		name, config string
@@ -305,7 +279,7 @@ func TestToolErrors(t *testing.T) {
 			expectFindings(t, r,
 				// fail closed: a failed adapter, an adapter that wrote nothing, a broken contract.
 				// go-consumers is the soft adapter: a skipped matrix is not an error.
-				want{ToolError, "maven-pins", Fail, New},
+				want{ToolError, "missing", Fail, New},
 				want{ToolError, "detect", Fail, New},
 				want{ToolError, "go-library", Fail, New},
 				want{ToolError, "osv", Fail, New},
@@ -327,16 +301,16 @@ func TestToolErrors(t *testing.T) {
 
 func TestBrokenFindingsFile(t *testing.T) {
 	dir := t.TempDir()
-	writeFile(t, filepath.Join(dir, "maven-pins-head.json"),
-		`{"schema": "dependency-gate-findings/v1", "adapter": {"name": "maven-pins", "ecosystem": "maven", "status": "ok"}, "revision": "head", "findings": []}`)
+	writeFile(t, filepath.Join(dir, "library-head.json"),
+		`{"schema": "dependency-gate-findings/v1", "adapter": {"name": "library", "ecosystem": "go", "status": "ok"}, "revision": "head", "findings": []}`)
 	writeFile(t, filepath.Join(dir, "sub", "broken.json"), `{"findings": [`)
 	var in Input
 	if err := in.ReadFindings(testSchemas(t), dir); err != nil {
 		t.Fatal(err)
 	}
 	r := policy(t, "").Evaluate(in)
-	expectFindings(t, r, want{ToolError, "maven-pins", Fail, New}, want{ToolError, "broken", Fail, New})
-	if msg := find(t, r, ToolError, "maven-pins").Message; !strings.Contains(msg, "checks") {
+	expectFindings(t, r, want{ToolError, "library", Fail, New}, want{ToolError, "broken", Fail, New})
+	if msg := find(t, r, ToolError, "library").Message; !strings.Contains(msg, "checks") {
 		t.Errorf("message should name the missing field: %s", msg)
 	}
 }
@@ -345,18 +319,14 @@ func TestInvalidRepoConfig(t *testing.T) {
 	for name, cfg := range map[string]string{
 		"not json":           `{"version": 1,`,
 		"schema":             `{"version": 1, "mode": "strict"}`,
-		"unknown check":      `{"version": 1, "checks": {"pin-exceded": "warn"}}`,
-		"wrong ecosystem":    `{"version": 1, "ecosystems": {"go": {"checks": {"pin-exceeded": "warn"}}}}`,
+		"unknown check":      `{"version": 1, "checks": {"no-such-check": "warn"}}`,
+		"wrong ecosystem":    `{"version": 1, "ecosystems": {"maven": {"checks": {"consumer-test-flaky": "warn"}}}}`,
 		"gate check off":     `{"version": 1, "checks": {"exception-unused": "off"}}`,
 		"gate check lowered": `{"version": 1, "checks": {"tool-error": "info"}}`,
 		"gate check warned":  `{"version": 1, "checks": {"config-invalid": "warn"}}`,
-		"locked weakened":    `{"version": 1, "checks": {"pin-exceeded": "warn"}}`,
-		"locked ignore":      `{"version": 1, "checks": {"pin-mismatch": {"ignore": [{"package": "g:a", "reason": "r"}]}}}`,
-		"locked by eco":      `{"version": 1, "ecosystems": {"maven": {"checks": {"pin-exceeded": "warn"}}}}`,
-		"locked by label":    `{"version": 1, "labels": {"levels": {"security": {"pin-exceeded": "warn"}}}}`,
 		"infra only":         `{"version": 1, "maxExceptionDays": 365}`,
-		"exceptions":         `{"version": 1, "exceptions": [{"checks": ["pin-*"], "package": "g:a", "version": "1", "reason": "r", "until": "2026-12-01"}]}`,
-		"pins":               `{"version": 1, "ecosystems": {"maven": {"pins": "pins.json"}}}`,
+		"exceptions":         `{"version": 1, "exceptions": [{"checks": ["consumer-*"], "package": "g:a", "version": "1", "reason": "r", "until": "2026-12-01"}]}`,
+		"unknown setting":    `{"version": 1, "ecosystems": {"maven": {"plugin": "x"}}}`,
 		"bad regex":          `{"version": 1, "ecosystems": {"go": {"exclude": ["("]}}}`,
 		"root with comma":    `{"version": 1, "ecosystems": {"maven": {"roots": ["a,b"]}}}`,
 		"root outside":       `{"version": 1, "ecosystems": {"maven": {"roots": ["core/../.."]}}}`,
@@ -377,9 +347,28 @@ func TestInvalidRepoConfig(t *testing.T) {
 	}
 }
 
+func TestLockedCheck(t *testing.T) {
+	infra := `{"version": 1, "locked": ["apidiff-exposed"]}`
+	for name, cfg := range map[string]string{
+		"weakened": `{"version": 1, "checks": {"apidiff-exposed": "warn"}}`,
+		"ignore":   `{"version": 1, "checks": {"apidiff-exposed": {"ignore": [{"package": "g", "reason": "r"}]}}}`,
+		"by eco":   `{"version": 1, "ecosystems": {"go": {"checks": {"apidiff-exposed": "warn"}}}}`,
+		"by label": `{"version": 1, "labels": {"levels": {"security": {"apidiff-exposed": "warn"}}}}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			dir := t.TempDir()
+			writeFile(t, filepath.Join(dir, RepoConfigFile), cfg)
+			p := load(t, LoadOptions{Defaults: []byte(infra), DefaultsName: "infra", RepoDir: dir})
+			if len(p.Problems) != 1 || p.Problems[0].Check != ConfigInvalid {
+				t.Fatalf("problems %+v", p.Problems)
+			}
+		})
+	}
+}
+
 func TestExceptionsAreRejected(t *testing.T) {
 	p := policy(t, `{"version": 1, "mode": "enforce", "exceptions": [
-		{"checks": ["pin-*"], "package": "com.rabbitmq:amqp-client", "version": "5.37.0", "reason": "r", "until": "2026-12-01"}
+		{"checks": ["consumer-*"], "package": "g:a", "version": "1", "reason": "r", "until": "2026-12-01"}
 	]}`)
 	if len(p.Problems) != 1 || p.Problems[0].Check != ConfigInvalid || !strings.Contains(p.Problems[0].Message, "exceptions") {
 		t.Fatalf("%+v", p.Problems)
@@ -389,8 +378,8 @@ func TestExceptionsAreRejected(t *testing.T) {
 	}
 	r := p.Evaluate(fixtures(t))
 	expectFindings(t, r,
-		want{"pin-exceeded", "amqp-client", Warn, Preexisting},
-		want{"pin-exceeded", "jackson-bom", Fail, New},
+		want{"apidiff-exposed", "openshift", Fail, New},
+		want{"apidiff-exposed", "opensearch-go", Fail, New},
 	)
 	if r.Mode != ModeReport || r.Verdict != VerdictFail || r.Failed() {
 		t.Errorf("the ignored file must not switch the mode: %s %s failed=%v", r.Mode, r.Verdict, r.Failed())
@@ -398,16 +387,16 @@ func TestExceptionsAreRejected(t *testing.T) {
 }
 
 func TestMerge(t *testing.T) {
-	infra := `{"version": 1, "mode": "report", "protectedBranches": "^main$", "maxExceptionDays": 30,
-		"labels": {"levels": {"security": {"pin-lagging": "fail"}}},
-		"ecosystems": {"maven": {"pins": "infra.json", "checks": {"pin-lagging": {"level": "warn", "ignore": [{"package": "a", "reason": "infra"}]}}}},
-		"checks": {"snapshot": "warn"},
+	infra := `{"version": 1, "mode": "report", "maxExceptionDays": 30,
+		"labels": {"levels": {"security": {"family-split": "fail"}}},
+		"ecosystems": {"go": {"checks": {"family-split": {"level": "warn", "ignore": [{"package": "a", "reason": "infra"}]}}}},
+		"checks": {"consumer-test-flaky": "warn"},
 		"families": [{"name": "bun", "ecosystem": "go", "match": "^bun"}, {"name": "otel", "ecosystem": "go", "match": "^otel"}],
 		"consumers": {"go": [{"repo": "a/b", "module": "m"}]}}`
 	repo := `{"version": 1, "mode": "enforce",
 		"labels": {"levels": {"security": {"apidiff-exposed": "fail"}}},
-		"ecosystems": {"maven": {"roots": ["."], "checks": {"pin-lagging": {"level": "fail", "ignore": [{"package": "b", "reason": "repo"}]}}}},
-		"checks": {"snapshot": "info"},
+		"ecosystems": {"maven": {"roots": ["."]}, "go": {"checks": {"family-split": {"level": "fail", "ignore": [{"package": "b", "reason": "repo"}]}}}},
+		"checks": {"consumer-test-flaky": "info"},
 		"families": [{"name": "otel", "ecosystem": "go", "match": "^go.opentelemetry.io/otel", "key": "stable"}],
 		"consumers": false}`
 	dir := t.TempDir()
@@ -420,23 +409,19 @@ func TestMerge(t *testing.T) {
 	if c.Mode != ModeEnforce || c.MaxExceptionDays != 30 {
 		t.Errorf("scalars: %+v", c)
 	}
-	if diff := cmp.Diff(map[string]map[string]Level{"security": {"pin-lagging": Fail, "apidiff-exposed": Fail}}, c.Labels.Levels); diff != "" {
+	if diff := cmp.Diff(map[string]map[string]Level{"security": {"family-split": Fail, "apidiff-exposed": Fail}}, c.Labels.Levels); diff != "" {
 		t.Errorf("label levels (-want +got):\n%s", diff)
 	}
-	down := c.Ecosystems[Maven].Checks["pin-lagging"]
+	down := c.Ecosystems[Go].Checks["family-split"]
 	if down.Level != Fail || len(down.Ignore) != 2 {
 		t.Errorf("ecosystem check %+v", down)
 	}
-	var pins string
 	var roots []string
-	if err := c.Ecosystems[Maven].Setting("pins", &pins); err != nil || pins != "infra.json" {
-		t.Errorf("pins %q %v", pins, err)
-	}
 	if err := c.Ecosystems[Maven].Setting("roots", &roots); err != nil || !slices.Equal(roots, []string{"."}) {
 		t.Errorf("roots %v %v", roots, err)
 	}
-	if diff := cmp.Diff(CheckSettings{Level: Info}, c.Checks["snapshot"]); diff != "" {
-		t.Errorf("snapshot check (-want +got):\n%s", diff)
+	if diff := cmp.Diff(CheckSettings{Level: Info}, c.Checks["consumer-test-flaky"]); diff != "" {
+		t.Errorf("consumer-test-flaky (-want +got):\n%s", diff)
 	}
 	if diff := cmp.Diff([]Family{
 		{Name: "bun", Ecosystem: Go, Match: "^bun"},
@@ -460,11 +445,11 @@ func TestMerge(t *testing.T) {
 	}
 
 	// infra and repository ignore rules both apply, with their sources
-	r := p.Evaluate(Input{Head: []*FindingsFile{headFile("maven-pins", Maven, AdapterOK, []string{"pin-lagging"},
-		Item{Check: "pin-lagging", Package: "a", Message: "m"}, Item{Check: "pin-lagging", Package: "b", Message: "m"},
-		Item{Check: "pin-lagging", Package: "y", Message: "m"})}})
-	expectFindings(t, r, want{"pin-lagging", "a", Fail, Allowed}, want{"pin-lagging", "b", Fail, Allowed}, want{"pin-lagging", "y", Fail, New})
-	if got := find(t, r, "pin-lagging", "a").Exception.Source; got != "infra#/ecosystems/maven/checks/pin-lagging/ignore/0" {
+	r := p.Evaluate(Input{Head: []*FindingsFile{headFile("go-library", Go, AdapterOK, []string{"family-split"},
+		Item{Check: "family-split", Package: "a", Message: "m"}, Item{Check: "family-split", Package: "b", Message: "m"},
+		Item{Check: "family-split", Package: "y", Message: "m"})}})
+	expectFindings(t, r, want{"family-split", "a", Fail, Allowed}, want{"family-split", "b", Fail, Allowed}, want{"family-split", "y", Fail, New})
+	if got := find(t, r, "family-split", "a").Exception.Source; got != "infra#/ecosystems/go/checks/family-split/ignore/0" {
 		t.Errorf("source %s", got)
 	}
 }
@@ -485,50 +470,12 @@ func TestReportMatchesSchema(t *testing.T) {
 	}
 }
 
-func TestTransitive(t *testing.T) {
-	declared := Item{Check: "pin-exceeded", Package: "com.fasterxml.jackson.core:jackson-databind", Version: "2.21.8", Message: "above the pin"}
-	tree := declared
-	tree.Transitive = true
-	other := Item{Check: "pin-exceeded", Package: "io.netty:netty-codec", Version: "4.2.9", Message: "above the pin", Transitive: true}
-	base := headFile("maven-pins", Maven, AdapterOK, nil, other)
-	base.Revision = Base
-	in := Input{
-		Head: []*FindingsFile{headFile("maven-pins", Maven, AdapterOK, []string{"pin-exceeded"}, declared, tree, other)},
-		Base: []*FindingsFile{base},
-	}
-	const (
-		declaredKey = "maven|pin-exceeded|com.fasterxml.jackson.core:jackson-databind|2.21.8|"
-		treeKey     = declaredKey + "|transitive"
-		otherKey    = "maven|pin-exceeded|io.netty:netty-codec|4.2.9||transitive"
-	)
-	for _, tc := range []struct {
-		name, config string
-		want         []string
-	}{
-		// infra: transitive findings are at most warnings, keyed apart from declared ones
-		{"infra defaults", "", []string{declaredKey + " fail new", treeKey + " warn new", otherKey + " warn preexisting"}},
-		{"enforced", `{"version": 1, "ecosystems": {"maven": {"transitive": "fail"}}}`,
-			[]string{declaredKey + " fail new", treeKey + " fail new", otherKey + " warn preexisting"}},
-		{"off", `{"version": 1, "ecosystems": {"maven": {"transitive": "off"}}}`, []string{declaredKey + " fail new"}},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			r := policy(t, tc.config).Evaluate(in)
-			if diff := cmp.Diff(tc.want, keys(r)); diff != "" {
-				t.Errorf("findings (-want +got):\n%s", diff)
-			}
-			if len(r.Findings) > 1 && !r.Findings[1].Transitive {
-				t.Error("the report keeps the flag")
-			}
-		})
-	}
-}
-
 func TestAdapterOfSeveralEcosystems(t *testing.T) {
 	osv := headFile("osv", "", AdapterOK, []string{"family-split"},
 		Item{Ecosystem: Maven, Check: "family-split", Package: "org.yaml:snakeyaml", Version: "2.4", Message: "versions diverge"},
 		Item{Ecosystem: Go, Check: "family-split", Package: "golang.org/x/net", Version: "v0.40.0", Message: "versions diverge"},
 		Item{Check: "family-split", Package: "left-pad", Message: "no ecosystem"},
-		Item{Ecosystem: Go, Check: "pin-exceeded", Package: "x", Message: "a maven check"},
+		Item{Ecosystem: Go, Check: "no-such-check", Package: "x", Message: "unknown"},
 	)
 	base := headFile("osv", "", AdapterOK, nil,
 		Item{Ecosystem: Go, Check: "family-split", Package: "golang.org/x/net", Version: "v0.40.0", Message: "old"})
@@ -545,7 +492,7 @@ func TestAdapterOfSeveralEcosystems(t *testing.T) {
 	for _, f := range matching(r, ToolError, "") {
 		toolErrors = append(toolErrors, f.Level.String()+" "+string(f.Status)+" "+f.Message)
 	}
-	if diff := cmp.Diff([]string{`fail new finding "family-split" has no ecosystem`, `fail new unknown go check "pin-exceeded"`}, toolErrors); diff != "" {
+	if diff := cmp.Diff([]string{`fail new finding "family-split" has no ecosystem`, `fail new unknown go check "no-such-check"`}, toolErrors); diff != "" {
 		t.Errorf("tool errors (-want +got):\n%s", diff)
 	}
 }
@@ -553,7 +500,7 @@ func TestAdapterOfSeveralEcosystems(t *testing.T) {
 // Exceptions are not policy, including in the infra defaults: Load refuses them.
 func TestInfraExceptionsAreRejected(t *testing.T) {
 	infra := strings.Replace(string(infraDefaults(t)), `"version": 1,`,
-		`"version": 1, "exceptions": [{"checks": ["pin-*"], "package": "com.rabbitmq:amqp-client", "version": "5.37.0", "reason": "infra", "until": "2026-12-01"}],`, 1)
+		`"version": 1, "exceptions": [{"checks": ["consumer-*"], "package": "g:a", "version": "1", "reason": "infra", "until": "2026-12-01"}],`, 1)
 	_, err := Load(LoadOptions{Schemas: testSchemas(t), Defaults: []byte(infra), DefaultsName: "infra", RepoDir: t.TempDir(), Today: today})
 	if err == nil || !strings.Contains(err.Error(), "exceptions") {
 		t.Fatalf("err = %v", err)
@@ -577,7 +524,7 @@ func TestRepoConfigAtRevision(t *testing.T) {
 	writeFile(t, filepath.Join(dir, RepoConfigFile), `{"version": 1, "mode": "enforce"}`)
 	git("add", ".")
 	git("commit", "-q", "-m", "enforce")
-	writeFile(t, filepath.Join(dir, RepoConfigFile), `{"version": 1, "mode": "report", "checks": {"pin-lagging": "off"}}`)
+	writeFile(t, filepath.Join(dir, RepoConfigFile), `{"version": 1, "mode": "report", "checks": {"family-split": "off"}}`)
 	git("commit", "-q", "-am", "relax")
 
 	base := load(t, LoadOptions{RepoDir: dir, RepoRev: "HEAD^1"})

@@ -58,8 +58,6 @@ type Item struct {
 	Message   string     `json:"message"`
 	Note      string     `json:"note,omitempty"`
 	Locations []Location `json:"locations,omitempty"`
-	// found only in the resolved dependency tree, not declared or managed by the repository
-	Transitive bool `json:"transitive,omitempty"`
 }
 
 // Adapter describes an adapter run in a report.

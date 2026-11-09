@@ -2,10 +2,6 @@
   "$schema": "../../../../../schemas/config.v1.json",
   "version": 1,
   "ecosystems": {
-    "maven": {
-      "excludes": ["^core-maven-plugins/.*/src/test/resources/"],
-      "transitive": "warn"
-    },
     "go": { "modules": ["."] }
   },
   "checks": {

@@ -62,24 +62,13 @@ const expiringDays = 14
 type checkDef struct {
 	// default level per ecosystem; the "" key marks a gate check
 	levels map[string]Level
-	// applies only to pull requests into (and pushes to) protected branches
-	protectedOnly bool
 }
 
-func maven(l Level) map[string]Level     { return map[string]Level{Maven: l} }
 func golang(l Level) map[string]Level    { return map[string]Level{Go: l} }
 func both(m, g Level) map[string]Level   { return map[string]Level{Maven: m, Go: g} }
 func gateCheck(l Level) map[string]Level { return map[string]Level{"": l} }
 
 var catalog = map[string]checkDef{
-	"pin-exceeded":     {levels: maven(Fail)},
-	"pin-mismatch":     {levels: maven(Fail)},
-	"pin-lagging":      {levels: maven(Warn)},
-	"pin-conflict":     {levels: maven(Warn)},
-	"shared-property":  {levels: maven(Warn)},
-	"feature-snapshot": {levels: maven(Fail), protectedOnly: true},
-	"snapshot": {levels: maven(Warn)},
-
 	"apidiff-exposed": {levels: golang(Fail)},
 
 	"family-split":        {levels: both(Off, Fail)},

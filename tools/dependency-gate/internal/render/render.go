@@ -261,9 +261,6 @@ func problem(f *gate.Finding) string {
 	if f.Note != "" {
 		text += " — " + f.Note
 	}
-	if f.Transitive {
-		text += " (transitive)"
-	}
 	switch f.Status {
 	case gate.Preexisting:
 		text += " (already on the base branch)"
@@ -311,13 +308,6 @@ func scope(s map[string]gate.Scope) string {
 				quoted[i] = code(e)
 			}
 			what = append(what, list.label+" "+strings.Join(quoted, ", "))
-		}
-		switch t := s[eco].Transitive; t {
-		case 0:
-		case gate.Off:
-			what = append(what, "transitive findings dropped")
-		default:
-			what = append(what, "transitive findings at most "+t.String())
 		}
 		parts = append(parts, eco+": "+strings.Join(what, "; "))
 	}

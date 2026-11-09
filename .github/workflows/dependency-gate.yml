@@ -1,8 +1,9 @@
 # Dependency gate (reusable)
 #
-# Two checks. "Dependency gate" decides whether a dependency change stays inside the pins and does not expose
-# a new Go API break. "Consumers" decides whether the change breaks a reference consumer. Automerge waits for
-# both because platformAutomerge is false; neither verdict waits for the other. Adapters only write findings.v1
+# Two checks. "Dependency gate" decides whether a Go dependency change exposes a new API break. A Maven pin
+# bypass that still builds the library and its consumers is not a finding. "Consumers" decides whether the
+# change breaks a reference consumer. Automerge waits for both because platformAutomerge is false; neither
+# verdict waits for the other. Adapters only write findings.v1
 # files. Each check applies the policy (levels, baseline) from the infra defaults and the caller's
 # .github/dependency-gate.json. In `report` mode (the pilot) a check stays green whatever the verdict.
 # Caller file, inputs and which checks run: tools/dependency-gate/README.md#enabling-the-checks.
@@ -42,11 +43,11 @@ on:
   workflow_call:
     inputs:
       comment:
-        description: "Sticky PR comment of the pin check. Consumers adds one line to it when that check would fail"
+        description: "Sticky PR comment of Dependency gate. Consumers adds one line to it when that check would fail"
         type: boolean
         default: true
       java-version:
-        description: "Maven: JDK to run the plugin with"
+        description: "Maven: JDK for the library build and the consumer builds"
         type: string
         default: "21"
       maven-username:
@@ -97,120 +98,15 @@ jobs:
           command: detect
           go-version: ${{ env.GO_VERSION }}
 
-  # Adapter jobs plug in here: maven (dependency-gate-maven-plugin on HEAD^1 and HEAD) and go-library
-  # (family-split and apidiff-exposed) feed the "Dependency gate" check. go-consumers and maven-consumers
-  # feed the separate "Consumers" check. Each adapter needs `detect`, runs when its output says so, takes the
-  # effective configuration from needs.detect.outputs.config and uploads findings.v1 as
-  # dependency-gate-findings-<adapter>. The check that owns the adapter lists it in `expect`
-  # (<adapter>=${{ needs.<job>.result }}), so an adapter that crashed without findings fails that check.
-
-  maven:
-    name: Maven pins
-    needs: [detect]
-    if: ${{ needs.detect.outputs.maven == 'true' }}
-    permissions:
-      contents: read
-      # BOMs from GitHub Packages; the plugin is installed from this revision
-      packages: read
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        with:
-          path: repo
-          # the PR merge commit and its base, HEAD^1
-          fetch-depth: 2
-          persist-credentials: false
-
-      - name: Set up java
-        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
-        with:
-          java-version: ${{ inputs.java-version }}
-          distribution: temurin
-          cache: maven
-          cache-dependency-path: repo/**/pom.xml
-
-      - name: Maven settings
-        id: settings
-        uses: $/.github/actions/maven-settings
-
-      - name: Install plugin
-        id: plugin
-        uses: $/.github/actions/dependency-gate-maven-plugin
-        env:
-          SETTINGS: ${{ steps.settings.outputs.path }}
-          MAVEN_USERNAME: ${{ inputs.maven-username || github.actor }}
-          MAVEN_TOKEN: ${{ secrets.MAVEN_TOKEN || github.token }}
-
-      - name: Check
-        env:
-          # GitHub Packages serves the qubership BOMs
-          SETTINGS: ${{ steps.settings.outputs.path }}
-          MAVEN_USERNAME: ${{ inputs.maven-username || github.actor }}
-          # read-only: Maven runs build extensions of the pull request's code
-          MAVEN_TOKEN: ${{ secrets.MAVEN_TOKEN || github.token }}
-          PLUGIN_VERSION: ${{ steps.plugin.outputs.version }}
-          CONFIG: ${{ needs.detect.outputs.config }}
-          ROOTS: ${{ needs.detect.outputs.maven-roots }}
-          # pushes and manual runs have no baseline: only the state of HEAD is checked
-          BASELINE: ${{ github.event_name == 'pull_request' }}
-        run: |
-          set -euo pipefail
-          out="$RUNNER_TEMP/dependency-gate-maven"
-          findings="$RUNNER_TEMP/dependency-gate-findings"
-          mkdir -p "$out" "$findings"
-
-          # one snapshot of the pins for both revisions
-          pins=$(jq -r '.ecosystems.maven.pins' <<< "$CONFIG")
-          if [[ "$pins" =~ ^https?:// ]]; then
-            curl -fsSL --retry 3 "$pins" -o "$out/renovate-core-config.json"
-          else
-            cp "repo/$pins" "$out/renovate-core-config.json"
-          fi
-
-          # Java regexes, one per line; the file is passed even when empty
-          jq -r '.ecosystems.maven.excludes // [] | .[]' <<< "$CONFIG" > "$out/excludes.txt"
-          transitive=true
-          if [ "$(jq -r '.ecosystems.maven.transitive // empty' <<< "$CONFIG")" = off ]; then
-            transitive=false
-          fi
-          # every gate parameter is set here: a -D of the checked code (.mvn/maven.config) loses to the command line
-          args=(-B -ntp -s "$SETTINGS" "com.netcracker.cloud.plugins:dependency-gate-maven-plugin:$PLUGIN_VERSION:check"
-            -Ddependency-gate.skip=false
-            "-Ddependency-gate.pins=$out/renovate-core-config.json"
-            "-Ddependency-gate.excludesFile=$out/excludes.txt"
-            "-Ddependency-gate.transitive=$transitive")
-          # check <dir> <revision> <findings file>: one revision
-          check() {
-            local dir=$1 revision=$2 file=$3 root poms
-            root=$(cd "$dir" && pwd)
-            # the roots are detected on HEAD: a root the change adds is not on the base
-            poms=$(jq -r '.[]' <<< "$ROOTS" | while read -r r; do if [ -e "$root/$r" ]; then echo "$r"; fi; done | paste -sd, -)
-            if [ -z "$poms" ]; then echo "none of the Maven roots $ROOTS is here"; return 1; fi
-            (cd "$root" && mvn "${args[@]}" "-Ddependency-gate.root=$root" "-Ddependency-gate.poms=$poms" \
-              "-Ddependency-gate.revision=$revision" "-Ddependency-gate.findings=$file")
-          }
-
-          if [ "$BASELINE" = true ]; then
-            git -C repo worktree add --detach "$out/base" HEAD^1
-            if ! check "$out/base" base "$findings/maven-pins-base.json" > "$out/base.log" 2>&1; then
-              echo "::warning::the base branch could not be checked, every finding counts as new"
-              echo "::group::base.log"; cat "$out/base.log"; echo "::endgroup::"
-            fi
-          fi
-          check repo head "$findings/maven-pins-head.json"
-
-      - name: Upload findings
-        if: ${{ always() }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: dependency-gate-findings-maven-pins
-          path: ${{ runner.temp }}/dependency-gate-findings/
-          if-no-files-found: ignore
+  # Adapter jobs plug in here: go-library (family-split and apidiff-exposed) feeds the "Dependency gate"
+  # check. go-consumers and maven-consumers feed the separate "Consumers" check. Each adapter needs
+  # `detect`, runs when its output says so, takes the effective configuration from needs.detect.outputs.config
+  # and uploads findings.v1 as dependency-gate-findings-<adapter>. The check that owns the adapter lists it
+  # in `expect` (<adapter>=${{ needs.<job>.result }}), so an adapter that crashed without findings fails that check.
 
   maven-snapshot:
     # installs the pull request as X.Y.Z-<branch>-SNAPSHOT. the consumer matrix builds against that
-    # snapshot only: a failed verify is a new finding. starts with the pin check. nothing is published.
+    # snapshot only: a failed verify is a new finding. nothing is published.
     name: Maven library build
     needs: [detect]
     if: ${{ needs.detect.outputs.maven == 'true' && github.event_name == 'pull_request' }}
@@ -504,9 +400,9 @@ jobs:
           if-no-files-found: ignore
 
   gate:
-    # the pin check Renovate waits for; not a required check. It does not wait for the consumer matrix.
+    # the check Renovate waits for; not a required check. It does not wait for the consumer matrix.
     name: Dependency gate
-    needs: [detect, maven, go-library]
+    needs: [detect, go-library]
     # also when an adapter failed; a cancelled run (a newer one replaces it) reports nothing
     if: ${{ !cancelled() }}
     permissions:
@@ -521,17 +417,6 @@ jobs:
           # the repository configuration is read from HEAD^1 on pull requests
           fetch-depth: 2
           persist-credentials: false
-
-      - name: Download Maven findings
-        # no matching artifact is not an error (only logged); missing findings of an adapter listed in `expect`
-        # fail the gate anyway, so a download failure must not turn the gate red before it reports.
-        # consumer artifacts are a different check and must not land in this directory.
-        continue-on-error: true
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
-        with:
-          pattern: dependency-gate-findings-maven-pins
-          path: ${{ runner.temp }}/dependency-gate-findings
-          merge-multiple: true
 
       - name: Download Go library findings
         continue-on-error: true
@@ -552,7 +437,6 @@ jobs:
           gate-ref: ${{ job.workflow_sha }}
           expect: |
             ${{ needs.detect.result != 'success' && format('detect={0}', needs.detect.result) || '' }}
-            maven-pins=${{ needs.maven.result }}
             go-library=${{ needs.go-library.result }}
 
       - name: Upload report
@@ -564,9 +448,9 @@ jobs:
           if-no-files-found: ignore
 
   consumers:
-    # the second check Renovate waits for. It starts when the matrix finishes, not when the pin check does.
+    # the second check Renovate waits for. It starts when the matrix finishes, not when Dependency gate does.
     # An empty Go plan still reports: the summary names why nobody was planned.
-    # The sticky comment stays the pin check's. This job only sets one line on it when the verdict is fail.
+    # The sticky comment stays Dependency gate's. This job only sets one line on it when the verdict is fail.
     # The link is the workflow run: a job-page link would need actions: read, which callers do not grant,
     # and a nested job cannot ask for a permission the caller did not allow.
     name: Consumers

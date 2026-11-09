@@ -29,16 +29,15 @@ const (
 
 // Config is config.v1: the infra defaults, a repository file, or both merged.
 type Config struct {
-	Schema            string                   `json:"$schema,omitempty"`
-	Version           int                      `json:"version"`
-	Mode              Mode                     `json:"mode,omitempty"`
-	ProtectedBranches string                   `json:"protectedBranches,omitempty"`
-	MaxExceptionDays  int                      `json:"maxExceptionDays,omitempty"`
-	Locked            []string                 `json:"locked,omitempty"`
-	Labels            Labels                   `json:"labels,omitzero"`
-	Ecosystems        map[string]Ecosystem     `json:"ecosystems,omitempty"`
-	Checks            map[string]CheckSettings `json:"checks,omitempty"`
-	Families          []Family                 `json:"families,omitempty"`
+	Schema           string                   `json:"$schema,omitempty"`
+	Version          int                      `json:"version"`
+	Mode             Mode                     `json:"mode,omitempty"`
+	MaxExceptionDays int                      `json:"maxExceptionDays,omitempty"`
+	Locked           []string                 `json:"locked,omitempty"`
+	Labels           Labels                   `json:"labels,omitzero"`
+	Ecosystems       map[string]Ecosystem     `json:"ecosystems,omitempty"`
+	Checks           map[string]CheckSettings `json:"checks,omitempty"`
+	Families         []Family                 `json:"families,omitempty"`
 	// adapter input the gate does not interpret; a repository may only set false
 	Consumers  json.RawMessage `json:"consumers,omitempty"`
 	Exceptions []Exception     `json:"exceptions,omitempty"`
@@ -48,7 +47,7 @@ type Labels struct {
 	Levels map[string]map[string]Level `json:"levels,omitempty"`
 }
 
-// Ecosystem holds check settings and adapter settings (roots, modules, pins, ...), passed through as is.
+// Ecosystem holds check settings and adapter settings (roots, modules, ...), passed through as is.
 type Ecosystem struct {
 	Checks   map[string]CheckSettings
 	Settings map[string]json.RawMessage
@@ -76,7 +75,7 @@ func (e *Ecosystem) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Setting decodes one adapter setting, e.g. the maven excludes.
+// Setting decodes one adapter setting, e.g. the Go module list.
 func (e Ecosystem) Setting(key string, v any) error {
 	if raw, ok := e.Settings[key]; ok {
 		return json.Unmarshal(raw, v)
@@ -156,7 +155,6 @@ type Policy struct {
 	// what the configuration keeps from the adapters, by ecosystem
 	Scope map[string]Scope
 
-	protected  *regexp.Regexp
 	exceptions []*rule
 	// ignore rules by check id, or by "check|ecosystem" for ecosystem settings
 	ignores map[string][]*rule
@@ -167,10 +165,8 @@ type Scope struct {
 	// configured Maven root poms or Go modules: nothing else is checked
 	Roots   []string `json:"roots,omitempty"`
 	Modules []string `json:"modules,omitempty"`
-	// patterns of poms (maven excludes) or module directories (go exclude) not checked
+	// RE2 regexes of Go module directories not checked
 	Exclude []string `json:"exclude,omitempty"`
-	// highest level of findings only the resolved dependency tree shows
-	Transitive Level `json:"transitive,omitzero"`
 }
 
 type LoadOptions struct {
@@ -213,9 +209,6 @@ func Load(o LoadOptions) (*Policy, error) {
 	}
 	cfg.Schema = ""
 	p.Config = cfg
-	if p.protected, err = regexp.Compile(cfg.ProtectedBranches); err != nil {
-		return nil, err
-	}
 	if p.ignores, err = compileIgnores(cfg); err != nil {
 		return nil, err
 	}
@@ -223,13 +216,13 @@ func Load(o LoadOptions) (*Policy, error) {
 	for eco, e := range cfg.Ecosystems {
 		var s Scope
 		for key, v := range map[string]any{
-			"roots": &s.Roots, "modules": &s.Modules, "excludes": &s.Exclude, "exclude": &s.Exclude, "transitive": &s.Transitive,
+			"roots": &s.Roots, "modules": &s.Modules, "exclude": &s.Exclude,
 		} {
 			if err := e.Setting(key, v); err != nil {
 				return nil, err
 			}
 		}
-		if s.Transitive != 0 || len(s.Roots)+len(s.Modules)+len(s.Exclude) > 0 {
+		if len(s.Roots)+len(s.Modules)+len(s.Exclude) > 0 {
 			p.Scope[eco] = s
 		}
 	}
@@ -396,7 +389,6 @@ func validate(c, infra *Config) []string {
 		e := c.Ecosystems[eco]
 		checkSettings("ecosystems."+eco+".checks", eco, e.Checks)
 	}
-	// maven excludes are Java regexes, the plugin checks them
 	var goExclude []string
 	if err := c.Ecosystems[Go].Setting("exclude", &goExclude); err != nil {
 		add("ecosystems.go.exclude: %v", err)
@@ -421,9 +413,6 @@ func validate(c, infra *Config) []string {
 			add("families.%s: %v", f.Name, err)
 		}
 	}
-	if _, err := regexp.Compile(c.ProtectedBranches); err != nil {
-		add("protectedBranches: %v", err)
-	}
 	if len(c.Exceptions) > 0 {
 		add("exceptions are not part of the policy")
 	}
@@ -434,12 +423,9 @@ func validate(c, infra *Config) []string {
 func restricted(repo *Config) []string {
 	var errs []string
 	for name, set := range map[string]bool{
-		"protectedBranches": repo.ProtectedBranches != "",
-		"maxExceptionDays":  repo.MaxExceptionDays != 0,
-		"locked":            repo.Locked != nil,
-		"consumers":         len(repo.Consumers) > 0 && string(bytes.TrimSpace(repo.Consumers)) != "false",
-		// the pins are what locked checks compare with
-		"ecosystems.maven.pins": repo.Ecosystems[Maven].Settings["pins"] != nil,
+		"maxExceptionDays": repo.MaxExceptionDays != 0,
+		"locked":           repo.Locked != nil,
+		"consumers":        len(repo.Consumers) > 0 && string(bytes.TrimSpace(repo.Consumers)) != "false",
 	} {
 		if set {
 			errs = append(errs, name+" is set by the infra defaults only")
@@ -482,10 +468,7 @@ func (c *Config) level(check, eco, adapter string, labels []string) Level {
 }
 
 // Level is the effective level of a check for a finding.
-func (p *Policy) Level(check, eco, adapter string, labels []string, branch string) Level {
-	if catalog[check].protectedOnly && branch != "" && !p.protected.MatchString(branch) {
-		return Off
-	}
+func (p *Policy) Level(check, eco, adapter string, labels []string) Level {
 	return p.Config.level(check, eco, adapter, labels)
 }
 
