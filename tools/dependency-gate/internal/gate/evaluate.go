@@ -212,11 +212,16 @@ func (p *Policy) allowedBy(f *Finding) *rule {
 }
 
 // missing describes an expected adapter that wrote no findings, from the result of its job.
+// A skipped job may name the reason after ": " (skipped: non-test build list unchanged).
 func missing(name, result string) (Adapter, *Finding) {
-	a := Adapter{Name: name, Status: AdapterError, Reason: "job " + result}
-	switch result {
+	status, reason, named := strings.Cut(result, ": ")
+	a := Adapter{Name: name, Status: AdapterError, Reason: "job " + status}
+	switch status {
 	case "skipped":
 		a.Status = AdapterSkipped
+		if named {
+			a.Reason = reason
+		}
 		return a, nil
 	case "success":
 		a.Reason = "the job succeeded without findings"

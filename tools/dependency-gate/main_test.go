@@ -690,13 +690,16 @@ replace example.com/prod => ./third/prod
 
 	stdout, stderr := plan(`{"consumers":false}`, "HEAD", "hit")
 	none(stdout, stderr, "consumers false")
+	if strings.Contains(stderr, "plan-reason:") {
+		t.Fatalf("consumers false names a reason: %s", stderr)
+	}
 
 	stdout, stderr = plan(config, "", "hit")
 	some(stdout, stderr, "no base")
 
 	stdout, stderr = plan(config, "HEAD", "hit")
 	none(stdout, stderr, "same revision")
-	if !strings.Contains(stderr, "unchanged") {
+	if !strings.Contains(stderr, "plan-reason: non-test build list unchanged") {
 		t.Fatalf("same revision: stderr %s", stderr)
 	}
 
@@ -734,18 +737,21 @@ replace example.com/prod => ./third/prod
 	bump("example.com/onlytest v0.1.0", "example.com/onlytest v0.2.0", "example.com/helponly v0.1.0", "example.com/helponly v0.2.0")
 	stdout, stderr = plan(config, "HEAD^1", "hit")
 	none(stdout, stderr, "test-only deps")
-	if !strings.Contains(stderr, "unchanged") {
+	if !strings.Contains(stderr, "plan-reason: non-test build list unchanged") {
 		t.Fatalf("test-only deps: stderr %s", stderr)
 	}
 
 	bump("example.com/prod v0.1.0", "example.com/prod v0.2.0")
 	stdout, stderr = plan(config, "HEAD^1", "hit")
 	some(stdout, stderr, "prod bump")
-	if !strings.Contains(stderr, "changed") {
+	if !strings.Contains(stderr, "changed") || strings.Contains(stderr, "plan-reason:") {
 		t.Fatalf("prod bump: stderr %s", stderr)
 	}
 	stdout, stderr = plan(config, "HEAD^1", "miss")
 	none(stdout, stderr, "prod bump, go.sum does not name the library")
+	if !strings.Contains(stderr, "plan-reason: no reference consumer depends on this module") {
+		t.Fatalf("go.sum miss: stderr %s", stderr)
+	}
 	stdout, stderr = plan(config, "HEAD^1", "fail")
 	some(stdout, stderr, "prod bump, go.sum unreadable")
 }

@@ -297,6 +297,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       consumers: ${{ steps.plan.outputs.consumers }}
+      skip-reason: ${{ steps.plan.outputs.skip-reason }}
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -564,10 +565,11 @@ jobs:
 
   consumers:
     # the second check Renovate waits for. It starts when the matrix finishes, not when the pin check does.
+    # An empty Go plan still reports: the summary names why nobody was planned.
     # comment stays off: the sticky marker belongs to the pin check.
     name: Consumers
     needs: [go-library, go-consumers, maven-snapshot, maven-consumers]
-    if: ${{ !cancelled() && (needs.go-consumers.result != 'skipped' || needs.maven-consumers.result != 'skipped') }}
+    if: ${{ !cancelled() && (needs.go-consumers.result != 'skipped' || needs.maven-consumers.result != 'skipped' || ((needs.go-library.result == 'success' || needs.go-library.result == 'failure') && needs.go-library.outputs.skip-reason != '')) }}
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -604,7 +606,7 @@ jobs:
           comment: false
           gate-ref: ${{ job.workflow_sha }}
           expect: |
-            go-consumers=${{ needs.go-consumers.result }}
+            go-consumers=${{ needs.go-consumers.result }}${{ (needs.go-library.result == 'success' || needs.go-library.result == 'failure') && needs.go-library.outputs.skip-reason != '' && format(': {0}', needs.go-library.outputs.skip-reason) || '' }}
             maven-consumers=${{ needs.maven-consumers.result }}
 
       - name: Upload report

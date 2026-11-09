@@ -292,7 +292,7 @@ func TestToolErrors(t *testing.T) {
 			headFile("go-library", Go, AdapterOK, []string{"apidiff-exposed"}, Item{Check: "pin-exceeded", Message: "wrong ecosystem"}),
 			headFile("go-consumers", Go, AdapterSkipped, nil),
 		},
-		Expected: map[string]string{"maven-pins": "failure", "detect": "success", "go-consumers": "success", "go-other": "skipped"},
+		Expected: map[string]string{"maven-pins": "failure", "detect": "success", "go-consumers": "success", "go-other": "skipped", "go-plan": "skipped: non-test build list unchanged"},
 	}
 	for _, tc := range []struct {
 		name, config string
@@ -311,10 +311,15 @@ func TestToolErrors(t *testing.T) {
 				want{ToolError, "osv", Fail, New},
 				want{check: ToolError, pkg: "go-consumers"},
 				want{check: ToolError, pkg: "go-other"},
+				want{check: ToolError, pkg: "go-plan"},
 			)
 			i := slices.IndexFunc(r.Adapters, func(a Adapter) bool { return a.Name == "go-other" })
-			if i < 0 || r.Adapters[i].Status != AdapterSkipped {
+			if i < 0 || r.Adapters[i].Status != AdapterSkipped || r.Adapters[i].Reason != "job skipped" {
 				t.Errorf("adapters %+v", r.Adapters)
+			}
+			i = slices.IndexFunc(r.Adapters, func(a Adapter) bool { return a.Name == "go-plan" })
+			if i < 0 || r.Adapters[i].Status != AdapterSkipped || r.Adapters[i].Reason != "non-test build list unchanged" {
+				t.Errorf("plan skip %+v", r.Adapters)
 			}
 		})
 	}

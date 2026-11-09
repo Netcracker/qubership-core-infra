@@ -27,7 +27,7 @@ Reference consumers (`consumers.go` in the infra defaults) are the Go services a
 library. `plan` compares each module's non-test build list with the base: the `go` and `toolchain` lines, and
 `module@version` of every module selected by packages reachable from non-test code (a replace is part of the
 line). A package imported only by tests is not in the list, and neither is a package reached only through it.
-An unchanged list plans nobody. A changed list keeps the consumers whose go.sum mentions the library (a library
+An unchanged list plans nobody, and the Consumers summary says so. A changed list keeps the consumers whose go.sum mentions the library (a library
 is never in its own go.sum); a go.sum that cannot be read is kept. `"consumers": false` plans nobody. The
 consumer job confirms with `go list -deps -test` (a failing `go list` is an error, not a skip) and
 builds the consumer with `replace <lib> => <lib at base>` and `=> <lib at head>` (+ `go mod tidy`, so MVS raises

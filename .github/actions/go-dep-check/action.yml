@@ -54,6 +54,9 @@ outputs:
   consumers:
     description: "plan: JSON array of {repo, module, tests, lib} to check"
     value: ${{ steps.plan.outputs.consumers }}
+  skip-reason:
+    description: "plan: why the array is empty; empty when consumers run or consumers are disabled"
+    value: ${{ steps.plan.outputs.skip-reason }}
 runs:
   using: composite
   steps:
@@ -92,8 +95,14 @@ runs:
         REPO_DIR: ${{ inputs.repo-dir }}
         BASE_REF: ${{ inputs.base-ref }}
       run: |
-        consumers=$(bash "$SCRIPTS/plan-consumers.sh")
+        log=$(mktemp)
+        consumers=$(bash "$SCRIPTS/plan-consumers.sh" 2>"$log")
+        cat "$log" >&2
         echo "consumers=$consumers" >> "$GITHUB_OUTPUT"
+        reason=$(sed -n 's/^plan-reason: //p' "$log" | tail -1 | tr -d '\r')
+        if [[ -n $reason ]]; then
+          echo "skip-reason=$reason" >> "$GITHUB_OUTPUT"
+        fi
 
     - name: Install gotestsum
       if: inputs.mode == 'consumer' && inputs.tests == 'true'

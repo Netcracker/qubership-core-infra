@@ -13,6 +13,8 @@
 #       REPO_DIR  repository checkout (default .)
 #       BASE_REF  base revision; empty skips the build-list comparison
 # stdout: JSON array of {repo, module, tests, lib}
+# stderr: plan-reason: <why the array is empty>, when the plan ran and kept nobody.
+#         "consumers": false writes [] and no reason: Consumers does not run.
 # exit:  0 the array is written; 2 the inputs cannot be read
 set -uo pipefail
 export LC_ALL=C
@@ -118,8 +120,13 @@ list_changed() {
 
 mapfile -t libs < <(printf '%s' "$MODULES" | jq -r '.[]' | tr -d '\r')
 list=$(printf '%s' "$CONFIG" | jq -c '(.consumers // {}) | .go // [] | .[]' | tr -d '\r')
+: > "$work/skip"
 consumers=$(for lib in "${libs[@]}"; do
-  list_changed "$lib" || continue
+  if ! list_changed "$lib"; then
+    echo unchanged >> "$work/skip"
+    continue
+  fi
+  echo considered >> "$work/skip"
   if [[ -f $work/head.list.mod ]]; then
     mod=$(tr -d '\r' < "$work/head.list.mod")
   else
@@ -135,5 +142,12 @@ consumers=$(for lib in "${libs[@]}"; do
     fi
     jq -c --arg lib "$lib" '. + {lib: $lib}' <<< "$c" | tr -d '\r'
   done <<< "$list"
-done | jq -sc .)
+done | jq -sc . | tr -d '\r')
+if [[ $consumers == "[]" ]]; then
+  if grep -qx considered "$work/skip"; then
+    echo "plan-reason: no reference consumer depends on this module" >&2
+  elif grep -qx unchanged "$work/skip"; then
+    echo "plan-reason: non-test build list unchanged" >&2
+  fi
+fi
 echo "$consumers"

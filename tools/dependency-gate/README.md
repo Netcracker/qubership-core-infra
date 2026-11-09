@@ -251,7 +251,7 @@ This call, with no `with`, no secret and no `.github/dependency-gate.json`, runs
 | When | Checks |
 |---|---|
 | the repository has Maven | `consumer-build`, `consumer-test` of `Netcracker/qubership-core-config-server` and `Netcracker/qubership-core-core-operator` (`mvn verify -DskipITs`). A consumer that does not reference this build is skipped. |
-| the repository has Go, its non-test build list changed against the base, and a reference consumer depends on it | `consumer-build`. A consumer the infra list marks with tests also runs `consumer-test` (`consumer-test-flaky` is info). A dependency only tests of this repository import does not start the matrix. |
+| the repository has Go, its non-test build list changed against the base, and a reference consumer depends on it | `consumer-build`. A consumer the infra list marks with tests also runs `consumer-test` (`consumer-test-flaky` is info). A dependency only tests of this repository import does not start the matrix. An empty plan still publishes **Consumers**, with `go-consumers` skipped and the reason: the non-test build list is unchanged, or no reference consumer depends on the module. |
 
 A Go consumer finding with the same key on the base build is preexisting and does not block. A Maven consumer
 has no base build: a failed `mvn verify` against the pull request is new.
