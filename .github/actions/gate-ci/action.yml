@@ -1,0 +1,70 @@
+# $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-action.json
+name: "Gate CI step"
+description: >
+  One command of dependency-gate/ci.py. Used by .github/workflows/dependency-gate.yml for the steps
+  that are not a single git or go command. See dependency-gate/DESIGN.md.
+inputs:
+  command:
+    description: "maven-plan | maven-install | adapter-error"
+    required: true
+  config:
+    description: "maven-plan: effective configuration, JSON"
+    required: false
+    default: ""
+  settings:
+    description: "maven-install: settings.xml"
+    required: false
+    default: ""
+  maven-username:
+    description: "maven-install: GitHub Packages user"
+    required: false
+    default: ""
+  maven-token:
+    description: "maven-install: GitHub Packages token"
+    required: false
+    default: ""
+  raw-suffix:
+    description: "maven-install: head branch, rewritten into the snapshot suffix"
+    required: false
+    default: ""
+  out:
+    description: "adapter-error: findings directory"
+    required: false
+    default: ""
+  file:
+    description: "adapter-error: findings file name"
+    required: false
+    default: ""
+  reason:
+    description: "adapter-error: why the job failed"
+    required: false
+    default: ""
+  adapter:
+    description: "adapter-error: adapter name"
+    required: false
+    default: ""
+  ecosystem:
+    description: "adapter-error: go or maven"
+    required: false
+    default: ""
+outputs:
+  consumers:
+    description: "maven-plan: JSON array of Maven reference consumers"
+    value: ${{ steps.run.outputs.consumers }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        CONFIG: ${{ inputs.config }}
+        SETTINGS: ${{ inputs.settings }}
+        MAVEN_USERNAME: ${{ inputs.maven-username }}
+        MAVEN_TOKEN: ${{ inputs.maven-token }}
+        RAW_SUFFIX: ${{ inputs.raw-suffix }}
+        OUT: ${{ inputs.out }}
+        FILE: ${{ inputs.file }}
+        REASON: ${{ inputs.reason }}
+        ADAPTER: ${{ inputs.adapter }}
+        ECOSYSTEM: ${{ inputs.ecosystem }}
+      run: python3 "$GITHUB_ACTION_PATH/../../../dependency-gate/ci.py" "${{ inputs.command }}"

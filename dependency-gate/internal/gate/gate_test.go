@@ -159,7 +159,7 @@ func TestDefaultsAreValid(t *testing.T) {
 	if len(p.Problems) > 0 {
 		t.Fatal(p.Problems)
 	}
-	if p.Config.Mode != ModeReport || p.Config.MaxExceptionDays != 0 || len(p.Config.Locked) != 0 {
+	if p.Config.MaxExceptionDays != 0 || len(p.Config.Locked) != 0 {
 		t.Errorf("unexpected defaults: %+v", p.Config)
 	}
 }
@@ -174,8 +174,8 @@ func TestFixturePolicy(t *testing.T) {
 	if got := find(t, r, "apidiff-exposed", "openshift").Exception; got.Source != RepoConfigFile+"#/checks/apidiff-exposed/ignore/0" || got.Until != "" {
 		t.Errorf("ignore rule: %+v", got)
 	}
-	if r.Verdict != VerdictFail || r.Mode != ModeReport || r.Failed() {
-		t.Errorf("verdict %s in %s mode, failed %v", r.Verdict, r.Mode, r.Failed())
+	if r.Verdict != VerdictFail || !r.Failed() {
+		t.Errorf("verdict %s, failed %v", r.Verdict, r.Failed())
 	}
 	if r.Counts.Allowed != 1 || r.Counts.Preexisting != 0 {
 		t.Errorf("counts %+v", r.Counts)
@@ -215,14 +215,18 @@ func TestBaseline(t *testing.T) {
 	}
 }
 
-func TestModes(t *testing.T) {
+func TestVerdictFailsTheCheck(t *testing.T) {
 	found := Input{Head: []*FindingsFile{headFile("go-library", Go, AdapterOK, []string{"apidiff-exposed"},
 		Item{Check: "apidiff-exposed", Package: "g", Version: "v2", Symbol: "T", Message: "removed"})}}
-	// report mode stays green with a fail verdict — covered by TestFixturePolicy
-	if r := policy(t, `{"version": 1, "mode": "enforce"}`).Evaluate(found); r.Verdict != VerdictFail || !r.Failed() {
-		t.Errorf("enforce: verdict %s, failed %v", r.Verdict, r.Failed())
+	r := policy(t, "").Evaluate(found)
+	if r.Verdict != VerdictFail || !r.Failed() {
+		t.Errorf("a new fail fails the check: verdict %s, failed %v", r.Verdict, r.Failed())
 	}
-	if r := policy(t, `{"version": 1, "mode": "enforce"}`).Evaluate(Input{}); r.Verdict != VerdictPass || r.Failed() {
+	r.DryRun = true
+	if r.Failed() {
+		t.Error("dry-run skips the failure")
+	}
+	if r := policy(t, "").Evaluate(Input{}); r.Verdict != VerdictPass || r.Failed() {
 		t.Errorf("nothing found: verdict %s, failed %v", r.Verdict, r.Failed())
 	}
 }
@@ -367,7 +371,7 @@ func TestLockedCheck(t *testing.T) {
 }
 
 func TestExceptionsAreRejected(t *testing.T) {
-	p := policy(t, `{"version": 1, "mode": "enforce", "exceptions": [
+	p := policy(t, `{"version": 1, "exceptions": [
 		{"checks": ["consumer-*"], "package": "g:a", "version": "1", "reason": "r", "until": "2026-12-01"}
 	]}`)
 	if len(p.Problems) != 1 || p.Problems[0].Check != ConfigInvalid || !strings.Contains(p.Problems[0].Message, "exceptions") {
@@ -381,19 +385,19 @@ func TestExceptionsAreRejected(t *testing.T) {
 		want{"apidiff-exposed", "openshift", Fail, New},
 		want{"apidiff-exposed", "opensearch-go", Fail, New},
 	)
-	if r.Mode != ModeReport || r.Verdict != VerdictFail || r.Failed() {
-		t.Errorf("the ignored file must not switch the mode: %s %s failed=%v", r.Mode, r.Verdict, r.Failed())
+	if r.Verdict != VerdictFail || !r.Failed() {
+		t.Errorf("the ignored file leaves the defaults, and a new fail fails the check: %s failed=%v", r.Verdict, r.Failed())
 	}
 }
 
 func TestMerge(t *testing.T) {
-	infra := `{"version": 1, "mode": "report", "maxExceptionDays": 30,
+	infra := `{"version": 1, "maxExceptionDays": 30,
 		"labels": {"levels": {"security": {"family-split": "fail"}}},
 		"ecosystems": {"go": {"checks": {"family-split": {"level": "warn", "ignore": [{"package": "a", "reason": "infra"}]}}}},
 		"checks": {"consumer-test-flaky": "warn"},
 		"families": [{"name": "bun", "ecosystem": "go", "match": "^bun"}, {"name": "otel", "ecosystem": "go", "match": "^otel"}],
-		"consumers": {"go": [{"repo": "a/b", "module": "m"}]}}`
-	repo := `{"version": 1, "mode": "enforce",
+		"consumers": {"go": {"services": [{"repo": "a/b", "module": "m"}]}}}`
+	repo := `{"version": 1,
 		"labels": {"levels": {"security": {"apidiff-exposed": "fail"}}},
 		"ecosystems": {"maven": {"roots": ["."]}, "go": {"checks": {"family-split": {"level": "fail", "ignore": [{"package": "b", "reason": "repo"}]}}}},
 		"checks": {"consumer-test-flaky": "info"},
@@ -406,7 +410,7 @@ func TestMerge(t *testing.T) {
 		t.Fatal(p.Problems[0].Message)
 	}
 	c := p.Config
-	if c.Mode != ModeEnforce || c.MaxExceptionDays != 30 {
+	if c.MaxExceptionDays != 30 {
 		t.Errorf("scalars: %+v", c)
 	}
 	if diff := cmp.Diff(map[string]map[string]Level{"security": {"family-split": Fail, "apidiff-exposed": Fail}}, c.Labels.Levels); diff != "" {
@@ -457,7 +461,9 @@ func TestMerge(t *testing.T) {
 func TestReportMatchesSchema(t *testing.T) {
 	full := policy(t, repoFixture(t)).Evaluate(fixtures(t))
 	full.Repository, full.PullRequest, full.Gate = "Netcracker/qubership-core-java-libs", 230, "qubership-core-infra@test"
-	for name, r := range map[string]*Report{"full": full, "empty": policy(t, "").Evaluate(Input{})} {
+	dry := policy(t, "").Evaluate(Input{})
+	dry.DryRun = true
+	for name, r := range map[string]*Report{"full": full, "empty": policy(t, "").Evaluate(Input{}), "dry-run": dry} {
 		t.Run(name, func(t *testing.T) {
 			data, err := json.Marshal(r)
 			if err != nil {
@@ -521,18 +527,94 @@ func TestRepoConfigAtRevision(t *testing.T) {
 	writeFile(t, filepath.Join(dir, "README.md"), "x")
 	git("add", ".")
 	git("commit", "-q", "-m", "no config")
-	writeFile(t, filepath.Join(dir, RepoConfigFile), `{"version": 1, "mode": "enforce"}`)
+	writeFile(t, filepath.Join(dir, RepoConfigFile), `{"version": 1, "checks": {"family-split": "warn"}}`)
 	git("add", ".")
-	git("commit", "-q", "-m", "enforce")
-	writeFile(t, filepath.Join(dir, RepoConfigFile), `{"version": 1, "mode": "report", "checks": {"family-split": "off"}}`)
+	git("commit", "-q", "-m", "warn")
+	writeFile(t, filepath.Join(dir, RepoConfigFile), `{"version": 1, "checks": {"family-split": "off"}}`)
 	git("commit", "-q", "-am", "relax")
 
 	base := load(t, LoadOptions{RepoDir: dir, RepoRev: "HEAD^1"})
-	if base.Config.Mode != ModeEnforce || !slices.Equal(base.Sources, []string{"infra:defaults.json", RepoConfigFile + "@HEAD^1"}) {
-		t.Errorf("base: mode %s, sources %v", base.Config.Mode, base.Sources)
+	if base.Config.Checks["family-split"].Level != Warn || !slices.Equal(base.Sources, []string{"infra:defaults.json", RepoConfigFile + "@HEAD^1"}) {
+		t.Errorf("base: level %s, sources %v", base.Config.Checks["family-split"].Level, base.Sources)
 	}
 	unknown := load(t, LoadOptions{RepoDir: dir, RepoRev: "HEAD~5"})
-	if unknown.Config.Mode != ModeReport || len(unknown.Problems) != 1 || unknown.Problems[0].Check != ConfigInvalid {
-		t.Errorf("unknown revision: mode %s, problems %+v", unknown.Config.Mode, unknown.Problems)
+	if unknown.Config.Checks["family-split"].Level != 0 || len(unknown.Problems) != 1 || unknown.Problems[0].Check != ConfigInvalid {
+		t.Errorf("unknown revision: level %s, problems %+v", unknown.Config.Checks["family-split"].Level, unknown.Problems)
+	}
+}
+
+func TestApplyConsumers(t *testing.T) {
+	p := policy(t, `{"version": 1, "consumers": false}`)
+	if string(p.Config.Consumers) != "false" {
+		t.Fatalf("file turns consumers off: %s", p.Config.Consumers)
+	}
+	p.ApplyConsumers(true)
+	if string(p.Config.Consumers) == "false" || !strings.Contains(string(p.Config.Consumers), "qubership") {
+		t.Fatalf("true restores the infra list: %s", p.Config.Consumers)
+	}
+	p.ApplyConsumers(false)
+	if string(p.Config.Consumers) != "false" {
+		t.Fatalf("false turns consumers off: %s", p.Config.Consumers)
+	}
+}
+
+func TestConsumerLists(t *testing.T) {
+	p := policy(t, "")
+	var doc struct {
+		Go struct {
+			Libs     []consumerEntry `json:"libs"`
+			Services []consumerEntry `json:"services"`
+		} `json:"go"`
+		Maven struct {
+			Services []consumerEntry `json:"services"`
+		} `json:"maven"`
+	}
+	if err := json.Unmarshal(p.Config.Consumers, &doc); err != nil {
+		t.Fatal(err)
+	}
+	if len(doc.Go.Libs) != 20 || len(doc.Go.Services) != 11 || len(doc.Maven.Services) != 2 {
+		t.Fatalf("libs %d, services %d, maven %d", len(doc.Go.Libs), len(doc.Go.Services), len(doc.Maven.Services))
+	}
+	for _, c := range append(doc.Go.Libs, doc.Go.Services...) {
+		if !c.Tests {
+			t.Errorf("%s does not run tests", c.Repo)
+		}
+	}
+	for _, c := range doc.Maven.Services {
+		if c.Tests || c.Module != "." {
+			t.Errorf("maven %+v", c)
+		}
+	}
+	want := map[string]string{
+		"Netcracker/qubership-core-site-management": "site-management-service",
+		"Netcracker/qubership-core-control-plane":   "control-plane",
+		"Netcracker/qubership-rate-limiter":         ".",
+		"Netcracker/qubership-mini-core":            "core-legacy-api/core-legacy-api-service",
+		"Netcracker/qubership-core-lib-go":          ".",
+	}
+	got := map[string]string{}
+	for _, c := range append(doc.Go.Libs, doc.Go.Services...) {
+		got[c.Repo] = c.Module
+	}
+	for repo, module := range want {
+		if got[repo] != module {
+			t.Errorf("%s module %q", repo, got[repo])
+		}
+	}
+	n := 0
+	for _, c := range doc.Go.Services {
+		if c.Repo == "Netcracker/qubership-core-test-apps" {
+			n++
+		}
+	}
+	if n != 3 {
+		t.Errorf("%d test-app modules", n)
+	}
+	names := map[string]bool{}
+	for _, c := range doc.Maven.Services {
+		names[c.Repo] = true
+	}
+	if !names["Netcracker/qubership-core-config-server"] || !names["Netcracker/qubership-core-core-operator"] {
+		t.Errorf("maven %v", names)
 	}
 }

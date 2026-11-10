@@ -61,11 +61,12 @@ type Report struct {
 	Gate        string           `json:"gate"`
 	Config      []string         `json:"config"`
 	Scope       map[string]Scope `json:"scope,omitempty"`
-	Mode        Mode             `json:"mode"`
-	Verdict     Verdict          `json:"verdict"`
-	Adapters    []Adapter        `json:"adapters"`
-	Findings    []*Finding       `json:"findings"`
-	Counts      Counts           `json:"counts"`
+	// DryRun skips the failure. The verdict is unchanged.
+	DryRun   bool       `json:"dryRun,omitempty"`
+	Verdict  Verdict    `json:"verdict"`
+	Adapters []Adapter  `json:"adapters"`
+	Findings []*Finding `json:"findings"`
+	Counts   Counts     `json:"counts"`
 }
 
 // Input of one evaluation.
@@ -82,7 +83,7 @@ type Input struct {
 
 // Evaluate applies levels, ignore rules, exceptions and the baseline, and computes the verdict.
 func (p *Policy) Evaluate(in Input) *Report {
-	r := &Report{Schema: ReportSchema, Config: p.Sources, Scope: p.Scope, Mode: p.Config.Mode,
+	r := &Report{Schema: ReportSchema, Config: p.Sources, Scope: p.Scope,
 		Adapters: []Adapter{}, Findings: []*Finding{}}
 	ran := map[string]bool{}
 	var found []*Finding
@@ -265,7 +266,7 @@ func tally(findings []*Finding) (Counts, Verdict) {
 	return c, verdict
 }
 
-// Failed reports whether the check fails: only a fail verdict in enforce mode does.
+// Failed reports whether the check fails. A new fail does, unless this run is a dry run.
 func (r *Report) Failed() bool {
-	return r.Mode == ModeEnforce && r.Verdict == VerdictFail
+	return r.Verdict == VerdictFail && !r.DryRun
 }

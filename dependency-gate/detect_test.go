@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/Netcracker/qubership-core-infra/tools/dependency-gate/internal/gate"
+	"github.com/Netcracker/qubership-core-infra/dependency-gate/internal/gate"
 )
 
 func TestDetectEcosystems(t *testing.T) {

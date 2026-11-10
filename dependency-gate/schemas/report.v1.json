@@ -1,10 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/Netcracker/qubership-core-infra/tools/dependency-gate/schemas/report.v1.json",
+  "$id": "https://github.com/Netcracker/qubership-core-infra/dependency-gate/schemas/report.v1.json",
   "title": "Dependency gate report",
   "description": "Final report of the gate: findings after levels, exceptions and baseline, and the verdict.",
   "type": "object",
-  "required": ["schema", "gate", "config", "mode", "adapters", "findings", "counts", "verdict"],
+  "required": ["schema", "gate", "config", "adapters", "findings", "counts", "verdict"],
   "additionalProperties": false,
   "properties": {
     "schema": { "const": "dependency-gate-report/v1" },
@@ -39,9 +39,12 @@
         }
       }
     },
-    "mode": { "enum": ["report", "enforce"] },
+    "dryRun": {
+      "description": "The verdict was computed and a fail did not fail the check. The summary and comment include a warning with the same findings.",
+      "type": "boolean"
+    },
     "verdict": {
-      "description": "Computed in both modes; in report mode the check stays green whatever the verdict",
+      "description": "fail: a new finding at fail; warn: a warning and no new fail; pass: otherwise. dry-run does not change this value",
       "$ref": "#/$defs/verdict"
     },
     "adapters": {

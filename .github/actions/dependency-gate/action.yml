@@ -1,9 +1,9 @@
 # $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-action.json
 name: "Dependency gate"
 description: >
-  Builds tools/dependency-gate from the same revision of qubership-core-infra as this action and runs one command:
+  Builds dependency-gate from the same revision of qubership-core-infra as this action and runs one command:
   detect (which ecosystems to check) or evaluate (apply the policy to the adapter findings, report, comment).
-  See tools/dependency-gate/README.md.
+  See dependency-gate/DESIGN.md.
 inputs:
   command:
     description: "detect | evaluate"
@@ -35,13 +35,21 @@ inputs:
     description: "evaluate: write the Consumers comment (the fail fact and the run link) and set the comment output to post or delete"
     required: false
     default: "false"
+  dry-run:
+    description: "evaluate: do not fail the check; the summary and comment show a warning with the same findings"
+    required: false
+    default: "false"
+  consumers:
+    description: "detect: false turns reference consumers off. true keeps the infra list"
+    required: false
+    default: "true"
   gate-ref:
     description: "Revision of qubership-core-infra, written to the report"
     required: false
     default: ""
 outputs:
   verdict:
-    description: "evaluate: pass | warn | fail (computed in both modes)"
+    description: "evaluate: pass | warn | fail"
     value: ${{ steps.evaluate.outputs.verdict }}
   comment:
     description: "evaluate: post creates or replaces the sticky comment, update refreshes one that already exists, delete removes it"
@@ -73,11 +81,10 @@ runs:
 
     - name: Build dependency-gate
       shell: bash
+      working-directory: ${{ github.action_path }}/../../../dependency-gate
       env:
         GOTOOLCHAIN: local
-      run: |
-        cd "$GITHUB_ACTION_PATH/../../../tools/dependency-gate"
-        go build -trimpath -o "$RUNNER_TEMP/dependency-gate-bin/dependency-gate" .
+      run: go build -trimpath -o "$RUNNER_TEMP/dependency-gate-bin/dependency-gate" .
 
     - name: Detect
       id: detect
@@ -85,7 +92,8 @@ runs:
       shell: bash
       env:
         REPO_DIR: ${{ inputs.repo-dir }}
-      run: '"$RUNNER_TEMP/dependency-gate-bin/dependency-gate" detect -repo "$REPO_DIR"'
+        CONSUMERS: ${{ inputs.consumers }}
+      run: python3 "$GITHUB_ACTION_PATH/../../../dependency-gate/ci.py" detect
 
     - name: Evaluate
       id: evaluate
@@ -98,14 +106,6 @@ runs:
         OUT_DIR: ${{ inputs.out-dir }}
         COMMENT: ${{ inputs.comment }}
         COMMENT_NOTE: ${{ inputs.comment-note }}
+        DRY_RUN: ${{ inputs.dry-run }}
         GATE_REF: ${{ inputs.gate-ref }}
-      run: |
-        args=(evaluate -repo "$REPO_DIR" -out "${OUT_DIR:-$RUNNER_TEMP/dependency-gate}")
-        if [ -n "$GATE_REF" ]; then args+=(-gate "qubership-core-infra@$GATE_REF"); fi
-        if [ -n "$FINDINGS_DIR" ] && [ -d "$FINDINGS_DIR" ]; then args+=(-findings "$FINDINGS_DIR"); fi
-        while read -r e; do
-          if [ -n "$e" ]; then args+=(-expect "$e"); fi
-        done <<< "$EXPECT"
-        if [ "$COMMENT" = true ]; then args+=(-comment); fi
-        if [ "$COMMENT_NOTE" = true ]; then args+=(-comment-note); fi
-        "$RUNNER_TEMP/dependency-gate-bin/dependency-gate" "${args[@]}"
+      run: python3 "$GITHUB_ACTION_PATH/../../../dependency-gate/ci.py" evaluate

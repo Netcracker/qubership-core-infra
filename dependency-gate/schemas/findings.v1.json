@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/Netcracker/qubership-core-infra/tools/dependency-gate/schemas/findings.v1.json",
+  "$id": "https://github.com/Netcracker/qubership-core-infra/dependency-gate/schemas/findings.v1.json",
   "title": "Dependency gate adapter findings",
   "description": "Raw findings of one adapter for one revision. Adapters know nothing about levels, exceptions or baselines.",
   "type": "object",

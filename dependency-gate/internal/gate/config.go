@@ -20,18 +20,10 @@ import (
 // RepoConfigFile is the optional configuration of the checked repository.
 const RepoConfigFile = ".github/dependency-gate.json"
 
-type Mode string
-
-const (
-	ModeReport  Mode = "report"
-	ModeEnforce Mode = "enforce"
-)
-
 // Config is config.v1: the infra defaults, a repository file, or both merged.
 type Config struct {
 	Schema           string                   `json:"$schema,omitempty"`
 	Version          int                      `json:"version"`
-	Mode             Mode                     `json:"mode,omitempty"`
 	MaxExceptionDays int                      `json:"maxExceptionDays,omitempty"`
 	Locked           []string                 `json:"locked,omitempty"`
 	Labels           Labels                   `json:"labels,omitzero"`
@@ -148,6 +140,8 @@ func (o origin) locations() []Location {
 // Policy is the effective configuration with compiled rules.
 type Policy struct {
 	Config Config
+	// infra consumers after expansion, before a repository file replaces them
+	infraConsumers json.RawMessage
 	// configuration files in merge order
 	Sources []string
 	// findings of the gate about the configuration itself
@@ -179,6 +173,8 @@ type LoadOptions struct {
 	// git revision RepoConfigFile is read from; empty: the working tree
 	RepoRev string
 	Today   time.Time
+	// path of .github/repos.json. Empty: search upwards from the working directory.
+	ListsFile string
 }
 
 // Load merges the repository file over the infra defaults. Problems of the repository file become findings;
@@ -197,7 +193,10 @@ func Load(o LoadOptions) (*Policy, error) {
 	if len(errs) > 0 {
 		return nil, fmt.Errorf("%s: %s", o.DefaultsName, strings.Join(errs, "; "))
 	}
-	p := &Policy{Sources: []string{o.DefaultsName}}
+	if err := expandConsumers(&infra, o.ListsFile); err != nil {
+		return nil, fmt.Errorf("%s: %w", o.DefaultsName, err)
+	}
+	p := &Policy{Sources: []string{o.DefaultsName}, infraConsumers: bytes.Clone(infra.Consumers)}
 	cfg := infra
 	if repo, ok := p.loadRepo(o, &infra); ok {
 		source := RepoConfigFile
@@ -230,6 +229,15 @@ func Load(o LoadOptions) (*Policy, error) {
 		p.addException(e, o.Today)
 	}
 	return p, nil
+}
+
+// ApplyConsumers replaces the merged consumers value. true restores the infra list; false turns reference consumers off.
+func (p *Policy) ApplyConsumers(on bool) {
+	if on {
+		p.Config.Consumers = bytes.Clone(p.infraConsumers)
+		return
+	}
+	p.Config.Consumers = json.RawMessage("false")
 }
 
 func (p *Policy) problem(check string, o origin, format string, args ...any) {
@@ -474,9 +482,6 @@ func (p *Policy) Level(check, eco, adapter string, labels []string) Level {
 
 func merge(infra, repo Config) Config {
 	out := infra
-	if repo.Mode != "" {
-		out.Mode = repo.Mode
-	}
 	out.Labels.Levels = mergeMap(infra.Labels.Levels, repo.Labels.Levels,
 		func(a, b map[string]Level) map[string]Level { return mergeMap(a, b, nil) })
 	out.Checks = mergeMap(infra.Checks, repo.Checks, mergeCheck)

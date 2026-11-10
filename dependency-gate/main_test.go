@@ -17,7 +17,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/Netcracker/qubership-core-infra/tools/dependency-gate/internal/gate"
+	"github.com/Netcracker/qubership-core-infra/dependency-gate/internal/gate"
 )
 
 const fixtures = "internal/gate/testdata/findings"
@@ -104,14 +104,14 @@ func TestEvaluateLocal(t *testing.T) {
 	var stdout bytes.Buffer
 	err := run(t.Context(), "evaluate", []string{"-repo", repo, "-findings", fixtures, "-out", out, "-today", "2026-10-29",
 		"-branch", "feature/x", "-expect", "go-library=success"}, &stdout)
-	if err != nil {
-		t.Fatal(err)
+	if !errors.Is(err, errFailed) {
+		t.Fatalf("a new fail fails the check: %v", err)
 	}
 	r := readReport(t, out)
-	if r.Mode != gate.ModeReport || !has(r, "apidiff-exposed") {
-		t.Errorf("report: mode %s, findings %d", r.Mode, len(r.Findings))
+	if r.Verdict != gate.VerdictFail || r.DryRun || !has(r, "apidiff-exposed") {
+		t.Errorf("report: verdict %s, dry-run %v, findings %d", r.Verdict, r.DryRun, len(r.Findings))
 	}
-	if !strings.HasPrefix(stdout.String(), "### ") || strings.Contains(stdout.String(), "::") {
+	if !strings.HasPrefix(stdout.String(), "### ") || strings.Contains(stdout.String(), "::") || strings.Contains(stdout.String(), "dry run") {
 		t.Errorf("locally the summary is printed, no workflow commands:\n%s", stdout.String())
 	}
 	for _, name := range []string{"summary.md", "comment.md"} {
@@ -120,16 +120,27 @@ func TestEvaluateLocal(t *testing.T) {
 		}
 	}
 
-	write(t, filepath.Join(repo, gate.RepoConfigFile), `{"version": 1, "mode": "enforce"}`)
-	err = run(t.Context(), "evaluate", []string{"-repo", repo, "-findings", fixtures, "-today", "2026-10-29"}, &stdout)
-	if !errors.Is(err, errFailed) {
-		t.Errorf("a fail verdict in enforce mode: got %v", err)
+	stdout.Reset()
+	out = t.TempDir()
+	err = run(t.Context(), "evaluate", []string{"-repo", repo, "-findings", fixtures, "-out", out, "-today", "2026-10-29", "-dry-run"}, &stdout)
+	if err != nil {
+		t.Fatalf("dry-run skips the failure: %v", err)
+	}
+	summary, err := os.ReadFile(filepath.Join(out, "summary.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(summary), "❌ Dependency gate: failed") || !strings.Contains(string(summary), "> Warning: dry run. The check stays green.") || !strings.Contains(string(summary), "apidiff-exposed") {
+		t.Errorf("dry-run summary:\n%s", summary)
+	}
+	if readReport(t, out).Verdict != gate.VerdictFail || !readReport(t, out).DryRun {
+		t.Errorf("dry-run keeps the fail verdict: %+v", readReport(t, out))
 	}
 }
 
-// On a pull request the repository file of the base branch applies: the change cannot relax its own gate.
+// On a pull request the repository file of the base branch applies: the change cannot lower a check.
 func TestEvaluatePullRequest(t *testing.T) {
-	repo := pullRequestRepo(t, `{"version": 1, "mode": "enforce"}`, `{"version": 1, "mode": "report"}`)
+	repo := pullRequestRepo(t, `{"version": 1}`, `{"version": 1, "checks": {"apidiff-exposed": "off"}}`)
 	work := t.TempDir()
 	env := map[string]string{
 		"GITHUB_ACTIONS": "true", "GITHUB_EVENT_NAME": "pull_request", "GITHUB_REPOSITORY": "o/r", "GITHUB_SHA": "merge-sha",
@@ -143,14 +154,14 @@ func TestEvaluatePullRequest(t *testing.T) {
 	err := run(t.Context(), "evaluate", []string{"-repo", repo, "-findings", fixtures, "-out", out, "-today", "2026-10-29",
 		"-comment", "-gate", "qubership-core-infra@test"}, &stdout)
 	if !errors.Is(err, errFailed) {
-		t.Fatalf("the base branch enforces: got %v", err)
+		t.Fatalf("the base file keeps the check: got %v", err)
 	}
 	r := readReport(t, out)
 	if r.PullRequest != 7 || r.Base != "base-sha" || r.Head != "head-sha" || r.Repository != "o/r" || r.Gate != "qubership-core-infra@test" {
 		t.Errorf("report header %+v", r)
 	}
-	if !slices.Equal(r.Config, []string{"infra:defaults.json@dev", gate.RepoConfigFile + "@HEAD^1"}) || r.Mode != gate.ModeEnforce {
-		t.Errorf("config %v, mode %s", r.Config, r.Mode)
+	if !slices.Equal(r.Config, []string{"infra:defaults.json@dev", gate.RepoConfigFile + "@HEAD^1"}) || !has(r, "apidiff-exposed") {
+		t.Errorf("config %v, findings %d", r.Config, len(r.Findings))
 	}
 	if !strings.Contains(stdout.String(), "::error file=") || strings.Contains(stdout.String(), "cannot update the PR comment") {
 		t.Errorf("annotations:\n%s", stdout.String())
@@ -179,7 +190,7 @@ func TestEvaluateComment(t *testing.T) {
 		"GITHUB_OUTPUT":     filepath.Join(work, "output"), "GITHUB_STEP_SUMMARY": filepath.Join(work, "summary"),
 	})
 	var stdout bytes.Buffer
-	if err := run(t.Context(), "evaluate", []string{"-repo", repo, "-findings", fixtures, "-out", out, "-today", "2026-10-29", "-comment"}, &stdout); err != nil {
+	if err := run(t.Context(), "evaluate", []string{"-repo", repo, "-findings", fixtures, "-out", out, "-today", "2026-10-29", "-comment"}, &stdout); !errors.Is(err, errFailed) {
 		t.Fatalf("%v\n%s", err, stdout.String())
 	}
 	if got := githubOutput(t, filepath.Join(work, "output"))["comment"]; got != "post" {
@@ -197,7 +208,7 @@ func TestEvaluateComment(t *testing.T) {
 		"GITHUB_OUTPUT": filepath.Join(work, "output"), "GITHUB_STEP_SUMMARY": filepath.Join(work, "summary"),
 	})
 	stdout.Reset()
-	if err := run(t.Context(), "evaluate", []string{"-repo", repo, "-findings", fixtures, "-out", out, "-today", "2026-10-29", "-comment-note"}, &stdout); err != nil {
+	if err := run(t.Context(), "evaluate", []string{"-repo", repo, "-findings", fixtures, "-out", out, "-today", "2026-10-29", "-comment-note"}, &stdout); !errors.Is(err, errFailed) {
 		t.Fatalf("%v\n%s", err, stdout.String())
 	}
 	if got := githubOutput(t, filepath.Join(work, "output"))["comment"]; got != "post" {
@@ -205,9 +216,26 @@ func TestEvaluateComment(t *testing.T) {
 	}
 	comment, _ = os.ReadFile(filepath.Join(out, "comment.md"))
 	text := string(comment)
-	if !strings.HasPrefix(text, "<!-- dependency-gate-consumers -->\n**Consumers:** would fail") ||
+	if !strings.HasPrefix(text, "<!-- dependency-gate-consumers -->\n**Consumers:** failed") ||
+		strings.Contains(text, "dry run") ||
 		!strings.Contains(text, "https://github.com/o/r/actions/runs/9") || strings.Contains(text, "apidiff-exposed") {
 		t.Errorf("consumers comment:\n%s", text)
+	}
+
+	work, out = t.TempDir(), t.TempDir()
+	githubEnv(t, map[string]string{
+		"GITHUB_ACTIONS": "true", "GITHUB_EVENT_NAME": "pull_request", "GITHUB_REPOSITORY": "o/r",
+		"GITHUB_EVENT_PATH": eventFile(t, "main"), "GITHUB_RUN_ID": "9", "GITHUB_SERVER_URL": "https://github.com",
+		"GITHUB_OUTPUT": filepath.Join(work, "output"), "GITHUB_STEP_SUMMARY": filepath.Join(work, "summary"),
+	})
+	stdout.Reset()
+	if err := run(t.Context(), "evaluate", []string{"-repo", repo, "-findings", fixtures, "-out", out, "-today", "2026-10-29", "-dry-run", "-comment-note"}, &stdout); err != nil {
+		t.Fatalf("dry-run: %v\n%s", err, stdout.String())
+	}
+	comment, _ = os.ReadFile(filepath.Join(out, "comment.md"))
+	text = string(comment)
+	if !strings.Contains(text, "**Consumers:** failed") || !strings.Contains(text, "Warning: dry run. The check stays green.") {
+		t.Errorf("dry-run consumers comment:\n%s", text)
 	}
 
 	work, out = t.TempDir(), t.TempDir()
@@ -290,7 +318,12 @@ func TestEvaluateLabelLevels(t *testing.T) {
 			githubEnv(t, env)
 			out := t.TempDir()
 			args := append([]string{"-repo", repo, "-findings", found, "-out", out, "-today", "2026-10-29"}, tc.args...)
-			if err := run(t.Context(), "evaluate", args, io.Discard); err != nil {
+			err := run(t.Context(), "evaluate", args, io.Discard)
+			if tc.want == gate.Fail {
+				if !errors.Is(err, errFailed) {
+					t.Fatalf("a fail level fails the check: %v", err)
+				}
+			} else if err != nil {
 				t.Fatal(err)
 			}
 			r := readReport(t, out)
@@ -345,6 +378,35 @@ func TestDetect(t *testing.T) {
 	}
 }
 
+func TestDetectConsumersFlag(t *testing.T) {
+	repo := t.TempDir()
+	githubEnv(t, nil)
+	var stdout bytes.Buffer
+	if err := run(t.Context(), "detect", []string{"-repo", repo, "-consumers", "false"}, &stdout); err != nil {
+		t.Fatal(err)
+	}
+	var off map[string]string
+	if err := json.Unmarshal(stdout.Bytes(), &off); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(off["config"], `"consumers":false`) {
+		t.Errorf("consumers false: %s", off["config"])
+	}
+
+	write(t, filepath.Join(repo, gate.RepoConfigFile), `{"version": 1, "consumers": false}`)
+	stdout.Reset()
+	if err := run(t.Context(), "detect", []string{"-repo", repo, "-consumers", "true"}, &stdout); err != nil {
+		t.Fatal(err)
+	}
+	var on map[string]string
+	if err := json.Unmarshal(stdout.Bytes(), &on); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(on["config"], `"consumers":false`) || !strings.Contains(on["config"], "qubership") {
+		t.Errorf("consumers true restores the list: %s", on["config"])
+	}
+}
+
 func TestFlags(t *testing.T) {
 	githubEnv(t, nil)
 	for _, tc := range []struct {
@@ -357,7 +419,7 @@ func TestFlags(t *testing.T) {
 		{"expect", "evaluate", []string{"-expect", "go-library"}, nil, "want adapter=result"},
 		{"unknown command", "check", nil, errUsage, ""},
 		// an unreadable repository file is a finding of the gate, not an error
-		{"config at rev", "evaluate", []string{"-config-rev", "no-such-rev", "-out", t.TempDir()}, nil, ""},
+		{"config at rev", "evaluate", []string{"-config-rev", "no-such-rev", "-out", t.TempDir()}, errFailed, gate.ConfigInvalid},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var stdout bytes.Buffer
@@ -366,6 +428,9 @@ func TestFlags(t *testing.T) {
 			case tc.is != nil:
 				if !errors.Is(err, tc.is) {
 					t.Errorf("got %v, want %v", err, tc.is)
+				}
+				if tc.want != "" && !strings.Contains(stdout.String(), tc.want) && !strings.Contains(err.Error(), tc.want) {
+					t.Errorf("got %v, stdout %s, want %q", err, stdout.String(), tc.want)
 				}
 			case tc.want != "":
 				if err == nil || !strings.Contains(err.Error(), tc.want) {
@@ -405,10 +470,42 @@ func TestCompare(t *testing.T) {
 	}
 }
 
+func pythonBin(t *testing.T) string {
+	t.Helper()
+	for _, name := range []string{"python3", "python"} {
+		path, err := exec.LookPath(name)
+		if err != nil {
+			continue
+		}
+		if exec.Command(path, "-c", "import sys").Run() == nil {
+			return path
+		}
+	}
+	t.Fatal("python is not installed")
+	return ""
+}
+
+func consumersScript(t *testing.T) (string, *gate.Schemas) {
+	t.Helper()
+	path, err := filepath.Abs("consumers.py")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sub, err := fs.Sub(schemas, "schemas")
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := gate.LoadSchemas(sub)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return filepath.ToSlash(path), s
+}
+
 // goDepCheck returns the path of a go-dep-check script, with slashes for bash, and the gate's schemas.
 func goDepCheck(t *testing.T, script string) (string, *gate.Schemas) {
 	t.Helper()
-	path, err := filepath.Abs("../../.github/actions/go-dep-check/" + script)
+	path, err := filepath.Abs("../.github/actions/go-dep-check/" + script)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -531,11 +628,11 @@ func TestNewVetScript(t *testing.T) {
 	}
 }
 
-// consumer-check.sh offline: the consumer replaces the library with a directory, and its go.sum mentions the
+// consumers.py check go, offline: the consumer replaces the library with a directory, and its go.sum mentions the
 // library only to pass the quick filter. Cases with tests need gotestsum.
 func TestConsumerCheckScript(t *testing.T) {
-	needTools(t, "bash", "jq", "git", "go")
-	script, s := goDepCheck(t, "consumer-check.sh")
+	needTools(t, "git", "go")
+	script, s := consumersScript(t)
 	_, err := exec.LookPath("gotestsum")
 	gotestsum := err == nil
 	const (
@@ -630,7 +727,7 @@ func TestFlaky(t *testing.T) {
 				}
 			}
 			out := filepath.Join(dir, "out")
-			cmd := exec.Command("bash", script, "c", "lib-base", "lib-head", "out", "o/c/.", strconv.FormatBool(tc.test != ""))
+			cmd := exec.Command(pythonBin(t), script, "check", "go", "c", "lib-base", "lib-head", "out", "o/c/.", strconv.FormatBool(tc.test != ""))
 			cmd.Dir = dir
 			cmd.Env = append(os.Environ(), "GOPROXY=off", "GOFLAGS=", "GOWORK=off", "MARK="+filepath.Join(dir, "mark"))
 			msg, err := cmd.CombinedOutput()
@@ -666,11 +763,11 @@ func TestFlaky(t *testing.T) {
 	}
 }
 
-// plan-consumers.sh: the matrix follows the non-test build list. A dependency imported only by tests, or only
-// by a package that only tests import, does not plan a consumer. curl is a fake on PATH.
+// consumers.py plan go: the matrix follows the non-test build list. A dependency imported only by tests, or only
+// by a package that only tests import, does not plan a consumer. curl is a shell script named by CURL.
 func TestPlanConsumers(t *testing.T) {
-	needTools(t, "bash", "jq", "git", "go")
-	script, _ := goDepCheck(t, "plan-consumers.sh")
+	needTools(t, "bash", "git", "go")
+	script, _ := consumersScript(t)
 	dir := t.TempDir()
 	repo := filepath.Join(dir, "repo")
 	bin := filepath.Join(dir, "bin")
@@ -725,11 +822,11 @@ replace example.com/prod => ./third/prod
 	git("add", ".")
 	git("commit", "-q", "-m", "base")
 
-	config := `{"consumers":{"go":[{"repo":"example/missing","module":".","tests":true}]}}`
+	config := `{"consumers":{"go":{"services":[{"repo":"example/missing","module":".","tests":true}]}}}`
 	one := []map[string]any{{"repo": "example/missing", "module": ".", "tests": true, "lib": "."}}
 	plan := func(cfg, base, curl string) (stdout, stderr string) {
 		t.Helper()
-		cmd := exec.Command("bash", script)
+		cmd := exec.Command(pythonBin(t), script, "plan", "go")
 		cmd.Env = append(os.Environ(),
 			"PATH="+bin+string(os.PathListSeparator)+os.Getenv("PATH"),
 			"REPO_DIR="+filepath.ToSlash(repo),

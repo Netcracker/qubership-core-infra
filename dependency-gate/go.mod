@@ -1,4 +1,4 @@
-module github.com/Netcracker/qubership-core-infra/tools/dependency-gate
+module github.com/Netcracker/qubership-core-infra/dependency-gate
 
 go 1.26.0
 

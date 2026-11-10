@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/Netcracker/qubership-core-infra/tools/dependency-gate/schemas/config.v1.json",
+  "$id": "https://github.com/Netcracker/qubership-core-infra/dependency-gate/schemas/config.v1.json",
   "title": "Dependency gate configuration",
   "description": "Repository file .github/dependency-gate.json, merged over the infra defaults.",
   "type": "object",
@@ -9,10 +9,6 @@
   "properties": {
     "$schema": { "type": "string" },
     "version": { "const": 1 },
-    "mode": {
-      "description": "report: the check is always green, the verdict is only reported; enforce: a fail verdict fails the check",
-      "enum": ["report", "enforce"]
-    },
     "maxExceptionDays": {
       "description": "Infra only. Longest allowed distance from today to an exception's until date",
       "type": "integer",
@@ -94,15 +90,28 @@
       }
     },
     "consumers": {
-      "description": "Infra only; a repository can only disable them with false",
+      "description": "Infra only; a repository can only disable them with false. Names come from the repository lists; a group may instead be the expanded array.",
       "oneOf": [
         { "const": false },
         {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "go": { "$ref": "#/$defs/consumerList" },
-            "maven": { "$ref": "#/$defs/consumerList" }
+            "go": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "libs": { "$ref": "#/$defs/consumerGroup" },
+                "services": { "$ref": "#/$defs/consumerGroup" }
+              }
+            },
+            "maven": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "services": { "$ref": "#/$defs/consumerGroup" }
+              }
+            }
           }
         }
       ]
@@ -198,6 +207,20 @@
       "type": "object",
       "propertyNames": { "$ref": "#/$defs/checkId" },
       "additionalProperties": { "$ref": "#/$defs/checkSettings" }
+    },
+    "consumerGroup": {
+      "description": "Tests and consumers that are not in .github/repos.json, or the expanded array of consumers. Names and module directories come from that file.",
+      "oneOf": [
+        { "$ref": "#/$defs/consumerList" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tests": { "description": "Go: run the consumer's tests", "type": "boolean" },
+            "extra": { "description": "Consumers that are not in .github/repos.json", "$ref": "#/$defs/consumerList" }
+          }
+        }
+      ]
     },
     "consumerList": {
       "type": "array",

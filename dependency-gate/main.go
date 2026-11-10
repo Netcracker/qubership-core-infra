@@ -23,8 +23,8 @@ import (
 	"github.com/sethvargo/go-githubactions"
 	"golang.org/x/mod/semver"
 
-	"github.com/Netcracker/qubership-core-infra/tools/dependency-gate/internal/gate"
-	"github.com/Netcracker/qubership-core-infra/tools/dependency-gate/internal/render"
+	"github.com/Netcracker/qubership-core-infra/dependency-gate/internal/gate"
+	"github.com/Netcracker/qubership-core-infra/dependency-gate/internal/render"
 )
 
 //go:embed defaults.json
@@ -36,7 +36,7 @@ var schemas embed.FS
 const usage = `usage: dependency-gate <command> [flags]
 
 commands:
-  evaluate  apply the policy to adapter findings and write the report (exit 0: pass/warn, 1: fail, 2: error)
+  evaluate  apply the policy to adapter findings and write the report (exit 0: pass, warn, or dry-run; 1: a new fail; 2: the gate itself failed)
   detect    find the Maven roots and Go modules and whether their manifests changed
   compare   print -1, 0 or 1 as Go version <a> is below, equal to or above <b> (for the go-dep-check scripts)
 
@@ -44,7 +44,7 @@ Run "dependency-gate <command> -h" for the flags.
 `
 
 var (
-	// errFailed is a fail verdict in enforce mode.
+	// errFailed is a new fail. A dry run does not return it.
 	errFailed = errors.New("dependency gate failed")
 	errUsage  = errors.New("unknown command")
 )
@@ -101,7 +101,7 @@ func pullRequest() bool { return strings.HasPrefix(os.Getenv("GITHUB_EVENT_NAME"
 
 // common flags of the commands
 type options struct {
-	repo, configRev, defaults, today string
+	repo, configRev, defaults, today, lists string
 }
 
 func (o *options) register(fs *flag.FlagSet) {
@@ -110,6 +110,7 @@ func (o *options) register(fs *flag.FlagSet) {
 		"git revision to read "+gate.RepoConfigFile+" from (default: HEAD^1 on pull requests, so a change cannot relax its own gate; else the working tree)")
 	fs.StringVar(&o.defaults, "defaults", "", "infra defaults file to use instead of the built-in one")
 	fs.StringVar(&o.today, "today", "", "date exceptions expire against, yyyy-mm-dd (default: today)")
+	fs.StringVar(&o.lists, "consumer-lists", "", "path of .github/repos.json (names and module directories)")
 }
 
 // load compiles the built-in schemas and loads the policy.
@@ -142,7 +143,7 @@ func (o *options) load() (*gate.Schemas, *gate.Policy, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	p, err := gate.Load(gate.LoadOptions{Schemas: s, Defaults: data, DefaultsName: name, RepoDir: o.repo, RepoRev: rev, Today: today})
+	p, err := gate.Load(gate.LoadOptions{Schemas: s, Defaults: data, DefaultsName: name, RepoDir: o.repo, RepoRev: rev, Today: today, ListsFile: o.lists})
 	return s, p, err
 }
 
@@ -168,6 +169,7 @@ func evaluate(args []string, stdout io.Writer) error {
 	})
 	comment := fs.Bool("comment", false, "this run owns the Dependency gate comment: comment.md, output comment=post or update")
 	commentNote := fs.Bool("comment-note", false, "this run owns the Consumers comment: comment.md is the fail fact and the run link, output comment=post or delete")
+	dryRun := fs.Bool("dry-run", false, "do not fail the check; the summary and comment show a warning with the same findings")
 	gateVersion := fs.String("gate", "qubership-core-infra@"+version(), "gate version written to the report")
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -203,6 +205,7 @@ func evaluate(args []string, stdout io.Writer) error {
 	}
 
 	report := policy.Evaluate(in)
+	report.DryRun = *dryRun
 	report.Repository, report.PullRequest, report.Base, report.Head, report.Gate = gh.Repository, pr, base, head, *gateVersion
 	data, err := json.MarshalIndent(report, "", "  ")
 	if err != nil {
@@ -251,7 +254,7 @@ func evaluate(args []string, stdout io.Writer) error {
 	} else {
 		fmt.Fprint(stdout, summary)
 	}
-	slog.Info("dependency gate", "mode", report.Mode, "verdict", report.Verdict, "fail", report.Counts.Fail,
+	slog.Info("dependency gate", "dry-run", report.DryRun, "verdict", report.Verdict, "fail", report.Counts.Fail,
 		"warn", report.Counts.Warn, "preexisting", report.Counts.Preexisting, "allowed", report.Counts.Allowed)
 	if report.Failed() {
 		return errFailed

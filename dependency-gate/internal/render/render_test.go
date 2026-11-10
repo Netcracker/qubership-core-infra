@@ -9,12 +9,11 @@ import (
 
 	"github.com/sethvargo/go-githubactions"
 
-	"github.com/Netcracker/qubership-core-infra/tools/dependency-gate/internal/gate"
+	"github.com/Netcracker/qubership-core-infra/dependency-gate/internal/gate"
 )
 
 func report() *gate.Report {
 	return &gate.Report{
-		Mode:    gate.ModeEnforce,
 		Verdict: gate.VerdictFail,
 		Adapters: []gate.Adapter{
 			{Name: "maven-consumers", Status: gate.AdapterOK},
@@ -45,7 +44,7 @@ func TestSummary(t *testing.T) {
 		title  string
 		want   []string
 	}{
-		{"enforce", func(*gate.Report) {}, "❌ Dependency gate: failed", []string{
+		{"fail", func(*gate.Report) {}, "❌ Dependency gate: failed", []string{
 			"1 fail, 1 warn, 1 already on the base branch, 1 allowed",
 			"`maven-consumers` ok · `go-library` skipped (go.mod unchanged)",
 			"| ❌ | consumer-build | `Netcracker/qubership-core-config-server` | `1` | does not build — a\\|b | `pom.xml:10` +1 |",
@@ -54,8 +53,11 @@ func TestSummary(t *testing.T) {
 			"(allowed: coordinated, until 2026-11-05, .github/dependency-gate.json#/exceptions/5)",
 			"#### Gate\n", "#### Maven\n", "#### Go\n",
 		}},
-		{"pilot", func(r *gate.Report) { r.Mode = gate.ModeReport }, "❌ Dependency gate (pilot): would fail", []string{"> Pilot"}},
-		{"pass", func(r *gate.Report) { r.Mode, r.Verdict, r.Findings = gate.ModeReport, gate.VerdictPass, nil },
+		{"dry-run", func(r *gate.Report) { r.DryRun = true }, "❌ Dependency gate: failed", []string{
+			"> Warning: dry run. The check stays green.",
+			"1 fail, 1 warn, 1 already on the base branch, 1 allowed",
+		}},
+		{"pass", func(r *gate.Report) { r.Verdict, r.Findings = gate.VerdictPass, nil },
 			"✅ Dependency gate: passed", nil},
 		{"consumer matrix", func(r *gate.Report) {
 			r.Adapters = nil
@@ -90,7 +92,7 @@ func TestSummary(t *testing.T) {
 					t.Errorf("summary lacks %q:\n%s", want, md)
 				}
 			}
-			if tc.name == "enforce" {
+			if tc.name == "fail" {
 				var at []int
 				for _, s := range []string{"#### Gate\n", "#### Maven\n", "#### Go\n"} {
 					at = append(at, strings.Index(md, s))
@@ -128,16 +130,16 @@ func TestComment(t *testing.T) {
 
 func TestConsumerLine(t *testing.T) {
 	r := report()
-	r.Mode = gate.ModeReport
 	r.Counts.Fail = 12
 	line := ConsumerLine(r, "https://github.com/o/r/actions/runs/1/job/2")
-	if line != "**Consumers:** would fail (12 fail). [job summary](https://github.com/o/r/actions/runs/1/job/2)" {
+	if line != "**Consumers:** failed (12 fail). [job summary](https://github.com/o/r/actions/runs/1/job/2)" {
 		t.Errorf("line %q", line)
 	}
-	r.Mode = gate.ModeEnforce
-	if got := ConsumerLine(r, ""); got != "**Consumers:** failed (12 fail)." {
-		t.Errorf("enforce line %q", got)
+	r.DryRun = true
+	if got := ConsumerLine(r, ""); got != "**Consumers:** failed (12 fail). Warning: dry run. The check stays green." {
+		t.Errorf("dry-run line %q", got)
 	}
+	r.DryRun = false
 	body := ConsumerComment(r, "https://github.com/o/r/actions/runs/1/job/2")
 	want := "**Consumers:** failed (12 fail). [job summary](https://github.com/o/r/actions/runs/1/job/2)"
 	if body != ConsumerMarker+"\n"+want+"\n" {

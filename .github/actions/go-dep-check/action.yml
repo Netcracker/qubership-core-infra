@@ -89,20 +89,11 @@ runs:
       if: inputs.mode == 'plan'
       shell: bash
       env:
-        SCRIPTS: ${{ github.action_path }}
         CONFIG: ${{ inputs.config }}
         MODULES: ${{ inputs.modules }}
         REPO_DIR: ${{ inputs.repo-dir }}
         BASE_REF: ${{ inputs.base-ref }}
-      run: |
-        log=$(mktemp)
-        consumers=$(bash "$SCRIPTS/plan-consumers.sh" 2>"$log")
-        cat "$log" >&2
-        echo "consumers=$consumers" >> "$GITHUB_OUTPUT"
-        reason=$(sed -n 's/^plan-reason: //p' "$log" | tail -1 | tr -d '\r')
-        if [[ -n $reason ]]; then
-          echo "skip-reason=$reason" >> "$GITHUB_OUTPUT"
-        fi
+      run: python3 "$GITHUB_ACTION_PATH/../../../dependency-gate/consumers.py" plan go
 
     - name: Install gotestsum
       if: inputs.mode == 'consumer' && inputs.tests == 'true'
@@ -113,13 +104,10 @@ runs:
       if: inputs.mode == 'consumer'
       shell: bash
       env:
-        SCRIPTS: ${{ github.action_path }}
         CONSUMER_DIR: ${{ inputs.consumer-dir }}
         CONSUMER_NAME: ${{ inputs.consumer-name }}
         LIB_BASE_DIR: ${{ inputs.lib-base-dir }}
         LIB_HEAD_DIR: ${{ inputs.lib-head-dir }}
         OUT_DIR: ${{ inputs.out-dir }}
         TESTS: ${{ inputs.tests }}
-      run: |
-        bash "$SCRIPTS/consumer-check.sh" "$CONSUMER_DIR" "$LIB_BASE_DIR" "$LIB_HEAD_DIR" \
-          "${OUT_DIR:-$RUNNER_TEMP/dependency-gate-findings}" "$CONSUMER_NAME" "$TESTS"
+      run: python3 "$GITHUB_ACTION_PATH/../../../dependency-gate/consumers.py" check go "$CONSUMER_DIR" "$LIB_BASE_DIR" "$LIB_HEAD_DIR" "${OUT_DIR:-$RUNNER_TEMP/dependency-gate-findings}" "$CONSUMER_NAME" "$TESTS"

@@ -10,7 +10,7 @@ import (
 
 	"github.com/sethvargo/go-githubactions"
 
-	"github.com/Netcracker/qubership-core-infra/tools/dependency-gate/internal/gate"
+	"github.com/Netcracker/qubership-core-infra/dependency-gate/internal/gate"
 )
 
 // Marker identifies the sticky comment of Dependency gate.
@@ -50,8 +50,8 @@ var funcs = template.FuncMap{
 var templates = template.Must(template.New("").Funcs(funcs).Parse(`
 {{- define "head" -}}
 ### {{title .Report}}
-{{if eq .Mode "report"}}
-> Pilot (` + "`mode: report`" + `): the check stays green; this is what ` + "`enforce`" + ` would decide.
+{{if and .DryRun (eq .Verdict "fail")}}
+> Warning: dry run. The check stays green.
 {{end}}
 {{with .Counts}}{{.Fail}} fail, {{.Warn}} warn, {{.Preexisting}} already on the base branch, {{.Allowed}} allowed{{end}}
 {{- end}}
@@ -150,15 +150,14 @@ func ConsumerLine(r *gate.Report, detailsURL string) string {
 	if r == nil || r.Verdict != gate.VerdictFail {
 		return ""
 	}
-	verb := "failed"
-	if r.Mode == gate.ModeReport {
-		verb = "would fail"
-	}
-	line := "**Consumers:** " + verb
+	line := "**Consumers:** failed"
 	if n := r.Counts.Fail; n > 0 {
 		line += fmt.Sprintf(" (%d fail)", n)
 	}
 	line += "."
+	if r.DryRun {
+		line += " Warning: dry run. The check stays green."
+	}
 	if detailsURL != "" {
 		line += " [job summary](" + detailsURL + ")"
 	}
@@ -205,17 +204,10 @@ func Annotate(a *githubactions.Action, r *gate.Report) {
 }
 
 func title(r *gate.Report) string {
-	pilot := r.Mode == gate.ModeReport
 	switch r.Verdict {
 	case gate.VerdictFail:
-		if pilot {
-			return "❌ Dependency gate (pilot): would fail"
-		}
 		return "❌ Dependency gate: failed"
 	case gate.VerdictWarn:
-		if pilot {
-			return "⚠️ Dependency gate (pilot): would warn"
-		}
 		return "⚠️ Dependency gate: passed with warnings"
 	default:
 		return "✅ Dependency gate: passed"

@@ -30,13 +30,10 @@ runs:
     - name: Verify
       shell: bash
       env:
-        SCRIPTS: ${{ github.action_path }}
         REVISION: ${{ inputs.revision }}
         CONSUMER_DIR: ${{ inputs.consumer-dir }}
         CONSUMER_NAME: ${{ inputs.consumer-name }}
         REPO: ${{ inputs.maven-repo }}
         OUT_DIR: ${{ inputs.out-dir }}
         SETTINGS: ${{ inputs.settings }}
-      run: |
-        bash "$SCRIPTS/maven-consumer.sh" "$REVISION" "$CONSUMER_DIR" "${REPO:-skip}" \
-          "${OUT_DIR:-$RUNNER_TEMP/dependency-gate-findings}" "$CONSUMER_NAME"
+      run: python3 "$GITHUB_ACTION_PATH/../../../dependency-gate/consumers.py" check maven "$REVISION" "$CONSUMER_DIR" "${REPO:-skip}" "${OUT_DIR:-$RUNNER_TEMP/dependency-gate-findings}" "$CONSUMER_NAME"

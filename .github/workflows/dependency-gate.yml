@@ -1,12 +1,11 @@
 # Dependency gate (reusable)
 #
-# Two checks. "Dependency gate" decides whether a Go dependency change exposes a new API break. A Maven pin
-# bypass that still builds the library and its consumers is not a finding. "Consumers" decides whether the
-# change breaks a reference consumer. Automerge waits for both because platformAutomerge is false; neither
-# verdict waits for the other. Adapters only write findings.v1
-# files. Each check applies the policy (levels, baseline) from the infra defaults and the caller's
-# .github/dependency-gate.json. In `report` mode (the pilot) a check stays green whatever the verdict.
-# Caller file, inputs and which checks run: tools/dependency-gate/README.md#enabling-the-checks.
+# Two checks. "Dependency gate" decides whether a Go dependency change exposes a new API break. A Maven
+# version bump is not a finding. "Consumers" decides whether the change breaks a reference consumer.
+# Automerge waits for both because platformAutomerge is false; neither verdict waits for the other.
+# Adapters only write findings.v1 files. A new fail fails the check. dry-run skips that failure: the check
+# stays green and the summary and comment show a warning with the same findings.
+# Caller inputs and which checks run: dependency-gate/DESIGN.md#enabling-the-checks.
 #
 # Usage (caller repository, .github/workflows/dependency-gate.yml):
 #   on:
@@ -22,9 +21,11 @@
 #   jobs:
 #     dependency-gate:
 #       uses: Netcracker/qubership-core-infra/.github/workflows/dependency-gate.yml@<sha> # vX.Y.Z
+#       with:
+#         consumers: false   # a service nothing consumes
 #
 # Do not add a paths filter in the caller: `detect` skips what did not change, and Renovate has no check to wait for
-# on a run that never starts.
+# on a run that never starts. Omitting `with` leaves reference consumers on and dry-run off.
 #
 # Maven reads GitHub Packages with the workflow token (`packages: read`). It reads the packages of the calling
 # repository; reading public packages of other repositories with it is not documented by GitHub. When that is not
@@ -34,8 +35,9 @@
 # Pull requests from forks get no secrets and a read-only workflow token: Maven still reads packages with it, the
 # sticky comment is skipped and the rest of the report is the same.
 #
-# On pull requests the repository's .github/dependency-gate.json is read from the base branch (HEAD^1), so a change
-# to it applies from the next pull request on.
+# The caller workflow's `with` is the override (consumers, dry-run). GitHub reads that workflow file from the
+# branch that runs, not from the base. .github/dependency-gate.json, when a repository has one, is still read
+# from the base (HEAD^1): a pull request cannot add an ignore rule or lower a check. The common case has no file.
 
 name: Dependency gate
 
@@ -43,9 +45,17 @@ on:
   workflow_call:
     inputs:
       comment:
-        description: "Sticky PR comments. Dependency gate posts its findings. Consumers posts its own comment when that check would fail"
+        description: "Sticky PR comments. Dependency gate posts its findings. Consumers posts its own comment when that check fails"
         type: boolean
         default: true
+      consumers:
+        description: "Reference consumers. false turns the Consumers check off for a service nothing consumes"
+        type: boolean
+        default: true
+      dry-run:
+        description: "Do not fail the check. The summary and comment show a warning with the same findings"
+        type: boolean
+        default: false
       java-version:
         description: "Maven: JDK for the library build and the consumer builds"
         type: string
@@ -97,6 +107,7 @@ jobs:
         with:
           command: detect
           go-version: ${{ env.GO_VERSION }}
+          consumers: ${{ inputs.consumers }}
 
   # Adapter jobs plug in here: go-library (family-split and apidiff-exposed) feeds the "Dependency gate"
   # check. go-consumers and maven-consumers feed the separate "Consumers" check. Each adapter needs
@@ -119,11 +130,10 @@ jobs:
     steps:
       - name: Plan
         id: plan
-        env:
-          CONFIG: ${{ needs.detect.outputs.config }}
-        run: |
-          list=$(jq -c 'if .consumers == false then [] else (.consumers.maven // []) end' <<< "$CONFIG")
-          echo "consumers=$list" >> "$GITHUB_OUTPUT"
+        uses: $/.github/actions/gate-ci
+        with:
+          command: maven-plan
+          config: ${{ needs.detect.outputs.config }}
 
       - name: Checkout
         if: steps.plan.outputs.consumers != '[]'
@@ -148,33 +158,13 @@ jobs:
 
       - name: Install
         if: steps.plan.outputs.consumers != '[]'
-        env:
-          SETTINGS: ${{ steps.settings.outputs.path }}
-          MAVEN_USERNAME: ${{ inputs.maven-username || github.actor }}
-          MAVEN_TOKEN: ${{ secrets.MAVEN_TOKEN || github.token }}
-          RAW_SUFFIX: ${{ github.head_ref }}
-        run: |
-          set -euo pipefail
-          # same isolation as Maven deploy (branch snapshot): X.Y.Z-SNAPSHOT -> X.Y.Z-<branch>-SNAPSHOT
-          SUFFIX=$(printf '%s' "$RAW_SUFFIX" \
-            | sed 's/[^a-zA-Z0-9]/-/g; s/-\+/-/g; s/^-//' \
-            | cut -c1-50 \
-            | sed 's/-$//')
-          if [ -z "$SUFFIX" ]; then
-            echo "::error::head branch '${RAW_SUFFIX}' holds no alphanumeric characters"
-            exit 1
-          fi
-          find repo -name pom.xml \
-            -exec sed -i "s/\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\)-SNAPSHOT/\1-${SUFFIX}-SNAPSHOT/g" {} +
-          if ! grep -Rql -- "-${SUFFIX}-SNAPSHOT" repo --include='pom.xml'; then
-            echo "::error::no X.Y.Z-SNAPSHOT version to isolate on this branch"
-            exit 1
-          fi
-          dest="$RUNNER_TEMP/m2-head"
-          rm -rf "$dest" "$dest.tgz"
-          mkdir -p "$dest"
-          mvn -B -ntp -s "$SETTINGS" -Dmaven.repo.local="$dest" -f repo/pom.xml -DskipTests install
-          (cd "$dest" && find . -name maven-metadata-local.xml -printf '%h\n' | tar -czf "$dest.tgz" -T -)
+        uses: $/.github/actions/gate-ci
+        with:
+          command: maven-install
+          settings: ${{ steps.settings.outputs.path }}
+          maven-username: ${{ inputs.maven-username || github.actor }}
+          maven-token: ${{ secrets.MAVEN_TOKEN || github.token }}
+          raw-suffix: ${{ github.head_ref }}
 
       - name: Upload head build
         if: ${{ always() }}
@@ -289,16 +279,14 @@ jobs:
       - name: Report a failed run
         # the gate sees go-consumers once any consumer reported, so each one must leave a file of its own
         if: ${{ failure() }}
-        env:
-          OUT: ${{ runner.temp }}/dependency-gate-findings
-          # unique within the run: the gate job merges the files of all consumers
-          FILE: go-consumers-failed-${{ strategy.job-index }}-head.json
-          REASON: "${{ matrix.consumer.repo }}/${{ matrix.consumer.module }}: the job failed before the check finished"
-        run: |
-          compgen -G "$OUT/*-head.json" > /dev/null && exit 0
-          mkdir -p "$OUT"
-          jq -n --arg reason "$REASON" '{schema: "dependency-gate-findings/v1", revision: "head", findings: [],
-            adapter: {name: "go-consumers", ecosystem: "go", status: "error", reason: $reason, checks: []}}' > "$OUT/$FILE"
+        uses: $/.github/actions/gate-ci
+        with:
+          command: adapter-error
+          out: ${{ runner.temp }}/dependency-gate-findings
+          file: go-consumers-failed-${{ strategy.job-index }}-head.json
+          reason: "${{ matrix.consumer.repo }}/${{ matrix.consumer.module }}: the job failed before the check finished"
+          adapter: go-consumers
+          ecosystem: go
 
       - name: Upload findings
         if: ${{ always() }}
@@ -381,15 +369,14 @@ jobs:
 
       - name: Report a failed run
         if: ${{ failure() }}
-        env:
-          OUT: ${{ runner.temp }}/dependency-gate-findings
-          FILE: maven-consumers-failed-${{ strategy.job-index }}-head.json
-          REASON: "${{ matrix.consumer.repo }}/${{ matrix.consumer.module }}: the job failed before the check finished"
-        run: |
-          compgen -G "$OUT/*-head.json" > /dev/null && exit 0
-          mkdir -p "$OUT"
-          jq -n --arg reason "$REASON" '{schema: "dependency-gate-findings/v1", revision: "head", findings: [],
-            adapter: {name: "maven-consumers", ecosystem: "maven", status: "error", reason: $reason, checks: []}}' > "$OUT/$FILE"
+        uses: $/.github/actions/gate-ci
+        with:
+          command: adapter-error
+          out: ${{ runner.temp }}/dependency-gate-findings
+          file: maven-consumers-failed-${{ strategy.job-index }}-head.json
+          reason: "${{ matrix.consumer.repo }}/${{ matrix.consumer.module }}: the job failed before the check finished"
+          adapter: maven-consumers
+          ecosystem: maven
 
       - name: Upload findings
         if: ${{ always() }}
@@ -414,7 +401,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          # the repository configuration is read from HEAD^1 on pull requests
+          # the repository file, when present, is read from HEAD^1 on pull requests
           fetch-depth: 2
           persist-credentials: false
 
@@ -435,6 +422,7 @@ jobs:
           findings-dir: ${{ runner.temp }}/dependency-gate-findings
           out-dir: ${{ runner.temp }}/dependency-gate
           comment: ${{ inputs.comment }}
+          dry-run: ${{ inputs.dry-run }}
           gate-ref: ${{ job.workflow_sha }}
           expect: |
             ${{ needs.detect.result != 'success' && format('detect={0}', needs.detect.result) || '' }}
@@ -506,6 +494,7 @@ jobs:
           out-dir: ${{ runner.temp }}/dependency-gate-consumers
           comment: false
           comment-note: ${{ inputs.comment }}
+          dry-run: ${{ inputs.dry-run }}
           gate-ref: ${{ job.workflow_sha }}
           expect: |
             go-consumers=${{ needs.go-consumers.result }}${{ (needs.go-library.result == 'success' || needs.go-library.result == 'failure') && needs.go-library.outputs.skip-reason != '' && format(': {0}', needs.go-library.outputs.skip-reason) || '' }}

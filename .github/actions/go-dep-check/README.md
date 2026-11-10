@@ -3,8 +3,8 @@
 Go adapters of the dependency gate (jobs `go-library` and `go-consumers` of
 [`.github/workflows/dependency-gate.yml`](../../workflows/dependency-gate.yml)). They only find problems and write
 findings.v1 files; levels, ignore rules, the baseline and the report belong to the gate
-([`tools/dependency-gate`](../../../tools/dependency-gate/README.md)). Module families and reference consumers come
-from the gate configuration (`families` with `ecosystem: go`, `consumers.go` in the infra defaults). The gate is not a required check: in `mode: enforce` it stops
+([`dependency-gate`](../../../dependency-gate/DESIGN.md)). Module families and reference consumers come
+from the gate configuration (`families` with `ecosystem: go`, `consumers.go` in the infra defaults). The gate is not a required check: a new fail stops
 the Renovate automerge, and a person with merge rights can merge with a red gate.
 
 ## go-library (`go-dep-check.sh <repo> <base> <head> <out> [<module>...]`)
@@ -21,22 +21,23 @@ revision run.
 The gate marks a head finding whose key is also on base as already on the base branch (`preexisting`), so a split
 or an exposed break that was already on the base branch does not block the change.
 
-## go-consumers (`consumer-check.sh <consumer> <lib-base> <lib-head> <out> <name> [<tests>]`)
+## go-consumers (`consumers.py check go <consumer> <lib-base> <lib-head> <out> <name> [<tests>]`)
 
-Reference consumers (`consumers.go` in the infra defaults) are the Go services and every `qubership-core-lib-go*`
-library. `plan` compares each module's non-test build list with the base: the `go` and `toolchain` lines, and
+Reference consumers are the Go libraries and Go services in `.github/repos.json` (the module directory is the entry's
+`module`; three modules of `qubership-core-test-apps` are added by the defaults) and the Maven services in the same file.
+`plan` compares each module's non-test build list with the base: the `go` and `toolchain` lines, and
 `module@version` of every module selected by packages reachable from non-test code (a replace is part of the
 line). A package imported only by tests is not in the list, and neither is a package reached only through it.
 An unchanged list plans nobody, and the Consumers summary says so. A changed list keeps the consumers whose go.sum mentions the library (a library
-is never in its own go.sum); a go.sum that cannot be read is kept. `"consumers": false` plans nobody. The
+is never in its own go.sum); a go.sum that cannot be read is kept. The workflow input `consumers: false` plans nobody. The
 consumer job confirms with `go list -deps -test` (a failing `go list` is an error, not a skip) and
 builds the consumer with `replace <lib> => <lib at base>` and `=> <lib at head>` (+ `go mod tidy`, so MVS raises
 the library's own dependencies like a real bump). `consumer-build` findings, with the aspect as `symbol`: `build`
 and `tests` (compile, test-binary init) on both revisions, `vet` (new findings) on head. The matrix runs at most 10
 consumers at a time.
 
-A consumer with `"tests": true` (the libraries: their tests need only Docker for testcontainers, no secrets) also runs
-its tests on head when they build: `gotestsum --rerun-fails=2 -- -count=1 -timeout 15m ./...` (pinned in
+Every Go consumer runs its tests on head when they build, the same `go test ./...` its own Build runs:
+`gotestsum --rerun-fails=2 -- -count=1 -timeout 15m ./...` (pinned in
 `action.yml`), so a failed test runs up to twice more. One finding per failed top-level test (a failed subtest fails
 its parent), `symbol` = `<import path>.<Test>`, or per package that failed without a failed test (`symbol` = the
 import path):
@@ -64,10 +65,10 @@ add their reruns on head and one run on base.
 ## Run locally
 
 ```bash
-go run github.com/Netcracker/qubership-core-infra/tools/dependency-gate@<sha> detect -repo <lib> | jq -r .config > /tmp/gate-config.json
+go run github.com/Netcracker/qubership-core-infra/dependency-gate@<sha> detect -repo <lib> | jq -r .config > /tmp/gate-config.json
 DEP_GATE_CONFIG=/tmp/gate-config.json .github/actions/go-dep-check/go-dep-check.sh <lib> origin/main origin/renovate-main/go-minor /tmp/findings
-.github/actions/go-dep-check/consumer-check.sh <service>/<module> <lib-at-main> <lib-at-branch> /tmp/findings <repo>/<module> [true]
-go run github.com/Netcracker/qubership-core-infra/tools/dependency-gate@<sha> evaluate -repo <lib> -findings /tmp/findings
+python3 dependency-gate/consumers.py check go <service>/<module> <lib-at-main> <lib-at-branch> /tmp/findings <repo>/<module> [true]
+go run github.com/Netcracker/qubership-core-infra/dependency-gate@<sha> evaluate -repo <lib> -findings /tmp/findings
 ```
 
 Needs `go`, `jq`, and `apidiff` (library checks) and `gotestsum` (consumer tests) in `$(go env GOPATH)/bin` (versions: see

@@ -18,7 +18,7 @@ import (
 
 	"github.com/sethvargo/go-githubactions"
 
-	"github.com/Netcracker/qubership-core-infra/tools/dependency-gate/internal/gate"
+	"github.com/Netcracker/qubership-core-infra/dependency-gate/internal/gate"
 )
 
 func detectCmd(args []string, stdout io.Writer) error {
@@ -26,12 +26,22 @@ func detectCmd(args []string, stdout io.Writer) error {
 	fs := flag.NewFlagSet("detect", flag.ContinueOnError)
 	o.register(fs)
 	base := fs.String("base", "", "revision to compare HEAD with (default: HEAD^1 on pull requests; empty: check everything)")
+	consumers := fs.String("consumers", "", "true or false: override reference consumers (default: the loaded configuration)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 	_, policy, err := o.load()
 	if err != nil {
 		return err
+	}
+	switch *consumers {
+	case "":
+	case "true":
+		policy.ApplyConsumers(true)
+	case "false":
+		policy.ApplyConsumers(false)
+	default:
+		return fmt.Errorf("-consumers: true or false")
 	}
 	for _, p := range policy.Problems {
 		// reported by evaluate; detect only works with what is valid
