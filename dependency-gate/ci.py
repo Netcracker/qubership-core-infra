@@ -7,10 +7,9 @@
     ci.py detect           REPO_DIR, CONSUMERS
     ci.py evaluate         REPO_DIR, FINDINGS_DIR, EXPECT, OUT_DIR, COMMENT, COMMENT_NOTE, GATE_REF, DRY_RUN
 
-detect and evaluate run the gate binary built beside them. The other commands use the
-standard library only.
+detect and evaluate run the gate binary built beside them. adapter-error writes its
+findings file through findings.py.
 """
-import json
 import os
 import re
 import shutil
@@ -101,23 +100,22 @@ def pack_installed(dest, archive):
 
 
 def adapter_error():
+    import findings
     out = Path(os.environ["OUT"])
     if out.is_dir() and any(out.glob("*-head.json")):
         return
     out.mkdir(parents=True, exist_ok=True)
-    document = {
-        "schema": "dependency-gate-findings/v1",
-        "revision": "head",
-        "findings": [],
-        "adapter": {
-            "name": os.environ["ADAPTER"],
-            "ecosystem": os.environ["ECOSYSTEM"],
-            "status": "error",
-            "reason": os.environ["REASON"],
-            "checks": [],
-        },
-    }
-    (out / os.environ["FILE"]).write_text(json.dumps(document) + "\n", encoding="utf-8")
+    findings.write_findings(
+        out / os.environ["FILE"],
+        os.environ["ADAPTER"],
+        os.environ["ECOSYSTEM"],
+        "head",
+        "error",
+        os.environ["REASON"],
+        [],
+        [],
+        "",
+    )
 
 
 def detect():

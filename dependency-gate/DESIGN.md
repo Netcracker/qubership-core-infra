@@ -14,6 +14,8 @@ A new fail fails the check. The checks are not required. A red gate stops Renova
 dependency-gate/
 ├── ci.py                # workflow steps that are not a single command
 ├── consumers.py         # Go and Maven reference consumers (plan, check)
+├── findings.py          # findings.v1 writer the adapters share
+├── library.py           # Go library adapter (family-split, apidiff)
 ├── defaults.json        # families, reference consumers
 ├── schemas/             # config.v1, findings.v1, report.v1
 ├── main.go              # detect, evaluate, compare
@@ -169,6 +171,6 @@ jobs:
 
 ## Workflow
 
-`.github/workflows/dependency-gate.yml` checks the caller out and calls actions. `dependency-gate/consumers.py` plans and checks reference consumers; `go` and `maven` are its parameter. `dependency-gate/ci.py` holds the other steps that decide something: the snapshot suffix and the findings file a crashed matrix job still has to leave. `git worktree`, `go build` and `go install` stay one command each, because that command is the step. The Go library adapter (family-split, apidiff) stays beside its action.
+`.github/workflows/dependency-gate.yml` checks the caller out and calls actions. `dependency-gate/consumers.py` plans and checks reference consumers; `go` and `maven` are its parameter. `dependency-gate/ci.py` holds the other steps that decide something: the snapshot suffix and the findings file a crashed matrix job still has to leave. `git worktree`, `go build` and `go install` stay one command each, because that command is the step. `dependency-gate/library.py` is the Go library adapter: it runs `go` and `apidiff` and writes findings. `dependency-gate/findings.py` is how both adapters write findings.v1. The gate decides the level.
 
 `permissions` in the caller are the ceiling. The workflow narrows them per job: `contents: read` everywhere, `packages: read` for Maven, `pull-requests: write` only for the comment.

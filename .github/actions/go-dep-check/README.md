@@ -7,8 +7,9 @@ findings.v1 files; levels, ignore rules, the baseline and the report belong to t
 from the gate configuration (`families` with `ecosystem: go`, `consumers.go` in the infra defaults). The gate is not a required check: a new fail stops
 the Renovate automerge, and a person with merge rights can merge with a red gate.
 
-## go-library (`go-dep-check.sh <repo> <base> <head> <out> [<module>...]`)
+## go-library (`dependency-gate/library.py`)
 
+`library.py` reads `CONFIG`, `MODULES`, `REPO_DIR`, `BASE_REF`, `HEAD_REF` and `OUT_DIR`.
 In CI `head` is the PR merge commit and `base` its first parent, so a stale PR is checked as it would be merged.
 A module whose go.mod/go.sum did not change is skipped. Without a base (push, manual run) only the checks of one
 revision run.
@@ -65,11 +66,12 @@ add their reruns on head and one run on base.
 ## Run locally
 
 ```bash
-go run github.com/Netcracker/qubership-core-infra/dependency-gate@<sha> detect -repo <lib> | jq -r .config > /tmp/gate-config.json
-DEP_GATE_CONFIG=/tmp/gate-config.json .github/actions/go-dep-check/go-dep-check.sh <lib> origin/main origin/renovate-main/go-minor /tmp/findings
+CONFIG=$(go run github.com/Netcracker/qubership-core-infra/dependency-gate@<sha> detect -repo <lib> | jq -c .config) \
+MODULES='["."]' REPO_DIR=<lib> BASE_REF=origin/main HEAD_REF=origin/renovate-main/go-minor OUT_DIR=/tmp/findings \
+python3 dependency-gate/library.py
 python3 dependency-gate/consumers.py check go <service>/<module> <lib-at-main> <lib-at-branch> /tmp/findings <repo>/<module> [true]
 go run github.com/Netcracker/qubership-core-infra/dependency-gate@<sha> evaluate -repo <lib> -findings /tmp/findings
 ```
 
-Needs `go`, `jq`, and `apidiff` (library checks) and `gotestsum` (consumer tests) in `$(go env GOPATH)/bin` (versions: see
-`action.yml`).
+Needs `go` and `apidiff` (library checks) and `gotestsum` (consumer tests) in `$(go env GOPATH)/bin` (versions: see
+`action.yml`). `APIDIFF` overrides the apidiff binary. The example uses `jq` only to take `.config` from `detect`.

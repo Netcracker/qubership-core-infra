@@ -64,25 +64,20 @@ runs:
       if: inputs.mode == 'library'
       shell: bash
       run: |
-        # tool versions are pinned; bump them together with the scripts
+        # tool versions are pinned; bump them together with library.py
         GOTOOLCHAIN=local go install golang.org/x/exp/cmd/apidiff@v0.0.0-20260908205506-85c1c2202aba
 
     - name: Library checks
       if: inputs.mode == 'library'
       shell: bash
       env:
-        SCRIPTS: ${{ github.action_path }}
         CONFIG: ${{ inputs.config }}
         MODULES: ${{ inputs.modules }}
         REPO_DIR: ${{ inputs.repo-dir }}
         BASE_REF: ${{ inputs.base-ref }}
         HEAD_REF: ${{ inputs.head-ref }}
         OUT_DIR: ${{ inputs.out-dir }}
-      run: |
-        export DEP_GATE_CONFIG=$RUNNER_TEMP/dependency-gate-config.json
-        printf '%s' "$CONFIG" > "$DEP_GATE_CONFIG"
-        mapfile -t modules < <(jq -r '.[]' <<< "$MODULES")
-        bash "$SCRIPTS/go-dep-check.sh" "$REPO_DIR" "$BASE_REF" "$HEAD_REF" "${OUT_DIR:-$RUNNER_TEMP/dependency-gate-findings}" "${modules[@]}"
+      run: python3 "$GITHUB_ACTION_PATH/../../../dependency-gate/library.py"
 
     - name: Plan consumers
       id: plan

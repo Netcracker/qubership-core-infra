@@ -502,10 +502,10 @@ func consumersScript(t *testing.T) (string, *gate.Schemas) {
 	return filepath.ToSlash(path), s
 }
 
-// goDepCheck returns the path of a go-dep-check script, with slashes for bash, and the gate's schemas.
-func goDepCheck(t *testing.T, script string) (string, *gate.Schemas) {
+// findingsPy is the directory of findings.py, and the gate's schemas.
+func findingsPy(t *testing.T) (string, *gate.Schemas) {
 	t.Helper()
-	path, err := filepath.Abs("../.github/actions/go-dep-check/" + script)
+	dir, err := filepath.Abs(".")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -517,7 +517,7 @@ func goDepCheck(t *testing.T, script string) (string, *gate.Schemas) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return filepath.ToSlash(path), s
+	return dir, s
 }
 
 func needTools(t *testing.T, tools ...string) {
@@ -529,15 +529,23 @@ func needTools(t *testing.T, tools ...string) {
 	}
 }
 
-// The go-dep-check scripts write findings.v1 with findings.sh: the files must pass the gate's schema.
+// findings.py writes findings.v1. The files must pass the gate's schema, and empty fields stay omitted.
 func TestFindingsScript(t *testing.T) {
-	needTools(t, "bash", "jq")
-	script, s := goDepCheck(t, "findings.sh")
-	// $1: the jsonl file, then: <status> <reason> <checks> <unit> [<emit args>...]
-	const sh = `. "$0"; out=$1 status=$2 reason=$3 checks=$4 UNIT=$5; shift 5
-: > "$out.jsonl"
-if [ $# -gt 0 ]; then emit "$out.jsonl" "$@"; fi
-write_findings "$out" go-library go head "$status" "$reason" "$checks" < "$out.jsonl"`
+	py := pythonBin(t)
+	scriptDir, s := findingsPy(t)
+	const prog = `
+import sys
+sys.path.insert(0, sys.argv[1])
+import findings
+out, status, reason, checks, unit = sys.argv[2:7]
+emit = sys.argv[7:]
+items = []
+if len(emit) >= 2:
+    items.append(findings.finding_from_args(emit[0], emit[1], emit[2:], unit))
+elif emit:
+    raise SystemExit("emit wants a check and a message")
+findings.write_findings(out, "go-library", "go", "head", status, reason, findings.split_checks(checks), items, "go-dep-check")
+`
 	for _, tc := range []struct {
 		name                         string
 		status, reason, checks, unit string
@@ -558,13 +566,17 @@ write_findings "$out" go-library go head "$status" "$reason" "$checks" < "$out.j
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			dir := t.TempDir()
-			out := filepath.ToSlash(filepath.Join(dir, "go-library-head.json"))
-			args := append([]string{"-c", sh, script, out, tc.status, tc.reason, tc.checks, tc.unit}, tc.emit...)
-			if msg, err := exec.Command("bash", args...).CombinedOutput(); err != nil {
+			out := filepath.Join(dir, "go-library-head.json")
+			args := append([]string{"-c", prog, scriptDir, out, tc.status, tc.reason, tc.checks, tc.unit}, tc.emit...)
+			if msg, err := exec.Command(py, args...).CombinedOutput(); err != nil {
 				t.Fatalf("%v: %s", err, msg)
 			}
-			if err := os.Remove(out + ".jsonl"); err != nil {
+			raw, err := os.ReadFile(out)
+			if err != nil {
 				t.Fatal(err)
+			}
+			if tc.name == "empty values are left out" && (bytes.Contains(raw, []byte(`"package"`)) || bytes.Contains(raw, []byte(`"locations"`))) {
+				t.Fatalf("empty fields were written: %s", raw)
 			}
 			var in gate.Input
 			if err := in.ReadFindings(s, dir); err != nil {
@@ -590,8 +602,16 @@ write_findings "$out" go-library go head "$status" "$reason" "$checks" < "$out.j
 
 // go vet findings are new by file and message: moved code is not new, a second equal finding is.
 func TestNewVetScript(t *testing.T) {
-	needTools(t, "bash", "awk")
-	script, _ := goDepCheck(t, "findings.sh")
+	py := pythonBin(t)
+	scriptDir, _ := findingsPy(t)
+	const prog = `
+import sys
+sys.path.insert(0, sys.argv[1])
+import findings
+old = open(sys.argv[2], encoding="utf-8").read()
+new = open(sys.argv[3], encoding="utf-8").read()
+sys.stdout.buffer.write("\n".join(findings.new_vet(old, new)).encode())
+`
 	const unused = "a.go:7:2: result of fmt.Sprintf call not used"
 	for _, tc := range []struct {
 		name, old, new string
@@ -612,8 +632,7 @@ func TestNewVetScript(t *testing.T) {
 			old, cur := filepath.Join(dir, "old"), filepath.Join(dir, "new")
 			write(t, old, tc.old)
 			write(t, cur, tc.new)
-			out, err := exec.Command("bash", "-c", `. "$0"; newvet "$1" "$2"`, script,
-				filepath.ToSlash(old), filepath.ToSlash(cur)).CombinedOutput()
+			out, err := exec.Command(py, "-c", prog, scriptDir, old, cur).CombinedOutput()
 			if err != nil {
 				t.Fatalf("%v: %s", err, out)
 			}

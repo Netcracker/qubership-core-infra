@@ -23,6 +23,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+from findings import error_lines, finding, new_vet, split_checks, write_findings
+
 US = "\x1f"
 
 
@@ -39,45 +41,6 @@ def main():
         sys.exit(check_go(args[2:]))
     else:
         sys.exit(check_maven(args[2:]))
-
-
-# ── findings.v1 ──────────────────────────────────────────────────────────────
-
-def write_findings(path, adapter, ecosystem, revision, status, reason, checks, findings, tool):
-    body = {
-        "schema": "dependency-gate-findings/v1",
-        "adapter": {
-            "name": adapter,
-            "ecosystem": ecosystem,
-            "tool": tool,
-            "status": status,
-            "checks": checks,
-        },
-        "revision": revision,
-        "findings": findings,
-    }
-    if reason:
-        body["adapter"]["reason"] = reason
-    Path(path).write_text(json.dumps(body) + "\n", encoding="utf-8")
-
-
-def split_checks(text):
-    seen = []
-    for part in text.split():
-        if part and part not in seen:
-            seen.append(part)
-    return seen
-
-
-def finding(check, message, package="", symbol="", note=""):
-    item = {"check": check, "message": message}
-    if package:
-        item["package"] = package
-    if symbol:
-        item["symbol"] = symbol
-    if note:
-        item["note"] = note
-    return item
 
 
 def github_output(name, value):
@@ -656,13 +619,7 @@ def excerpt_test(events):
 
 
 def excerpt_build(text):
-    kept = []
-    for line in text.splitlines():
-        if re.search(r"\.go:[0-9]+|panic|error|cannot|undefined|FAIL", line):
-            kept.append(re.sub(r"^[^\s]*/", "", line[:300]))
-        if len(kept) == 3:
-            break
-    return "; ".join(kept)
+    return "; ".join(re.sub(r"^[^\s]*/", "", line) for line in error_lines(text))
 
 
 def mvs_note(kind, base_lines, head_lines):
@@ -698,34 +655,6 @@ def report(revision, tests, what, name, note):
         symbol = f"{package}.{test}" if test else package
         items.append(finding(check, message, package=name, symbol=symbol, note=note))
     return items
-
-
-def new_vet(old, new):
-    def key(line):
-        return re.sub(r":[0-9]+(?::[0-9]+)?:", ":", line, count=1)
-
-    def useful(line):
-        return line and not line.startswith("#") and not line.startswith("go: downloading")
-
-    old_counts, moved = {}, {}
-    for line in filter(useful, old.splitlines()):
-        old_counts[line] = old_counts.get(line, 0) + 1
-        moved[key(line)] = moved.get(key(line), 0) + 1
-    rest = []
-    for line in sorted({line for line in new.splitlines() if useful(line)}):
-        if old_counts.get(line, 0) > 0:
-            old_counts[line] -= 1
-            moved[key(line)] = moved.get(key(line), 0) - 1
-        else:
-            rest.append(line)
-    fresh = []
-    for line in rest:
-        k = key(line)
-        if moved.get(k, 0) <= 0:
-            fresh.append(line)
-        else:
-            moved[k] -= 1
-    return fresh
 
 
 if __name__ == "__main__":
