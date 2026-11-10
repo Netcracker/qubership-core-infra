@@ -48,9 +48,9 @@ packageRules:
   - matchDatasources: [ "docker" ]
     matchPackageNames: [ "golang" ]
     separateMinorPatch: true
-  - description: "Java major: the Java version (21 in the eclipse-temurin:21-jre-alpine-3.24 image, java-version: '21' in actions/setup-java) is chosen deliberately, usually an LTS, and is not bumped by Renovate. Updates within the major and digest updates still come."
-    matchDatasources: [ "docker", "java-version" ]
-    matchPackageNames: [ "eclipse-temurin", "**/eclipse-temurin", "java-jdk", "java-jre" ]
+  - description: "Java runtime images: the Java major (e.g. 21 in 21-jre-alpine-3.24) is chosen deliberately, usually an LTS, and is not bumped by Renovate. Updates within the major and digest updates still come."
+    matchDatasources: [ "docker" ]
+    matchPackageNames: [ "eclipse-temurin", "**/eclipse-temurin" ]
     matchUpdateTypes: [ "major" ]
     enabled: false
   - description: "OpenTelemetry instrumentation must match the OpenTelemetry SDK managed by Spring Boot (Boot 4.1.x -> SDK 1.62.0 -> instrumentation 2.28.x). Update together with Spring Boot's OpenTelemetry version."
@@ -70,35 +70,6 @@ packageRules:
       - "org.apache.maven.plugins:maven-surefire-plugin"
       - "org.apache.maven.plugins:maven-failsafe-plugin"
     allowedVersions: "!/^3\\.6\\.0$/"
-  - description: "Go libraries: automerge non-major Go module updates once every status check on the branch is green."
-    matchRepositories: [ "/^netcracker\\/qubership-core-lib-go(-|$)/i" ]
-    matchManagers: [ "gomod" ]
-    matchUpdateTypes: [ "minor", "patch", "digest" ]
-    automerge: true
-    automergeType: "pr"
-    platformAutomerge: false
-  - description: "All repositories: automerge non-major GitHub Actions updates once every status check on the branch is green. Digest is included because actions are pinned by SHA with a major tag comment, so most in-major updates arrive as digest. Releases age 3 days first, so a moved or replaced tag is not merged at once."
-    matchManagers: [ "github-actions" ]
-    matchUpdateTypes: [ "minor", "patch", "digest" ]
-    automerge: true
-    automergeType: "pr"
-    platformAutomerge: false
-    minimumReleaseAge: "3 days"
-  - description: "Go libraries: let third-party releases age 3 days before the automerge above can pick them up. Our own modules are not delayed."
-    matchRepositories: [ "/^netcracker\\/qubership-core-lib-go(-|$)/i" ]
-    matchManagers: [ "gomod" ]
-    matchPackageNames: [ "!/netcracker/i" ]
-    minimumReleaseAge: "3 days"
-  - description: "All repositories: automerge Maven minor and patch updates once every status check on the branch is green. Maven does not produce digest updates. The dependency-gate check is not required and runs in report mode, so it does not block the merge."
-    matchManagers: [ "maven" ]
-    matchUpdateTypes: [ "minor", "patch" ]
-    automerge: true
-    automergeType: "pr"
-    platformAutomerge: false
-  - description: "All repositories: let third-party Maven releases age 3 days before the automerge above can pick them up. Our own artifacts (com.netcracker.*) are not delayed."
-    matchManagers: [ "maven" ]
-    matchPackageNames: [ "!/^com\\.netcracker\\./" ]
-    minimumReleaseAge: "3 days"
 
 platform: "github"
 platformAutomerge: true
