@@ -15,7 +15,7 @@ on:
         required: true
       automerge:
         type: string
-        description: "keep reuses the stored choice. Nothing stored yet is a code freeze (automerge off). on allows automerge (RENOVATE_CODE_FREEZE=false). off sets a code freeze (RENOVATE_CODE_FREEZE=true, nothing is automerged)."
+        description: "keep reads the checked-out renovate-core-config.json. A packageRule with automerge false and matchPackageNames exactly [\"*\"] is a code freeze. A missing file or no such rule means automerge on (RENOVATE_CODE_FREEZE=false). on forces automerge on. off forces a code freeze (RENOVATE_CODE_FREEZE=true)."
         required: false
         default: keep
     secrets:
@@ -51,7 +51,7 @@ on:
           - debug
       automerge:
         type: choice
-        description: "keep reuses the stored choice. Nothing stored yet is a code freeze (automerge off). on allows automerge (RENOVATE_CODE_FREEZE=false). off sets a code freeze (RENOVATE_CODE_FREEZE=true, nothing is automerged)."
+        description: "keep reads the checked-out renovate-core-config.json. A packageRule with automerge false and matchPackageNames exactly [\"*\"] is a code freeze. A missing file or no such rule means automerge on (RENOVATE_CODE_FREEZE=false). on forces automerge on. off forces a code freeze (RENOVATE_CODE_FREEZE=true)."
         required: true
         default: keep
         options:
@@ -78,7 +78,6 @@ jobs:
       LOG_LEVEL: ${{ inputs.log-level }}
       TYPE: ${{ inputs.type }}
       AUTOMERGE: ${{ inputs.automerge }}
-      AUTOMERGE_STATE_FILE: .github/config/renovate-automerge-state
 
     steps:
       - name: Checkout
@@ -155,44 +154,44 @@ jobs:
       - name: "Resolve automerge state"
         shell: bash
         run: |
-          # Stored choice: AUTOMERGE_STATE_FILE ("on" or "off"). This job writes that file
-          # only when the automerge input is on or off, in the same commit as the generated
-          # config. keep reads it here, before generation. Dry-run does not write it.
-          # Nothing stored yet is a code freeze (automerge off). When this file is
-          # absent, keep sets RENOVATE_CODE_FREEZE=true, including when
-          # renovate-core-config.json has no blanket automerge:false rule.
-          # on stores "on" and emits no freeze rule, so the next keep reads this file
-          # to tell "automerge was enabled" from "never chosen".
-          stored=off
-          have_state=false
-          if [ -f "${AUTOMERGE_STATE_FILE}" ]; then
-            stored=$(tr -d '[:space:]' < "${AUTOMERGE_STATE_FILE}")
-            case "${stored}" in
-              on|off)
-                have_state=true
-                ;;
-              *)
-                echo "::error::could not read the stored automerge state from ${AUTOMERGE_STATE_FILE}"
-                exit 1
-                ;;
-            esac
+          # keep reads the checked-out renovate-core-config.json. Code freeze only when
+          # some packageRule has automerge false and matchPackageNames exactly ["*"].
+          # A missing file, or a file with no such blanket rule, means automerge on.
+          # on forces automerge on. off forces a code freeze. jq exit 1 means the
+          # blanket rule is absent; any other jq failure fails the job.
+          config_file="renovate-core-config.json"
+          in_freeze=false
+          if [ -f "${config_file}" ]; then
+            if jq -e 'any(.packageRules[]?; .automerge == false and .matchPackageNames == ["*"])' "${config_file}" >/dev/null; then
+              in_freeze=true
+            else
+              jq_status=$?
+              if [ "${jq_status}" -ne 1 ]; then
+                echo "::error::failed to read automerge state from ${config_file}"
+                exit "${jq_status}"
+              fi
+            fi
           fi
           case "${AUTOMERGE}" in
             keep)
-              effective="${stored}"
+              if [ "${in_freeze}" = "true" ]; then
+                effective=off
+              else
+                effective=on
+              fi
               decision=kept
               ;;
             on)
               effective=on
-              if [ "${stored}" = "on" ]; then
-                decision=kept
-              else
+              if [ "${in_freeze}" = "true" ]; then
                 decision=changed
+              else
+                decision=kept
               fi
               ;;
             off)
               effective=off
-              if [ "${stored}" = "off" ]; then
+              if [ "${in_freeze}" = "true" ]; then
                 decision=kept
               else
                 decision=changed
@@ -212,9 +211,6 @@ jobs:
           fi
           echo "RENOVATE_CODE_FREEZE=${RENOVATE_CODE_FREEZE}" >> "${GITHUB_ENV}"
           summary="Effective state: ${decision}, ${mode}"
-          if [ "${have_state}" != "true" ] && [ "${AUTOMERGE}" = "keep" ]; then
-            summary="${summary} (nothing stored yet)"
-          fi
           echo "${summary}"
           echo "${summary}" >> "${GITHUB_STEP_SUMMARY}"
 
@@ -273,13 +269,12 @@ jobs:
           else
             args+=("--strictGavsFile=effective-gavs.txt")
           fi
-          # Code freeze: PRs are still created, nothing is automerged. Appended after every other rule
-          # this generator emits, including pins, whenever RENOVATE_CODE_FREEZE=true (explicit off, and
-          # keep when the stored choice is off or nothing is stored yet). Dry-run writes the same file
-          # and does not commit it. Omitted when automerge is on. Last inside this preset only: a
-          # repository that extends the preset and adds its own later automerge rule still wins after
-          # preset expansion. Generated output only: do not treat this rule as the stored choice.
-          # The stored choice is AUTOMERGE_STATE_FILE, written for an explicit on or off.
+          # Code freeze: PRs are still created, nothing is automerged. Appended after the pin-file
+          # args and before --renovateConfigOutputFile whenever RENOVATE_CODE_FREEZE=true (explicit
+          # off, and keep when the checked-out config has a packageRule with automerge false and
+          # matchPackageNames exactly ["*"]). Omitted when automerge is on. Dry-run writes the same
+          # file and does not commit it. Last inside this preset only: a repository that extends the
+          # preset and adds its own later automerge rule still wins after preset expansion.
           if [ "${RENOVATE_CODE_FREEZE}" = "true" ]; then
             args+=("--fromJson={'packageRules':[{'matchPackageNames':['*'],'automerge':false}]}")
           fi
@@ -291,18 +286,13 @@ jobs:
           java -jar "${cli_name}.jar" "${args[@]}"
           
           # commit renovate-core-config.json if updated.
-          # Explicit on stores automerge enabled; explicit off stores a freeze. keep does not
-          # write the state file, so nothing stored yet stays a freeze on the next keep.
-          # Dry-run does not store the choice and does not commit.
+          # The next keep reads that file for the blanket automerge:false rule.
+          # Dry-run does not commit.
           git config user.email "actions@github.com"
           git config user.name "actions"
           if [ "${DRY_RUN}" = "true" ]; then
             echo "dry-run: renovate-core-config.json is not committed (see the renovate-core-config artifact)"
             exit 0
-          fi
-          if [ "${AUTOMERGE}" = "on" ] || [ "${AUTOMERGE}" = "off" ]; then
-            printf '%s\n' "${AUTOMERGE}" > "${AUTOMERGE_STATE_FILE}"
-            git add -- "${AUTOMERGE_STATE_FILE}"
           fi
           git add renovate-core-config.json
           git diff --cached --quiet || git commit -m "Update renovate core config"
