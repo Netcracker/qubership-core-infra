@@ -239,12 +239,10 @@ jobs:
           args+=("--fromFile=.github/config/renovate.yml")
           args+=("--fromJson={'branchPrefix':'${branchPrefix}'}")
           args+=("--fromJson={'labels':[${defLabels}]}")
-          args+=("--fromJson={'packageRules':[{'matchManagers':['maven'],'groupName':'maven','groupSlug':'maven','addLabels':['group:maven']}]}")
-          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchUpdateTypes':['major'],'groupName':'go-major','groupSlug':'go-major','addLabels':['group:go']}]}")
+          args+=("--fromJson={'packageRules':[{'matchManagers':['maven'],'matchUpdateTypes':['minor','patch','pin','digest'],'groupName':'maven','groupSlug':'maven','addLabels':['group:maven']}]}")
           args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchUpdateTypes':['minor'],'groupName':'go-minor','groupSlug':'go-minor','addLabels':['group:go']}]}")
           args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchUpdateTypes':['patch'],'groupName':'go-patch','groupSlug':'go-patch','addLabels':['group:go']}]}")
           args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchUpdateTypes':['digest'],'groupName':'go-digest','groupSlug':'go-digest','addLabels':['group:go']}]}")
-          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchPackageNames':['/(.*netcracker.*)/'],'matchUpdateTypes':['major'],'groupName':'go-netcracker-major','groupSlug':'go-netcracker-major','addLabels':['group:go-netcracker']}]}")
           args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchPackageNames':['/(.*netcracker.*)/'],'matchUpdateTypes':['minor'],'groupName':'go-netcracker-minor','groupSlug':'go-netcracker-minor','addLabels':['group:go-netcracker']}]}")
           args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchPackageNames':['/(.*netcracker.*)/'],'matchUpdateTypes':['patch'],'groupName':'go-netcracker-patch','groupSlug':'go-netcracker-patch','addLabels':['group:go-netcracker']}]}")
           args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchPackageNames':['/(.*netcracker.*)/'],'matchUpdateTypes':['digest'],'groupName':'go-netcracker-digest','groupSlug':'go-netcracker-digest','addLabels':['group:go-netcracker']}]}")
@@ -269,6 +267,7 @@ jobs:
           else
             args+=("--strictGavsFile=effective-gavs.txt")
           fi
+          args+=("--fromJson={'packageRules':[{'matchManagers':['maven'],'matchUpdateTypes':['major'],'groupName':null,'groupSlug':null}]}")
           # Code freeze: PRs are still created, nothing is automerged. Appended after the pin-file
           # args and before --renovateConfigOutputFile whenever RENOVATE_CODE_FREEZE=true (explicit
           # off, and keep when the checked-out config has a packageRule with automerge false and
