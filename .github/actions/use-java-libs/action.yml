@@ -34,11 +34,15 @@ inputs:
     description: "Retarget only artifacts this install produced. matched=false when none of them are referenced."
     required: false
     default: "false"
+  collect:
+    description: "java-libs checkout. Writes java-libs-versions.json in the workspace and does not install or rewrite."
+    required: false
+    default: ""
 
 outputs:
   versions-file:
     description: "JSON with the java-libs module and BOM versions. Empty in strict mode."
-    value: ${{ steps.versions.outputs.versions-file }}
+    value: ${{ steps.collect.outputs.versions-file || steps.versions.outputs.versions-file }}
   matched:
     description: "false when strict found no reference to the installed library"
     value: ${{ steps.rewrite.outputs.matched }}
@@ -49,8 +53,20 @@ outputs:
 runs:
   using: composite
   steps:
+    - name: Collect java-libs versions
+      id: collect
+      if: inputs.collect != ''
+      shell: bash
+      env:
+        SRC: ${{ inputs.collect }}
+      run: |
+        set -euo pipefail
+        out="$GITHUB_WORKSPACE/java-libs-versions.json"
+        python3 "$GITHUB_ACTION_PATH/../../scripts/java-libs-versions.py" collect "$SRC" > "$out"
+        echo "versions-file=$out" >> "$GITHUB_OUTPUT"
+
     - name: Download the java-libs build
-      if: inputs.artifact != ''
+      if: inputs.collect == '' && inputs.artifact != ''
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
       with:
         name: ${{ inputs.artifact }}
@@ -58,7 +74,7 @@ runs:
 
     - name: Install the java-libs build into the local Maven repository
       id: install
-      if: inputs.artifact != '' || inputs.tarball != ''
+      if: inputs.collect == '' && (inputs.artifact != '' || inputs.tarball != '')
       shell: bash
       env:
         ARTIFACT: ${{ inputs.artifact }}
@@ -87,12 +103,13 @@ runs:
         echo "repository=$dest" >> "$GITHUB_OUTPUT"
 
     - name: Keep Maven on the installed snapshots
-      if: inputs.artifact != '' || inputs.tarball != ''
+      if: inputs.collect == '' && (inputs.artifact != '' || inputs.tarball != '')
       shell: bash
       run: echo "MAVEN_ARGS=${MAVEN_ARGS:+$MAVEN_ARGS }-nsu" >> "$GITHUB_ENV"
 
     - name: Resolve the versions file
       id: versions
+      if: inputs.collect == ''
       shell: bash
       env:
         ARTIFACT: ${{ inputs.artifact }}
@@ -120,6 +137,7 @@ runs:
 
     - name: Rewrite the poms
       id: rewrite
+      if: inputs.collect == ''
       shell: bash
       working-directory: ${{ inputs.path }}
       env:
