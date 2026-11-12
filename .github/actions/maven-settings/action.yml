@@ -1,0 +1,16 @@
+# $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-action.json
+name: "Maven settings for GitHub Packages"
+description: >
+  Gives the path of settings.xml next to this action: Netcracker GitHub Packages as Maven repository and plugin
+  repository, with the credentials from the MAVEN_USERNAME and MAVEN_TOKEN environment variables of the mvn step.
+outputs:
+  path:
+    description: "settings.xml for mvn -s"
+    value: ${{ steps.path.outputs.path }}
+runs:
+  using: composite
+  steps:
+    - name: Settings path
+      id: path
+      shell: bash
+      run: echo "path=$GITHUB_ACTION_PATH/settings.xml" >> "$GITHUB_OUTPUT"

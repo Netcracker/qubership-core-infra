@@ -1,0 +1,45 @@
+{
+  "go": {
+    "libs": [
+      {"repo": "Netcracker/qubership-core-lib-go", "module": "."},
+      {"repo": "Netcracker/qubership-core-lib-go-error-handling", "module": "."},
+      {"repo": "Netcracker/qubership-core-lib-go-actuator-common", "module": "."},
+      {"repo": "Netcracker/qubership-core-lib-go-dbaas-base-client", "module": "."},
+      {"repo": "Netcracker/qubership-core-lib-go-rest-utils", "module": "."},
+      {"repo": "Netcracker/qubership-core-lib-go-bg-state-monitor", "module": "."},
+      {"repo": "Netcracker/qubership-core-lib-go-stomp-websocket", "module": "."},
+      {"repo": "Netcracker/qubership-core-lib-go-bg-kafka", "module": "."},
+      {"repo": "Netcracker/qubership-core-lib-go-dbaas-clickhouse-client", "module": "."},
+      {"repo": "Netcracker/qubership-core-lib-go-dbaas-postgres-client", "module": "."},
+      {"repo": "Netcracker/qubership-core-lib-go-dbaas-mongo-client", "module": "."},
+      {"repo": "Netcracker/qubership-core-lib-go-dbaas-cassandra-client", "module": "."},
+      {"repo": "Netcracker/qubership-core-lib-go-maas-client", "module": "."},
+      {"repo": "Netcracker/qubership-core-lib-go-dbaas-arangodb-client", "module": "."},
+      {"repo": "Netcracker/qubership-core-lib-go-fiber-server-utils", "module": "."},
+      {"repo": "Netcracker/qubership-core-lib-go-paas-mediation-client", "module": "."},
+      {"repo": "Netcracker/qubership-core-lib-go-dbaas-opensearch-client", "module": "."},
+      {"repo": "Netcracker/qubership-core-lib-go-maas-core", "module": "."},
+      {"repo": "Netcracker/qubership-core-lib-go-maas-segmentio", "module": "."},
+      {"repo": "Netcracker/qubership-core-lib-go-maas-bg-segmentio", "module": "."}
+    ],
+    "services": [
+      {"repo": "Netcracker/qubership-core-control-plane", "module": "control-plane"},
+      {"repo": "Netcracker/qubership-core-dbaas-agent", "module": "dbaas-agent-service"},
+      {"repo": "Netcracker/qubership-core-facade-operator", "module": "facade-operator-service"},
+      {"repo": "Netcracker/qubership-core-maas-agent", "module": "maas-agent-service"},
+      {"repo": "Netcracker/qubership-core-paas-mediation", "module": "paas-mediation-service"},
+      {"repo": "Netcracker/qubership-core-site-management", "module": "site-management-service"},
+      {"repo": "Netcracker/qubership-mini-core", "module": "core-legacy-api/core-legacy-api-service"},
+      {"repo": "Netcracker/qubership-rate-limiter", "module": "."}
+    ]
+  },
+  "maven": {
+    "libs": [
+      {"repo": "Netcracker/qubership-core-java-libs"}
+    ],
+    "services": [
+      {"repo": "Netcracker/qubership-core-core-operator", "module": "."},
+      {"repo": "Netcracker/qubership-core-config-server", "module": "."}
+    ]
+  }
+}

@@ -1,0 +1,108 @@
+# $schema: https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-action.json
+name: "Go dependency check"
+description: >
+  Go adapters of the dependency gate (.github/workflows/dependency-gate.yml). library: what a go.mod/go.sum change
+  does to the repository's Go modules (go-library findings); plan: which reference consumers compile the library
+  when its non-test build list changed;
+  consumer: builds one consumer against the library at base and at head and, if asked, runs its tests
+  (go-consumers findings). Writes findings.v1 files; the gate applies the policy. See README.md next to this file.
+inputs:
+  mode:
+    description: "library | plan | consumer"
+    required: true
+  config:
+    description: "library, plan: effective gate configuration, JSON (detect output config)"
+    required: false
+    default: "{}"
+  modules:
+    description: "library, plan: JSON array of Go module directories (detect output go-modules)"
+    required: false
+    default: '["."]'
+  base-ref:
+    description: "library, plan: base revision, HEAD^1 of the PR merge commit; empty skips the baseline and, for plan, the build-list comparison"
+    required: false
+    default: ""
+  head-ref:
+    description: "library: head revision"
+    required: false
+    default: "HEAD"
+  repo-dir:
+    description: "library, plan: repository checkout"
+    required: false
+    default: "."
+  consumer-dir:
+    description: "consumer: consumer module directory"
+    required: false
+  consumer-name:
+    description: "consumer: <repo>/<module> of the consumer, for the report"
+    required: false
+  lib-base-dir:
+    description: "consumer: library module at base"
+    required: false
+  lib-head-dir:
+    description: "consumer: library module at head"
+    required: false
+  tests:
+    description: "consumer: also run the consumer's tests (gotestsum)"
+    required: false
+    default: "false"
+  out-dir:
+    description: "library, consumer: where the findings are written (default $RUNNER_TEMP/dependency-gate-findings)"
+    required: false
+    default: ""
+outputs:
+  consumers:
+    description: "plan: JSON array of {repo, module, tests, lib} to check"
+    value: ${{ steps.plan.outputs.consumers }}
+  skip-reason:
+    description: "plan: why the array is empty; empty when consumers run or consumers are disabled"
+    value: ${{ steps.plan.outputs.skip-reason }}
+runs:
+  using: composite
+  steps:
+    - name: Install tools
+      if: inputs.mode == 'library'
+      shell: bash
+      run: |
+        # tool versions are pinned; bump them together with library.py
+        GOTOOLCHAIN=local go install golang.org/x/exp/cmd/apidiff@v0.0.0-20260908205506-85c1c2202aba
+
+    - name: Library checks
+      if: inputs.mode == 'library'
+      shell: bash
+      env:
+        CONFIG: ${{ inputs.config }}
+        MODULES: ${{ inputs.modules }}
+        REPO_DIR: ${{ inputs.repo-dir }}
+        BASE_REF: ${{ inputs.base-ref }}
+        HEAD_REF: ${{ inputs.head-ref }}
+        OUT_DIR: ${{ inputs.out-dir }}
+      run: python3 "$GITHUB_ACTION_PATH/../../../dependency-gate/library.py"
+
+    - name: Plan consumers
+      id: plan
+      if: inputs.mode == 'plan'
+      shell: bash
+      env:
+        CONFIG: ${{ inputs.config }}
+        MODULES: ${{ inputs.modules }}
+        REPO_DIR: ${{ inputs.repo-dir }}
+        BASE_REF: ${{ inputs.base-ref }}
+      run: python3 "$GITHUB_ACTION_PATH/../../../dependency-gate/consumers.py" plan go
+
+    - name: Install gotestsum
+      if: inputs.mode == 'consumer' && inputs.tests == 'true'
+      shell: bash
+      run: GOTOOLCHAIN=local go install gotest.tools/gotestsum@v1.13.0
+
+    - name: Consumer check
+      if: inputs.mode == 'consumer'
+      shell: bash
+      env:
+        CONSUMER_DIR: ${{ inputs.consumer-dir }}
+        CONSUMER_NAME: ${{ inputs.consumer-name }}
+        LIB_BASE_DIR: ${{ inputs.lib-base-dir }}
+        LIB_HEAD_DIR: ${{ inputs.lib-head-dir }}
+        OUT_DIR: ${{ inputs.out-dir }}
+        TESTS: ${{ inputs.tests }}
+      run: python3 "$GITHUB_ACTION_PATH/../../../dependency-gate/consumers.py" check go "$CONSUMER_DIR" "$LIB_BASE_DIR" "$LIB_HEAD_DIR" "${OUT_DIR:-$RUNNER_TEMP/dependency-gate-findings}" "$CONSUMER_NAME" "$TESTS"

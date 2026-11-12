@@ -1,0 +1,523 @@
+# Dependency gate (reusable)
+#
+# Two checks. "Dependency gate" decides whether a Go dependency change exposes a new API break. A Maven
+# version bump is not a finding. "Consumers" decides whether the change breaks a reference consumer.
+# Automerge waits for both because platformAutomerge is false; neither verdict waits for the other.
+# Adapters only write findings.v1 files. A new fail fails the check. dry-run skips that failure: the check
+# stays green and the summary and comment show a warning with the same findings.
+# Caller inputs and which checks run: dependency-gate/DESIGN.md#enabling-the-checks.
+#
+# Usage (caller repository, .github/workflows/dependency-gate.yml):
+#   on:
+#     pull_request:
+#       types: [opened, synchronize, reopened]
+#     push:
+#       branches: [main]
+#     workflow_dispatch:
+#   permissions:
+#     contents: read
+#     packages: read
+#     pull-requests: write
+#   jobs:
+#     dependency-gate:
+#       uses: Netcracker/qubership-core-infra/.github/workflows/dependency-gate.yml@<sha> # vX.Y.Z
+#       with:
+#         consumers: false   # a service nothing consumes
+#
+# Do not add a paths filter in the caller: `detect` skips what did not change, and Renovate has no check to wait for
+# on a run that never starts. Omitting `with` leaves reference consumers on and dry-run off.
+#
+# Maven reads GitHub Packages with the workflow token (`packages: read`). It reads the packages of the calling
+# repository; reading public packages of other repositories with it is not documented by GitHub. When that is not
+# enough, pass a read-only token (read:packages) as MAVEN_TOKEN and its user as maven-username. Never pass a token
+# that can write or delete packages: the Maven job runs build extensions of the pull request's code.
+#
+# Pull requests from forks get no secrets and a read-only workflow token: Maven still reads packages with it, the
+# sticky comment is skipped and the rest of the report is the same.
+#
+# The caller workflow's `with` is the override (consumers, dry-run). GitHub reads that workflow file from the
+# branch that runs, not from the base. .github/dependency-gate.json, when a repository has one, is still read
+# from the base (HEAD^1): a pull request cannot add an ignore rule or lower a check. The common case has no file.
+
+name: Dependency gate
+
+on:
+  workflow_call:
+    inputs:
+      comment:
+        description: "Sticky PR comments. Dependency gate posts its findings. Consumers posts its own comment when that check fails"
+        type: boolean
+        default: true
+      consumers:
+        description: "Reference consumers. false turns the Consumers check off for a service nothing consumes"
+        type: boolean
+        default: true
+      dry-run:
+        description: "Do not fail the check. The summary and comment show a warning with the same findings"
+        type: boolean
+        default: false
+      java-version:
+        description: "Maven: JDK for the library build and the consumer builds"
+        type: string
+        default: "21"
+      maven-username:
+        description: "Maven: GitHub Packages user of MAVEN_TOKEN (default: the actor)"
+        type: string
+        default: ""
+    secrets:
+      MAVEN_TOKEN:
+        description: "Maven: read-only GitHub Packages token (read:packages), only when the workflow token cannot read a package; never one that can write or delete"
+        required: false
+
+# adapter jobs run the pull request's code (build extensions, init(), tests): each job gets only what it needs.
+# `gate` posts the Dependency gate sticky comment. `consumers` posts its own. The matrix jobs write nothing.
+permissions:
+  contents: read
+
+env:
+  GO_VERSION: "1.27.3"
+  # Go jobs build with the Go set up for them, never a toolchain a go.mod asks for
+  GOTOOLCHAIN: local
+
+concurrency:
+  group: dependency-gate-${{ github.workflow_ref }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect:
+    name: Detect
+    runs-on: ubuntu-latest
+    outputs:
+      maven: ${{ steps.detect.outputs.maven }}
+      maven-roots: ${{ steps.detect.outputs.maven-roots }}
+      go: ${{ steps.detect.outputs.go }}
+      go-modules: ${{ steps.detect.outputs.go-modules }}
+      config: ${{ steps.detect.outputs.config }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          # pull_request checks out the merge commit: HEAD^1 is the base branch
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Detect
+        id: detect
+        uses: $/.github/actions/dependency-gate
+        with:
+          command: detect
+          go-version: ${{ env.GO_VERSION }}
+          consumers: ${{ inputs.consumers }}
+
+  # Adapter jobs plug in here: go-library (family-split and apidiff-exposed) feeds the "Dependency gate"
+  # check. go-consumers and maven-consumers feed the separate "Consumers" check. Each adapter needs
+  # `detect`, runs when its output says so, takes the effective configuration from needs.detect.outputs.config
+  # and uploads findings.v1 as dependency-gate-findings-<adapter>. The check that owns the adapter lists it
+  # in `expect` (<adapter>=${{ needs.<job>.result }}), so an adapter that crashed without findings fails that check.
+
+  maven-snapshot:
+    # installs the pull request as X.Y.Z-<branch>-SNAPSHOT. the consumer matrix builds against that
+    # snapshot only: a failed verify is a new finding. nothing is published.
+    name: Maven library build
+    needs: [detect]
+    if: ${{ needs.detect.outputs.maven == 'true' && github.event_name == 'pull_request' }}
+    outputs:
+      consumers: ${{ steps.plan.outputs.consumers }}
+    permissions:
+      contents: read
+      packages: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Plan
+        id: plan
+        uses: $/.github/actions/gate-ci
+        with:
+          command: maven-plan
+          config: ${{ needs.detect.outputs.config }}
+
+      - name: Checkout
+        if: steps.plan.outputs.consumers != '[]'
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          path: repo
+          persist-credentials: false
+
+      - name: Set up Java
+        if: steps.plan.outputs.consumers != '[]'
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: temurin
+          cache: maven
+          cache-dependency-path: repo/**/pom.xml
+
+      - name: Maven settings
+        if: steps.plan.outputs.consumers != '[]'
+        id: settings
+        uses: $/.github/actions/maven-settings
+
+      - name: Install
+        if: steps.plan.outputs.consumers != '[]'
+        uses: $/.github/actions/gate-ci
+        with:
+          command: maven-install
+          settings: ${{ steps.settings.outputs.path }}
+          maven-username: ${{ inputs.maven-username || github.actor }}
+          maven-token: ${{ secrets.MAVEN_TOKEN || github.token }}
+          raw-suffix: ${{ github.head_ref }}
+
+      - name: Upload head build
+        if: ${{ always() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: dependency-gate-m2-head
+          path: ${{ runner.temp }}/m2-head.tgz
+          if-no-files-found: ignore
+
+  go-library:
+    name: Go library
+    needs: [detect]
+    if: ${{ needs.detect.outputs.go == 'true' }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    outputs:
+      consumers: ${{ steps.plan.outputs.consumers }}
+      skip-reason: ${{ steps.plan.outputs.skip-reason }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          # the PR merge commit and its base, HEAD^1
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: '**/go.sum'
+
+      - name: Check
+        uses: $/.github/actions/go-dep-check
+        with:
+          mode: library
+          config: ${{ needs.detect.outputs.config }}
+          modules: ${{ needs.detect.outputs.go-modules }}
+          # pushes and manual runs have no baseline: only the state of HEAD is checked
+          base-ref: ${{ github.event_name == 'pull_request' && 'HEAD^1' || '' }}
+          out-dir: ${{ runner.temp }}/dependency-gate-findings
+
+      - name: Plan consumers
+        id: plan
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        uses: $/.github/actions/go-dep-check
+        with:
+          mode: plan
+          config: ${{ needs.detect.outputs.config }}
+          modules: ${{ needs.detect.outputs.go-modules }}
+          # the merge commit against its base: consumers run only when the non-test build list moved
+          base-ref: HEAD^1
+
+      - name: Upload findings
+        if: ${{ always() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: dependency-gate-findings-go-library
+          path: ${{ runner.temp }}/dependency-gate-findings/
+          if-no-files-found: ignore
+
+  go-consumers:
+    name: Go consumer ${{ matrix.consumer.repo }}/${{ matrix.consumer.module }}
+    needs: [detect, go-library]
+    # also when the library checks failed: the reviewer then sees both
+    if: ${{ !cancelled() && needs.go-library.outputs.consumers != '' && needs.go-library.outputs.consumers != '[]' }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      # a lib-go change plans dozens of consumers; leave runners to the rest of the organization
+      max-parallel: 10
+      matrix:
+        consumer: ${{ fromJson(needs.go-library.outputs.consumers) }}
+    steps:
+      - name: Checkout library
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          path: lib
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Library at base
+        run: git -C lib worktree add --detach ../lib-base HEAD^1
+
+      - name: Checkout consumer
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          repository: ${{ matrix.consumer.repo }}
+          path: consumer
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: consumer/${{ matrix.consumer.module }}/go.sum
+
+      - name: Check
+        uses: $/.github/actions/go-dep-check
+        with:
+          mode: consumer
+          consumer-dir: consumer/${{ matrix.consumer.module }}
+          consumer-name: ${{ matrix.consumer.repo }}/${{ matrix.consumer.module }}
+          lib-base-dir: lib-base/${{ matrix.consumer.lib }}
+          lib-head-dir: lib/${{ matrix.consumer.lib }}
+          tests: ${{ matrix.consumer.tests || false }}
+          out-dir: ${{ runner.temp }}/dependency-gate-findings
+
+      - name: Report a failed run
+        # the gate sees go-consumers once any consumer reported, so each one must leave a file of its own
+        if: ${{ failure() }}
+        uses: $/.github/actions/gate-ci
+        with:
+          command: adapter-error
+          out: ${{ runner.temp }}/dependency-gate-findings
+          file: go-consumers-failed-${{ strategy.job-index }}-head.json
+          reason: "${{ matrix.consumer.repo }}/${{ matrix.consumer.module }}: the job failed before the check finished"
+          adapter: go-consumers
+          ecosystem: go
+
+      - name: Upload findings
+        if: ${{ always() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: dependency-gate-findings-go-consumers-${{ strategy.job-index }}
+          path: ${{ runner.temp }}/dependency-gate-findings/
+          if-no-files-found: ignore
+
+  maven-consumers:
+    name: Maven consumer ${{ matrix.consumer.repo }}
+    needs: [detect, maven-snapshot]
+    if: ${{ !cancelled() && needs.maven-snapshot.outputs.consumers != '' && needs.maven-snapshot.outputs.consumers != '[]' }}
+    permissions:
+      contents: read
+      packages: read
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        consumer: ${{ fromJson(needs.maven-snapshot.outputs.consumers) }}
+    steps:
+      - name: Checkout consumer
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          repository: ${{ matrix.consumer.repo }}
+          path: consumer
+          persist-credentials: false
+
+      - name: Set up Java
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: temurin
+          cache: maven
+
+      - name: Maven settings
+        id: settings
+        uses: $/.github/actions/maven-settings
+
+      - name: Download head library
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: dependency-gate-m2-head
+          path: ${{ runner.temp }}/m2-head
+
+      - name: Point the consumer at the head library
+        id: head
+        uses: $/.github/actions/use-java-libs
+        with:
+          tarball: ${{ runner.temp }}/m2-head/m2-head.tgz
+          repository: ${{ runner.temp }}/repo-head
+          path: consumer/${{ matrix.consumer.module }}
+          poms: all
+          strict: true
+
+      - name: Build against the head library
+        id: head-build
+        if: success() && steps.head.outputs.matched == 'true'
+        uses: $/.github/actions/maven-consumer
+        with:
+          revision: head
+          consumer-dir: consumer/${{ matrix.consumer.module }}
+          consumer-name: ${{ matrix.consumer.repo }}/${{ matrix.consumer.module }}
+          maven-repo: ${{ runner.temp }}/repo-head
+          settings: ${{ steps.settings.outputs.path }}
+          out-dir: ${{ runner.temp }}/dependency-gate-findings
+
+      - name: Record a consumer that does not use the library
+        if: success() && steps.head.outputs.matched != 'true'
+        uses: $/.github/actions/maven-consumer
+        with:
+          revision: head
+          consumer-dir: consumer/${{ matrix.consumer.module }}
+          consumer-name: ${{ matrix.consumer.repo }}/${{ matrix.consumer.module }}
+          maven-repo: skip
+          settings: ${{ steps.settings.outputs.path }}
+          out-dir: ${{ runner.temp }}/dependency-gate-findings
+
+      - name: Report a failed run
+        if: ${{ failure() }}
+        uses: $/.github/actions/gate-ci
+        with:
+          command: adapter-error
+          out: ${{ runner.temp }}/dependency-gate-findings
+          file: maven-consumers-failed-${{ strategy.job-index }}-head.json
+          reason: "${{ matrix.consumer.repo }}/${{ matrix.consumer.module }}: the job failed before the check finished"
+          adapter: maven-consumers
+          ecosystem: maven
+
+      - name: Upload findings
+        if: ${{ always() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: dependency-gate-findings-maven-consumers-${{ strategy.job-index }}
+          path: ${{ runner.temp }}/dependency-gate-findings/
+          if-no-files-found: ignore
+
+  gate:
+    # the check Renovate waits for; not a required check. It does not wait for the consumer matrix.
+    name: Dependency gate
+    needs: [detect, go-library]
+    # also when an adapter failed; a cancelled run (a newer one replaces it) reports nothing
+    if: ${{ !cancelled() }}
+    permissions:
+      contents: read
+      # the sticky comment
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          # the repository file, when present, is read from HEAD^1 on pull requests
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Download Go library findings
+        continue-on-error: true
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          pattern: dependency-gate-findings-go-library
+          path: ${{ runner.temp }}/dependency-gate-findings
+          merge-multiple: true
+
+      - name: Evaluate
+        id: report
+        uses: $/.github/actions/dependency-gate
+        with:
+          command: evaluate
+          go-version: ${{ env.GO_VERSION }}
+          findings-dir: ${{ runner.temp }}/dependency-gate-findings
+          out-dir: ${{ runner.temp }}/dependency-gate
+          comment: ${{ inputs.comment }}
+          dry-run: ${{ inputs.dry-run }}
+          gate-ref: ${{ job.workflow_sha }}
+          expect: |
+            ${{ needs.detect.result != 'success' && format('detect={0}', needs.detect.result) || '' }}
+            go-library=${{ needs.go-library.result }}
+
+      - name: Pull request comment
+        if: >-
+          (success() || failure()) &&
+          inputs.comment &&
+          steps.report.outputs.comment != '' &&
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+        with:
+          header: dependency-gate
+          path: ${{ runner.temp }}/dependency-gate/comment.md
+          only_update: ${{ steps.report.outputs.comment == 'update' }}
+
+      - name: Upload report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: dependency-gate-report
+          path: ${{ runner.temp }}/dependency-gate/
+          if-no-files-found: ignore
+
+  consumers:
+    # the second check Renovate waits for. It starts when the matrix finishes, not when Dependency gate does.
+    # An empty Go plan still reports: the summary names why nobody was planned.
+    # Its sticky comment is separate: the fail fact and the run link. A later run that does not fail deletes it.
+    name: Consumers
+    needs: [go-library, go-consumers, maven-snapshot, maven-consumers]
+    if: ${{ !cancelled() && (needs.go-consumers.result != 'skipped' || needs.maven-consumers.result != 'skipped' || ((needs.go-library.result == 'success' || needs.go-library.result == 'failure') && needs.go-library.outputs.skip-reason != '')) }}
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Download consumer findings
+        continue-on-error: true
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          pattern: dependency-gate-findings-go-consumers-*
+          path: ${{ runner.temp }}/dependency-gate-findings
+          merge-multiple: true
+
+      - name: Download Maven consumer findings
+        continue-on-error: true
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          pattern: dependency-gate-findings-maven-consumers-*
+          path: ${{ runner.temp }}/dependency-gate-findings
+          merge-multiple: true
+
+      - name: Evaluate
+        id: report
+        uses: $/.github/actions/dependency-gate
+        with:
+          command: evaluate
+          go-version: ${{ env.GO_VERSION }}
+          findings-dir: ${{ runner.temp }}/dependency-gate-findings
+          out-dir: ${{ runner.temp }}/dependency-gate-consumers
+          comment: false
+          comment-note: ${{ inputs.comment }}
+          dry-run: ${{ inputs.dry-run }}
+          gate-ref: ${{ job.workflow_sha }}
+          expect: |
+            go-consumers=${{ needs.go-consumers.result }}${{ (needs.go-library.result == 'success' || needs.go-library.result == 'failure') && needs.go-library.outputs.skip-reason != '' && format(': {0}', needs.go-library.outputs.skip-reason) || '' }}
+            maven-consumers=${{ needs.maven-consumers.result }}
+
+      - name: Pull request comment
+        if: >-
+          (success() || failure()) &&
+          inputs.comment &&
+          steps.report.outputs.comment != '' &&
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+        with:
+          header: dependency-gate-consumers
+          path: ${{ runner.temp }}/dependency-gate-consumers/comment.md
+          delete: ${{ steps.report.outputs.comment == 'delete' }}
+
+      - name: Upload report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: dependency-gate-consumers-report
+          path: ${{ runner.temp }}/dependency-gate-consumers/
+          if-no-files-found: ignore
