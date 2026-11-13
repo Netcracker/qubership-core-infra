@@ -13,6 +13,11 @@ on:
       log-level:
         type: string
         required: true
+      automerge:
+        type: string
+        description: "keep reads the checked-out renovate-core-config.json. A packageRule with automerge false and matchPackageNames exactly [\"*\"] is a code freeze. A missing file or no such rule means automerge on (RENOVATE_CODE_FREEZE=false). on forces automerge on. off forces a code freeze (RENOVATE_CODE_FREEZE=true)."
+        required: false
+        default: keep
     secrets:
       MAVEN_USER:
         required: true
@@ -44,6 +49,15 @@ on:
         options:
           - info
           - debug
+      automerge:
+        type: choice
+        description: "keep reads the checked-out renovate-core-config.json. A packageRule with automerge false and matchPackageNames exactly [\"*\"] is a code freeze. A missing file or no such rule means automerge on (RENOVATE_CODE_FREEZE=false). on forces automerge on. off forces a code freeze (RENOVATE_CODE_FREEZE=true)."
+        required: true
+        default: keep
+        options:
+          - keep
+          - "on"
+          - "off"
 
 concurrency:
   group: "renovate-${{ inputs.type }}"
@@ -63,6 +77,7 @@ jobs:
       DRY_RUN: ${{ inputs.dry-run }}
       LOG_LEVEL: ${{ inputs.log-level }}
       TYPE: ${{ inputs.type }}
+      AUTOMERGE: ${{ inputs.automerge }}
 
     steps:
       - name: Checkout
@@ -115,6 +130,8 @@ jobs:
           cmd="java -jar ${cli_name}.jar ${args}"
           echo "running cmd: ${cmd}"
           eval "${cmd}"
+          # these come from the super POM of the Maven running the CLI, not from Spring or Quarkus: not pins
+          sed -i '/^org\.apache\.maven\.plugins:/d' effective-gavs.txt
 
       - name: "Upload implicit-gavs.txt artifact"
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
@@ -133,6 +150,69 @@ jobs:
         with:
           name: diff.yaml
           path: diff.yaml
+
+      - name: "Resolve automerge state"
+        shell: bash
+        run: |
+          # keep reads the checked-out renovate-core-config.json. Code freeze only when
+          # some packageRule has automerge false and matchPackageNames exactly ["*"].
+          # A missing file, or a file with no such blanket rule, means automerge on.
+          # on forces automerge on. off forces a code freeze. jq exit 1 means the
+          # blanket rule is absent; any other jq failure fails the job.
+          config_file="renovate-core-config.json"
+          in_freeze=false
+          if [ -f "${config_file}" ]; then
+            if jq -e 'any(.packageRules[]?; .automerge == false and .matchPackageNames == ["*"])' "${config_file}" >/dev/null; then
+              in_freeze=true
+            else
+              jq_status=$?
+              if [ "${jq_status}" -ne 1 ]; then
+                echo "::error::failed to read automerge state from ${config_file}"
+                exit "${jq_status}"
+              fi
+            fi
+          fi
+          case "${AUTOMERGE}" in
+            keep)
+              if [ "${in_freeze}" = "true" ]; then
+                effective=off
+              else
+                effective=on
+              fi
+              decision=kept
+              ;;
+            on)
+              effective=on
+              if [ "${in_freeze}" = "true" ]; then
+                decision=changed
+              else
+                decision=kept
+              fi
+              ;;
+            off)
+              effective=off
+              if [ "${in_freeze}" = "true" ]; then
+                decision=kept
+              else
+                decision=changed
+              fi
+              ;;
+            *)
+              echo "::error::automerge must be keep, on, or off"
+              exit 1
+              ;;
+          esac
+          if [ "${effective}" = "off" ]; then
+            RENOVATE_CODE_FREEZE=true
+            mode="code freeze"
+          else
+            RENOVATE_CODE_FREEZE=false
+            mode="automerge on"
+          fi
+          echo "RENOVATE_CODE_FREEZE=${RENOVATE_CODE_FREEZE}" >> "${GITHUB_ENV}"
+          summary="Effective state: ${decision}, ${mode}"
+          echo "${summary}"
+          echo "${summary}" >> "${GITHUB_STEP_SUMMARY}"
 
       - name: "Run renovate-config-cli"
         id: run-renovate-config-cli
@@ -159,29 +239,43 @@ jobs:
           args+=("--fromFile=.github/config/renovate.yml")
           args+=("--fromJson={'branchPrefix':'${branchPrefix}'}")
           args+=("--fromJson={'labels':[${defLabels}]}")
-          args+=("--fromJson={'packageRules':[{'matchManagers':['maven'],'groupName':'maven','groupSlug':'maven','addLabels':['group:maven']}]}")
-          # go datasource only: the go directive and the toolchain line use golang-version and follow the org-inherited-config rules
-          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchDatasources':['go'],'matchUpdateTypes':['major'],'groupName':'go-major','groupSlug':'go-major','addLabels':['group:go']}]}")
-          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchDatasources':['go'],'matchUpdateTypes':['minor'],'groupName':'go-minor','groupSlug':'go-minor','addLabels':['group:go']}]}")
-          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchDatasources':['go'],'matchUpdateTypes':['patch'],'groupName':'go-patch','groupSlug':'go-patch','addLabels':['group:go']}]}")
-          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchDatasources':['go'],'matchUpdateTypes':['digest'],'groupName':'go-digest','groupSlug':'go-digest','addLabels':['group:go']}]}")
-          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchDatasources':['go'],'matchPackageNames':['/(.*netcracker.*)/'],'matchUpdateTypes':['major'],'groupName':'go-netcracker-major','groupSlug':'go-netcracker-major','addLabels':['group:go-netcracker']}]}")
-          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchDatasources':['go'],'matchPackageNames':['/(.*netcracker.*)/'],'matchUpdateTypes':['minor'],'groupName':'go-netcracker-minor','groupSlug':'go-netcracker-minor','addLabels':['group:go-netcracker']}]}")
-          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchDatasources':['go'],'matchPackageNames':['/(.*netcracker.*)/'],'matchUpdateTypes':['patch'],'groupName':'go-netcracker-patch','groupSlug':'go-netcracker-patch','addLabels':['group:go-netcracker']}]}")
-          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchDatasources':['go'],'matchPackageNames':['/(.*netcracker.*)/'],'matchUpdateTypes':['digest'],'groupName':'go-netcracker-digest','groupSlug':'go-netcracker-digest','addLabels':['group:go-netcracker']}]}")
+          args+=("--fromJson={'packageRules':[{'matchManagers':['maven'],'matchUpdateTypes':['minor','patch','pin','digest'],'groupName':'maven','groupSlug':'maven','addLabels':['group:maven']}]}")
+          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchUpdateTypes':['minor'],'groupName':'go-minor','groupSlug':'go-minor','addLabels':['group:go']}]}")
+          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchUpdateTypes':['patch'],'groupName':'go-patch','groupSlug':'go-patch','addLabels':['group:go']}]}")
+          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchUpdateTypes':['digest'],'groupName':'go-digest','groupSlug':'go-digest','addLabels':['group:go']}]}")
+          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchPackageNames':['/(.*netcracker.*)/'],'matchUpdateTypes':['minor'],'groupName':'go-netcracker-minor','groupSlug':'go-netcracker-minor','addLabels':['group:go-netcracker']}]}")
+          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchPackageNames':['/(.*netcracker.*)/'],'matchUpdateTypes':['patch'],'groupName':'go-netcracker-patch','groupSlug':'go-netcracker-patch','addLabels':['group:go-netcracker']}]}")
+          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchPackageNames':['/(.*netcracker.*)/'],'matchUpdateTypes':['digest'],'groupName':'go-netcracker-digest','groupSlug':'go-netcracker-digest','addLabels':['group:go-netcracker']}]}")
           # temporary rule to separate update github.com/valyala/fasthttp v1.69.0 → v1.70.0 (manual steps are required)
           args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchPackageNames':['github.com/valyala/fasthttp'],'matchNewValue':['v1.70.0'],'groupName':'go-fasthttp','groupSlug':'go-fasthttp','addLabels':['group:go']}]}")
           # bun modules check each other's version at init (pgdialect panics when it differs from bun), so they
           # must move together. Renovate does not update indirect Go deps by default, which left pgdialect behind
           # bun in site-management#295; enable them for bun and put all bun modules into one group.
           args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchPackageNames':['github.com/uptrace/bun','github.com/uptrace/bun/**'],'matchDepTypes':['require','indirect'],'enabled':true,'groupName':'go-bun','groupSlug':'go-bun','addLabels':['group:go']}]}")
-          args+=("--fromJson={'packageRules':[{'matchManagers':['github-actions'],'groupName':'github-actions'}]}")
+          # do not bump the go directive in go.mod on a new Go release: it is a lower bound for the whole
+          # module graph, so raising it forces every consumer of our libraries onto that Go version.
+          # go mod tidy still raises it when a dependency requires it; the build pins the compiler itself.
+          args+=("--fromJson={'packageRules':[{'matchManagers':['gomod'],'matchDepNames':['go'],'matchDepTypes':['golang','toolchain'],'enabled':false}]}")
+          args+=("--fromJson={'packageRules':[{'matchManagers':['github-actions'],'matchUpdateTypes':['major'],'groupName':'github-actions-major','groupSlug':'github-actions-major','addLabels':['group:github-actions']}]}")
+          args+=("--fromJson={'packageRules':[{'matchManagers':['github-actions'],'matchUpdateTypes':['minor'],'groupName':'github-actions-minor','groupSlug':'github-actions-minor','addLabels':['group:github-actions']}]}")
+          args+=("--fromJson={'packageRules':[{'matchManagers':['github-actions'],'matchUpdateTypes':['patch'],'groupName':'github-actions-patch','groupSlug':'github-actions-patch','addLabels':['group:github-actions']}]}")
+          args+=("--fromJson={'packageRules':[{'matchManagers':['github-actions'],'matchUpdateTypes':['digest'],'groupName':'github-actions-digest','groupSlug':'github-actions-digest','addLabels':['group:github-actions']}]}")
           args+=("--fromJson={'packageRules':[{'matchPackageNames':['/^com\\\\.netcracker\\\\./'],'groupName':'netcracker','groupSlug':'netcracker','addLabels':['group:netcracker']}]}")
           args+=("--groupNameMapping={'maven':'.*'}")
           if [ "${TYPE}" = "configuration" ]; then
             args+=("--patchGavsFile=implicit-gavs.txt")
           else
             args+=("--strictGavsFile=effective-gavs.txt")
+          fi
+          args+=("--fromJson={'packageRules':[{'matchManagers':['maven'],'matchUpdateTypes':['major'],'groupName':null,'groupSlug':null}]}")
+          # Code freeze: PRs are still created, nothing is automerged. Appended after the pin-file
+          # args and before --renovateConfigOutputFile whenever RENOVATE_CODE_FREEZE=true (explicit
+          # off, and keep when the checked-out config has a packageRule with automerge false and
+          # matchPackageNames exactly ["*"]). Omitted when automerge is on. Dry-run writes the same
+          # file and does not commit it. Last inside this preset only: a repository that extends the
+          # preset and adds its own later automerge rule still wins after preset expansion.
+          if [ "${RENOVATE_CODE_FREEZE}" = "true" ]; then
+            args+=("--fromJson={'packageRules':[{'matchPackageNames':['*'],'automerge':false}]}")
           fi
           args+=("--renovateConfigOutputFile=renovate-core-config.json")
           args+=("--renovateConfigOutputFormat=JSON")
@@ -190,7 +284,9 @@ jobs:
           fi
           java -jar "${cli_name}.jar" "${args[@]}"
           
-          # commit renovate-core-config.json if updated
+          # commit renovate-core-config.json if updated.
+          # The next keep reads that file for the blanket automerge:false rule.
+          # Dry-run does not commit.
           git config user.email "actions@github.com"
           git config user.name "actions"
           if [ "${DRY_RUN}" = "true" ]; then
