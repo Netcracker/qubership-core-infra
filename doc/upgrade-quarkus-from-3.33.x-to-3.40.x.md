@@ -213,9 +213,6 @@ grep -rnE "(2\.13\.2|33\.5\.0-jre|2\.21\.0|26\.0\.2|7\.5\.2|3\.9\.12|3\.2\.1\.Fi
 grep -rn -A1 "<artifactId>jandex</artifactId>" --include="pom.xml"
 ```
 
-Remove an explicit `jandex` version so the Quarkus BOM manages it. Leave `jandex-maven-plugin` on `3.5.3` if that is
-what the build uses.
-
 Versions left unchanged on purpose: `amqp-client` `5.37.0`, `log4j-*` `2.26.1`, `junit-bom` `6.0.3`.
 
 ---
