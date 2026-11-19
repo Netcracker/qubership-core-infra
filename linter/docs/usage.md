@@ -2,9 +2,9 @@
 
 This document explains how to use the `platform-ci-toolkit` common linter locally, in CI pipelines, and in GitHub Actions workflows.
 
-The common linter image is published as `ghcr.io/netcracker/linter` and is based on GitHub Super-Linter v9. It also includes the `skillcheck` utility for validating Agent Skills. Consumer repositories either copy `templates/common.mk` as their own `Makefile`, or include it from a thin wrapper so the same targets work locally and in CI.
+The common linter image is published as `ghcr.io/netcracker/linter` and is based on GitHub Super-Linter v9. Existing common-linter tags include the `skillcheck` utility for validating Agent Skills. Consumers of those tags either copy `templates/common.mk` as their own `Makefile`, or include it from a thin wrapper so the same targets work locally and in CI.
 
-## Default linters
+## Defaults for existing common-linter tags
 
 The common linter enables a fixed allowlist of linters. Super-Linter does not allow mixing `VALIDATE_*=true` and `VALIDATE_*=false`, so anything not listed is off.
 
@@ -22,7 +22,43 @@ Override `DEFAULT_BRANCH` via the Makefile, CI job variables, or `docker -e` (se
 
 ---
 
-## Local usage
+## Mandatory lint checks
+
+The image enables the required validators by default. Run
+`lint --path <directory>` for a full scan of that directory in its nearest
+Git checkout. Running the image with its default command lints `/tmp/lint`. Use
+`--path .` from the repository root, or point to a component or initialized
+Git submodule. Super-Linter selects Go modules, Python, Java, shell scripts,
+Dockerfiles, YAML, and Markdown using the image's allowlist and rules.
+
+Add optional Super-Linter checks using environment variables such as
+`VALIDATE_JSON=true`, `VALIDATE_JAVASCRIPT_ES=true`, or
+`VALIDATE_TYPESCRIPT_ES=true`. Leave unwanted checks unset. Setting a
+mandatory `VALIDATE_*` flag to `false` fails the job. Setting an optional per-check
+flag to `false` conflicts with Super-Linter's allowlist and fails configuration.
+The command runs in check-only mode. Some optional
+checks scan the whole workspace by design, even when you select a subdirectory.
+
+The linter also runs `helm lint --strict` for each chart in scope. Helm checks
+use the full chart, including when a directory inside the chart is selected.
+Make any chart dependencies available in the checkout before running lint.
+
+The GitLab example uses the toolkit branch image from Artifactory. Publish the branch image before running the job.
+
+```yaml
+lint:
+  stage: lint
+  image:
+    name: artifactorycn.netcracker.com:17114/netcracker/linter:git-submodules-test
+    entrypoint: [""]
+  script:
+    - lint --path .
+```
+
+Put `lint` before the build stage in the consumer pipeline. Use the intended
+Go proxy for private Go dependencies.
+
+## Local usage with existing common-linter tags
 
 ### Prerequisites
 

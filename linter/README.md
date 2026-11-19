@@ -1,6 +1,6 @@
 # Common Linter
 
-This directory builds the common linter image. The image extends [GitHub Super-Linter](https://github.com/super-linter/super-linter) with organization-wide defaults, supports per-module Go linting for repositories that contain multiple Go modules, and includes the `skillcheck` utility for validating Agent Skills.
+This branch builds the mandatory lint image on [GitHub Super-Linter](https://github.com/super-linter/super-linter). It ships the required lint rules and the `lint --path` command.
 
 ## Build
 
@@ -18,7 +18,24 @@ make push
 
 The image is built and published by the repository's `CI: Dev Docker Build` workflow, configured in `.qubership/docker.cfg`. The workflow builds the `linter` component from `linter/Dockerfile` and pushes it to the GitHub Container Registry (`ghcr.io`).
 
+## Mandatory lint checks
+
+Run `lint --path .` inside the linter image. The image enables the mandatory
+checks by default. See [mandatory lint usage](docs/usage.md#mandatory-lint-checks)
+for the project discovery rules and a GitLab job.
+
 ## Run locally
+
+Mount the Git checkout at `/tmp/lint` and run the image:
+
+```bash
+docker run --rm -v "$PWD:/tmp/lint" ghcr.io/netcracker/linter:git-submodules-test
+```
+
+## Existing common-linter tags
+
+The following Makefile commands use common-linter tags that include the
+original wrapper and skillcheck.
 
 From a consumer repository that contains the consumer `Makefile`:
 
