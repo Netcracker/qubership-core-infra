@@ -10,9 +10,10 @@ rules in Consul.
 
 Before:
 
-- At each Cloud Core deployment, core-bootstrap created policies and an ACL token that never expires, and stored the
-  token in the Secret `config-server-consul-token`. For that it needed the Consul admin token: an ACL token with
-  permission to create policies and tokens, passed in the deployment parameter `CONSUL_ADMIN_TOKEN`.
+- At each Cloud Core deployment, the `configserver` task of the core-bootstrap pre-deploy job created policies and an
+  ACL token that never expires, and stored the token in the Secret `config-server-consul-token`. For that it needed
+  the Consul admin token: an ACL token with permission to create policies and tokens, passed in the deployment
+  parameter `CONSUL_ADMIN_TOKEN`.
 - config-server used that token, and core-legacy-api from the `qubership-mini-core` repository used it after replacing
   config-server.
 - The other services logged in to Consul with the M2M token through a preconfigured auth method.
@@ -29,8 +30,8 @@ Now, in the `hybrid` and `k8s` modes:
   expires.
 - The roles and policies are declared in `ConsulACL` CRs in the Cloud Core charts, see
   [Permissions in Consul](#permissions-in-consul).
-- The static ACL token for core-legacy-api stays for the migration period. core-bootstrap decides whether to issue it
-  depending on the auth mode, see [Consul auth modes](#consul-auth-modes).
+- The static ACL token for core-legacy-api stays for the migration period. The `configserver` task decides whether to
+  issue it depending on the auth mode, see [Consul auth modes](#consul-auth-modes).
 - Cloud Core also works on Consul with ACLs disabled, which matters mostly for CI tests and dev environments. Such a
   Consul responds to the login with `401` and the body `ACL support disabled`, and the Go and Java Consul clients then
   call it without an ACL token.
@@ -42,7 +43,7 @@ Issue: [qubership-core-infra#426](https://github.com/Netcracker/qubership-core-i
 The Cloud Core deployment parameter `M2M_AUTH_MODE` sets the mode; it also sets the mode of the M2M calls between
 services. The deployment parameter `CONSUL_AUTH_MODE` overrides the mode for Consul only and is meant for tests.
 
-| Mode | core-bootstrap | core-legacy-api | Other Cloud Core services |
+| Mode | `configserver` task | core-legacy-api | Other Cloud Core services |
 |---|---|---|---|
 | `legacy` (default) | Issues a static ACL token with the Consul admin token and stores it in the Secret `config-server-consul-token` | Static ACL token from the Secret `config-server-consul-token` | Login with the M2M token |
 | `hybrid` | Looks up the auth method `applications-k8s-m2m` in Consul. If the method exists, deletes the Secret; if not, issues the static ACL token as in `legacy` | Static ACL token if the Secret exists, otherwise login with the Kubernetes token. The choice is made at pod startup | Login with the Kubernetes token through `applications-k8s-m2m`; if the login fails, with the M2M token |
@@ -56,7 +57,7 @@ The charts install the `ConsulACL` and `ConsulKV` CRs in the `hybrid` and `k8s` 
 The permissions of a service are set in three places:
 
 - **The shared chart `cloud-core-configuration`** from the `qubership-core-bootstrap` repository. It holds the common
-  settings of Cloud Core: it is installed before the service charts and runs the core-bootstrap pre-deploy tasks. It
+  settings of Cloud Core: it is installed before the service charts and runs the core-bootstrap pre-deploy job. It
   contains the `ConsulACL` CR `cloud-core` with one binding rule for the auth method `applications-k8s-m2m`: an ACL
   token obtained with the Kubernetes token of a ServiceAccount from the Cloud Core namespace gets the role
   `<namespace>_<ServiceAccount name>_v2`. The ServiceAccount `default` gets no role.
@@ -105,7 +106,7 @@ Permissions of the roles:
 
 - The `consul-propertysource` package adds the `ReadAuthSettings()` function. It returns the mode, auth method, and
   audience of the Consul login the way the Consul client of the library resolves them. core-legacy-api and
-  core-bootstrap use it to resolve the mode by the same rules as the client.
+  the `configserver` task use it to resolve the mode by the same rules as the client.
 - The client treats a `401` login response with the body `ACL support disabled` as a login without an ACL token and
   logs `Consul ACLs are disabled: working without a Consul token`. Without this, Go services that log in to Consul
   would not work on Consul with ACLs disabled.
@@ -173,7 +174,7 @@ Permissions of the roles:
 - `core-legacy-api-integration-tests` run in three environments: Consul without ACLs in `legacy`, Consul with ACLs in
   `k8s` and in `hybrid`.
 - In the environments with ACLs, `core-legacy-api-integration-tests` check that the Secret `config-server-consul-token`
-  is absent, that is, core-bootstrap issued no static ACL token.
+  is absent, that is, the `configserver` task issued no static ACL token.
 - The mesh test services (Go, Quarkus, Spring) log in to Consul with the Kubernetes token and get their `ConsulACL` CR
   from coretpl; each runs under its own ServiceAccount.
 - The `integration-tests` workflow takes the parameter `consul-acls`; `m2m-mode-combinations` checks `hybrid` and
@@ -185,7 +186,7 @@ Permissions of the roles:
 ## Limitations
 
 - core-legacy-api in `hybrid` chooses between the static ACL token and the login with the Kubernetes token only at pod
-  startup. When core-bootstrap deletes the Secret, it does not revoke the token in Consul, so a running pod keeps
-  working until it restarts.
+  startup. When the `configserver` task deletes the Secret, it does not revoke the token in Consul, so a running pod
+  keeps working until it restarts.
 - Deleting from Consul the old static ACL tokens and the policies `<namespace>_config-edit` and
-  `<namespace>_config-server_logging`, which core-bootstrap created in `legacy`, is out of scope.
+  `<namespace>_config-server_logging`, which the `configserver` task created in `legacy`, is out of scope.
