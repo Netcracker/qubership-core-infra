@@ -21,7 +21,8 @@ names:
 | `server` | `github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v3/server` | `server.StartServer` starts the application on the address from the configuration |
 | `fibererrors` | `github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v3/errors` | `fibererrors.DefaultErrorHandler` answers handler errors in the TMF format |
 | `security` | `github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v3/security` | `security.SecurityMiddleware` is the interface of the access-check middleware |
-| `context` | Go standard library | `context.Context` |
+| `logger` | `github.com/netcracker/qubership-core-lib-go/v3/logging` | A logger of the service: `logger.InfoC(ctx, ...)` writes a line with the request data from `ctx` |
+| `context`, `json`, `time` | Go standard library: `context`, `encoding/json`, `time` | `context.Context`, `json.Unmarshal`, `time.Second` |
 
 The other changes in Fiber itself, not related to fiber-server-utils, are described in the
 [Fiber v3 migration guide](https://docs.gofiber.io/whats_new).
@@ -36,8 +37,8 @@ Replace the module paths in `go.mod` and in every import:
 | `github.com/gofiber/fiber/v2` | `github.com/gofiber/fiber/v3` |
 | `github.com/gofiber/adaptor/v2` | `github.com/gofiber/fiber/v3/middleware/adaptor` |
 
-After `go mod tidy`, check that no old version is left among the dependencies, transitive ones included. The command
-must print nothing:
+After `go mod tidy`, check which old versions are left among the dependencies, transitive ones included. The command
+lists them; a module in its output can come from a dependency that has not moved to Fiber v3 yet:
 
 ```bash
 go list -m all | grep -E 'gofiber/fiber/v2|gofiber/adaptor/v2|fiber-server-utils/v2'
@@ -154,9 +155,10 @@ if err := c.BodyParser(&tenant); err != nil { ... }
 if err := c.Bind().Body(&tenant); err != nil { ... }
 ```
 
-The new method treats the `Content-Type: text/json` header of an incoming request differently. On v2, `BodyParser`
-parsed such a body as JSON; on v3, `Bind().Body` returns the error `Unprocessable Entity`. For the other `Content-Type`
-values, the behavior is the same: `application/json` and `application/<type>+json` are parsed as JSON.
+The new method is stricter about the `Content-Type` header of an incoming request. On v2, `BodyParser` parsed a body as
+JSON whenever its `Content-Type` ended in `json`. On v3, `Bind().Body` parses only `application/json` and
+`application/<type>+json` as JSON and returns the error `Unprocessable Entity` for other types, such as `text/json` or
+`application/x-json`.
 
 The error text for malformed JSON changes too: `bind from body: ` precedes the parser message. On v2 it is
 `unexpected end of JSON input`, on v3 `bind from body: unexpected end of JSON input`.
@@ -169,19 +171,16 @@ What to consider:
 
 ### Step 7. Check the code that uses the request path
 
-The Fiber v3 router shortens and decodes the path before it selects a route (item 4 in part 2), and `c.Path()` returns
+The Fiber v3 router resolves `..` and decodes `%`-encoded letters, digits, and `-._~` in the path before it selects a
+route (item 4 in part 2), and `c.Path()` returns
 the processed path: for the request `/api/v1/a/../items`, it returns `/api/v1/items`. Check the code if the service
 passes `c.Path()` on, for example proxies the request to another service.
 
 ## Part 2. Behavior changes
 
-Responses to valid requests do not change. What changes are the responses to unusual and invalid requests, and some of
-the logs.
-
 Items 1–6 apply to any service on fiber-server-utils v3, including the cloud core services: control-plane,
-dbaas-agent, maas-agent, paas-mediation, site-management, facade-operator, and core-legacy-api.
-
-rate-limiter runs on Fiber v3 without fiber-server-utils, so only items 2–4 apply to it.
+dbaas-agent, maas-agent, paas-mediation, site-management, facade-operator, core-legacy-api, and rate-limiter. Item 1
+does not apply to rate-limiter, which answers a request to an unknown path itself.
 
 1. **A request to a path that has no route**
    - v2: `404`, error text `Cannot GET /<path>`.
@@ -194,7 +193,7 @@ rate-limiter runs on Fiber v3 without fiber-server-utils, so only items 2–4 ap
 3. **A request with the `QUERY` method**
    - v2: `400`, body `Invalid http method`.
    - v3: handled like any other method.
-4. **A path with `..` segments or with `%`-encoded characters**, such as `GET /api/v1/a/../items` or
+4. **A path with `..` segments or with `%`-encoded letters, digits, or `-._~`**, such as `GET /api/v1/a/../items` or
    `GET /api/v1/items/%61bc`
    - v2: the path is used as sent. `/api/v1/a/../items` matches no route and gets `404`.
    - v3: the path is shortened and decoded first: the requests are handled as `GET /api/v1/items` and
@@ -219,16 +218,18 @@ rate-limiter runs on Fiber v3 without fiber-server-utils, so only items 2–4 ap
    - v2: `GET /api/v1/items` is declined, but `GET /api/v1/items?limit=10` is served: a query string bypassed the
      pattern.
    - v3: both requests are declined.
-   - Patterns with `*`, such as `/api/v1/**`, decline requests with a query string on both versions.
+   - Patterns that end with `/**`, such as `/api/v1/**`, decline requests with a query string on both versions.
 
 ### Changes in individual cloud core services
 
-1. **A request body with `Content-Type: text/json`** in dbaas-agent, site-management, core-legacy-api, and
+1. **A request body whose `Content-Type` ends in `json` but is neither `application/json` nor
+   `application/<type>+json`**, such as `text/json`, in dbaas-agent, site-management, core-legacy-api, and
    paas-mediation
    - v2: the body is parsed as JSON, and the request is executed.
    - v3: the request is declined and changes nothing: `400`, `500` in dbaas-agent.
    - Bodies with `application/json` and `application/<type>+json` are accepted the same way on v2 and v3.
-2. **The paas-mediation response to malformed JSON in the request body**
+2. **The paas-mediation response to malformed JSON in a request that creates or updates a config map, route, or
+   service**
    - v2: `400`, error text `failed to parse request body: unexpected end of JSON input`.
    - v3: `400`, error text `failed to parse request body: bind from body: unexpected end of JSON input`.
 3. **The dbaas-agent response to a delete by classifier with a body that cannot be parsed**, for example with
