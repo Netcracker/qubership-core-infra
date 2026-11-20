@@ -61,13 +61,14 @@ The permissions of a service are set in three places:
   contains the `ConsulACL` CR `cloud-core` with one binding rule for the auth method `applications-k8s-m2m`: an ACL
   token obtained with the Kubernetes token of a ServiceAccount from the Cloud Core namespace gets the role
   `<namespace>_<ServiceAccount name>_v2`. The ServiceAccount `default` gets no role.
-- **The service template in the Helm library `coretpl`** from the `qubership-core-bootstrap` repository. The chart of
-  every Cloud Core service includes the `coretpl` templates, and the template creates a `ConsulACL` CR with the role
+- **The service template in the Helm library `coretpl`** from the `qubership-core-bootstrap` repository. A Cloud Core
+  service chart that includes the template `coretpl.synchronizer.hooks` gets a `ConsulACL` CR with the role
   `<namespace>_<SERVICE_NAME>_v2` and its policies. The role is bound to the ServiceAccount name, so a service gets
   these permissions only if its pod runs under the ServiceAccount named `SERVICE_NAME`.
-- **The service's own `ConsulACL` CR.** A service that needs other permissions turns the `coretpl` template off with the
-  deployment parameter `CORE_TPL_MS_CONSULACL_ENABLED: false` and installs a `ConsulACL` CR with the role
-  `<namespace>_<SERVICE_NAME>_v2` in its own chart. `core-legacy-api` and `core-operator` do so.
+- **The service's own `ConsulACL` CR.** A service that needs other permissions installs a `ConsulACL` CR with the role
+  `<namespace>_<SERVICE_NAME>_v2` in its own chart. `core-operator` does so and turns the `coretpl` template off with
+  the deployment parameter `CORE_TPL_MS_CONSULACL_ENABLED: false`. `core-legacy-api` does so too; its chart does not
+  include the `coretpl` template.
 
 A service chart installs a `ConsulKV` CR next to its `ConsulACL` CR. For that CR, the Consul ACL Configurator creates
 the empty folder keys of the service in Consul KV, keys that end with `/`: `config/<namespace>/<SERVICE_NAME>/`,
@@ -146,8 +147,8 @@ Permissions of the roles:
   every 5 seconds instead of failing.
 - The ACL token is valid for 30 minutes, and the client logs in again periodically. `core-legacy-api` takes the current
   token for every Consul request, so after a new login the requests carry the new token.
-- The chart turns the `coretpl` template off and installs its own `ConsulACL` CR. In the `k8s` mode the pod does not
-  mount the Secret `config-server-consul-token`.
+- The chart installs its own `ConsulACL` CR. In the `k8s` mode the pod does not mount the Secret
+  `config-server-consul-token`.
 
 ### `qubership-core-core-operator`, [#241](https://github.com/Netcracker/qubership-core-core-operator/pull/241)
 
