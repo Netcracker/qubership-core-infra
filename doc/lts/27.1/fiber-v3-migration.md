@@ -205,9 +205,12 @@ does not apply to rate-limiter, which answers a request to an unknown path itsel
 
    - v2: the error log line has `request_id=-`.
    - v3: the error log line has the `request_id`. Tracing and metrics do not count such a request, as on v2.
-   - Fiber v3 runs the middleware registered with `app.Use` for such requests too. If a middleware of the service
-     returns an error for such a request, Fiber writes the line `serverErrorHandler: middleware traversal failed` to
-     its log.
+   - Fiber v3 runs the middleware registered with `app.Use` or on a route group for such requests too, but no route
+     handler. If a middleware of the service returns an error for such a request, Fiber writes the line
+     `serverErrorHandler: middleware traversal failed` to its log.
+   - A middleware with a side effect, such as one that proxies the request or writes data, has to skip such a request:
+     its body was never read. The request has an error status of 400 or above when the middleware starts, while any
+     other request has 200.
 6. **A request with a query string to a disabled deprecated API**
 
    fiber-server-utils disables deprecated endpoints if the application is created with
