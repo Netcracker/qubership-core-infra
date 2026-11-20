@@ -12,7 +12,7 @@ on:
         default: "main"
       repositoryToRelease:
         type: choice
-        description: "Repository to bulk release from. Select 'all' to release all repositories. qubership-mini-core and qubership-rate-limiter are excluded when branch is lts/26.3"
+        description: "Repository to bulk release from. Select 'all' to release all repositories. qubership-mini-core and qubership-rate-limiter have no LTS branches below 26.4"
         options:
           - all
           - qubership-core-control-plane
@@ -79,14 +79,23 @@ jobs:
           https://github.com/Netcracker/qubership-core-maas-agent
           https://github.com/Netcracker/qubership-core-paas-mediation
           https://github.com/Netcracker/qubership-core-site-management"
-          # mini-core and rate-limiter are not part of the lts/26.3 line
-          if [ "${BRANCH}" != "lts/26.3" ]; then
+          # mini-core and rate-limiter have no LTS branches below 26.4
+          exclude_new_services=false
+          if [[ "${BRANCH}" =~ ^lts/([0-9]+)\.([0-9]+) ]]; then
+            major="${BASH_REMATCH[1]}"
+            minor="${BASH_REMATCH[2]}"
+            if [ "${major}" -lt 26 ] || { [ "${major}" -eq 26 ] && [ "${minor}" -lt 4 ]; }; then
+              exclude_new_services=true
+            fi
+          fi
+          if [ "${exclude_new_services}" = "true" ]; then
+            echo "Source branch ${BRANCH} is below lts/26.4: qubership-mini-core and qubership-rate-limiter have no such branch"
+          else
             repositories="${repositories}
           https://github.com/Netcracker/qubership-mini-core
           https://github.com/Netcracker/qubership-rate-limiter"
-          else
-            echo "Source branch is lts/26.3: excluding qubership-mini-core and qubership-rate-limiter"
           fi
+          echo "exclude_new_services=${exclude_new_services}" >> "${GITHUB_OUTPUT}"
           echo "repositories=\n${repositories}"
           repositories=$(echo "${repositories}" | tr '\n' ',')
           echo "repositories=${repositories}" >> "${GITHUB_OUTPUT}"
@@ -134,6 +143,7 @@ jobs:
           LTS_RELEASE: ${{ inputs.ltsRelease }}
           LTS_BRANCH_NAME: ${{ inputs.ltsBranchName }}
           BRANCH: ${{ inputs.branch }}
+          EXCLUDE_NEW_SERVICES: ${{ steps.read-repositories.outputs.exclude_new_services }}
         # language="shell script"
         run: |
           mkdir /tmp/GOPROXY
@@ -157,10 +167,10 @@ jobs:
           if [ "${BRANCH}" != "main" ]; then
             options="${options} --branch=${BRANCH}"
           fi
-          if [ "${BRANCH}" = "lts/26.3" ]; then
+          if [ "${EXCLUDE_NEW_SERVICES}" = "true" ]; then
             case "${REPOSITORY_TO_RELEASE}" in
               qubership-mini-core|qubership-rate-limiter)
-                echo "qubership-mini-core and qubership-rate-limiter are excluded when source branch is lts/26.3"
+                echo "qubership-mini-core and qubership-rate-limiter have no branch below lts/26.4"
                 exit 1
                 ;;
             esac
