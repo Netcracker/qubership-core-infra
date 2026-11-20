@@ -1,4 +1,6 @@
-.git
-docs/
-templates/
-*.md
+*
+!Dockerfile
+!mandatory.py
+!prechecks/
+!prechecks/base-linters/
+!prechecks/base-linters/**

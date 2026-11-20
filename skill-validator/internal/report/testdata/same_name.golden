@@ -1,6 +1,0 @@
-FAIL  dup (/work/one)
-        SKILL.md: description is missing or empty
-PASS  dup (/work/two)
-PASS  solo
-
-Summary: 3 skills checked, 2 valid, 1 failed, 0 skipped, 1 problem

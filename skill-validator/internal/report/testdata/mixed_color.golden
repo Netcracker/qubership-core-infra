@@ -1,8 +1,0 @@
-[31mFAIL[0m  bad
-        SKILL.md: name is missing
-        SKILL.md:5: "../x.md" points outside the skill folder
-[32mPASS[0m  code-review
-[33mWARN[0m  torn
-        parse frontmatter SKILL.md: yaml: line 1: did not find expected ','
-
-[1m[31mSummary: 3 skills checked, 1 valid, 1 failed, 1 skipped, 3 problems[0m

@@ -1,5 +1,0 @@
-PASS  ok
-PASS  portable
-        SKILL.md: harness-specific frontmatter field "model" (Claude Code only, not in the Agent Skills specification)
-
-Summary: 2 skills checked, 2 valid, 0 failed, 0 skipped, 1 problem, 1 warning

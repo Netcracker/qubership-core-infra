@@ -1,4 +1,0 @@
-name: common-linter-integration
-version: 1.0.0
-description: Integrate the platform-ci-toolkit common linter into a consumer repository on GitHub Actions or GitLab CI.
-author: Netcracker

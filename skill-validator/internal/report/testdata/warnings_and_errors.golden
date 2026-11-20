@@ -1,5 +1,0 @@
-FAIL  both
-        SKILL.md: name is missing
-        SKILL.md: harness-specific frontmatter field "paths" (Claude Code only, not in the Agent Skills specification)
-
-Summary: 1 skill checked, 0 valid, 1 failed, 0 skipped, 2 problems, 1 warning
