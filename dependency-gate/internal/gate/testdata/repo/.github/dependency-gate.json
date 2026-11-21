@@ -1,0 +1,17 @@
+{
+  "$schema": "../../../../../schemas/config.v1.json",
+  "version": 1,
+  "ecosystems": {
+    "go": { "modules": ["."] }
+  },
+  "checks": {
+    "apidiff-exposed": {
+      "ignore": [
+        { "package": "/^github\\.com/openshift/api//", "reason": "Breaks in every release; used internally only, never exposed" }
+      ]
+    }
+  },
+  "families": [
+    { "name": "kafka-go", "ecosystem": "go", "match": "^github\\.com/segmentio/kafka-go(/|$)"     }
+  ]
+}

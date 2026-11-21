@@ -1,0 +1,26 @@
+{
+  "$schema": "./schemas/config.v1.json",
+  "version": 1,
+  "families": [
+    { "name": "bun", "ecosystem": "go", "match": "^github\\.com/uptrace/bun(/|$)", "note": "dialects and drivers check bun's version in init()" },
+    { "name": "otel", "ecosystem": "go", "match": "^go\\.opentelemetry\\.io/otel(/|$)", "key": "stable", "note": "stable (v1) otel modules are released together; v0 ones (prometheus exporter, log) are not compared" },
+    { "name": "k8s.io", "ecosystem": "go", "match": "^k8s\\.io/(api|apimachinery|client-go|apiextensions-apiserver|apiserver|component-base|kubectl|kube-aggregator|metrics|cli-runtime|code-generator)$", "note": "kubernetes staging repositories share one version" },
+    { "name": "testcontainers", "ecosystem": "go", "match": "^github\\.com/testcontainers/testcontainers-go(/modules/.+)?$" }
+  ],
+  "consumers": {
+    "go": {
+      "libs": { "tests": true },
+      "services": {
+        "tests": true,
+        "extra": [
+          { "repo": "Netcracker/qubership-core-test-apps", "module": "mesh-test-service-go/test-service-go" },
+          { "repo": "Netcracker/qubership-core-test-apps", "module": "maas-failover-resilience/test-service-go/test-service-go" },
+          { "repo": "Netcracker/qubership-core-test-apps", "module": "consul-login/test-service-go/test-service-go" }
+        ]
+      }
+    },
+    "maven": {
+      "services": {}
+    }
+  }
+}
