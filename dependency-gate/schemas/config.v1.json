@@ -1,0 +1,239 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Netcracker/qubership-core-infra/dependency-gate/schemas/config.v1.json",
+  "title": "Dependency gate configuration",
+  "description": "Repository file .github/dependency-gate.json, merged over the infra defaults.",
+  "type": "object",
+  "required": ["version"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "const": 1 },
+    "maxExceptionDays": {
+      "description": "Infra only. Longest allowed distance from today to an exception's until date",
+      "type": "integer",
+      "minimum": 1
+    },
+    "locked": {
+      "description": "Infra only. Checks a repository cannot weaken: no lower level, no ignore rules, no label levels",
+      "type": "array",
+      "items": { "$ref": "#/$defs/checkId" },
+      "uniqueItems": true
+    },
+    "labels": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "levels": {
+          "description": "Check levels applied while the PR has the label",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "propertyNames": { "$ref": "#/$defs/checkId" },
+            "additionalProperties": { "$ref": "#/$defs/level" }
+          }
+        }
+      }
+    },
+    "ecosystems": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maven": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "roots": {
+              "description": "Root pom directories; default: the root pom, else top-level directories with a pom.xml that no other pom lists as a module",
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/directory" }
+            },
+            "checks": { "$ref": "#/$defs/checks" }
+          }
+        },
+        "go": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "modules": {
+              "description": "Module directories; default: every go.mod outside vendor/ and testdata/",
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/directory" }
+            },
+            "exclude": {
+              "description": "RE2 regexes of repository-relative module directories not to check",
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "checks": { "$ref": "#/$defs/checks" }
+          }
+        }
+      }
+    },
+    "checks": { "$ref": "#/$defs/checks" },
+    "families": {
+      "description": "Modules released together; merged with the infra list by name",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "ecosystem", "match"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "ecosystem": { "$ref": "#/$defs/ecosystem" },
+          "match": { "description": "RE2 regex of module paths or groupId:artifactId", "type": "string", "minLength": 1 },
+          "key": { "description": "What must be equal: version (default), minor, stable", "enum": ["version", "minor", "stable"] },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "consumers": {
+      "description": "Infra only; a repository can only disable them with false. Names come from the repository lists; a group may instead be the expanded array.",
+      "oneOf": [
+        { "const": false },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "go": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "libs": { "$ref": "#/$defs/consumerGroup" },
+                "services": { "$ref": "#/$defs/consumerGroup" }
+              }
+            },
+            "maven": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "services": { "$ref": "#/$defs/consumerGroup" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "exceptions": {
+      "description": "Temporary permissions for specific findings",
+      "type": "array",
+      "items": { "$ref": "#/$defs/exception" }
+    }
+  },
+  "$defs": {
+    "checkId": { "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+    "checkPattern": {
+      "description": "Check id or a glob over check ids, e.g. consumer-* or *",
+      "type": "string",
+      "pattern": "^[a-z0-9*?-]+$"
+    },
+    "level": { "enum": ["fail", "warn", "info", "off"] },
+    "ecosystem": { "enum": ["maven", "go"] },
+    "directory": {
+      "description": "Repository-relative directory: no commas (the adapters join lists with them), no .. and no line breaks",
+      "type": "string",
+      "pattern": "^[^,.\r\n]*(\\.[^,.\r\n]+)*\\.?$",
+      "minLength": 1
+    },
+    "matcher": {
+      "description": "Exact value or /RE2 regex/ with an optional i flag",
+      "type": "string",
+      "minLength": 1
+    },
+    "selector": {
+      "type": "object",
+      "properties": {
+        "package": { "$ref": "#/$defs/matcher" },
+        "version": { "$ref": "#/$defs/matcher", "description": "Default *: any version" },
+        "symbol": { "$ref": "#/$defs/matcher" },
+        "vuln": { "$ref": "#/$defs/matcher" },
+        "license": { "$ref": "#/$defs/matcher" },
+        "path": { "$ref": "#/$defs/matcher" }
+      },
+      "anyOf": [
+        { "required": ["package"] },
+        { "required": ["symbol"] },
+        { "required": ["vuln"] },
+        { "required": ["license"] },
+        { "required": ["path"] }
+      ],
+      "dependentRequired": { "version": ["package"] }
+    },
+    "reason": { "type": "string", "pattern": "\\S" },
+    "ignore": {
+      "description": "Permanent setting of a check: findings it matches never count",
+      "type": "object",
+      "required": ["reason"],
+      "allOf": [{ "$ref": "#/$defs/selector" }],
+      "properties": {
+        "reason": { "$ref": "#/$defs/reason" }
+      },
+      "propertyNames": { "enum": ["reason", "package", "version", "symbol", "vuln", "license", "path"] }
+    },
+    "exception": {
+      "type": "object",
+      "required": ["checks", "reason", "until"],
+      "allOf": [{ "$ref": "#/$defs/selector" }],
+      "properties": {
+        "checks": {
+          "description": "Checks it applies to; all checks must be written explicitly as [\"*\"]",
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/checkPattern" }
+        },
+        "reason": { "$ref": "#/$defs/reason" },
+        "until": { "description": "Last day the exception applies (yyyy-mm-dd)", "type": "string", "format": "date" },
+        "issue": { "type": "string", "format": "uri" }
+      },
+      "propertyNames": { "enum": ["checks", "reason", "until", "issue", "package", "version", "symbol", "vuln", "license", "path"] }
+    },
+    "checkSettings": {
+      "oneOf": [
+        { "$ref": "#/$defs/level" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "level": { "$ref": "#/$defs/level" },
+            "ignore": { "type": "array", "items": { "$ref": "#/$defs/ignore" } }
+          }
+        }
+      ]
+    },
+    "checks": {
+      "description": "Level and settings per check id",
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/checkId" },
+      "additionalProperties": { "$ref": "#/$defs/checkSettings" }
+    },
+    "consumerGroup": {
+      "description": "Tests and consumers that are not in .github/repos.json, or the expanded array of consumers. Names and module directories come from that file.",
+      "oneOf": [
+        { "$ref": "#/$defs/consumerList" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tests": { "description": "Go: run the consumer's tests", "type": "boolean" },
+            "extra": { "description": "Consumers that are not in .github/repos.json", "$ref": "#/$defs/consumerList" }
+          }
+        }
+      ]
+    },
+    "consumerList": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["repo", "module"],
+        "additionalProperties": false,
+        "properties": {
+          "repo": { "type": "string", "pattern": "^[\\w.-]+/[\\w.-]+$" },
+          "module": { "type": "string", "minLength": 1 },
+          "tests": { "description": "Go: also run the consumer's tests (consumer-test)", "type": "boolean" }
+        }
+      }
+    }
+  }
+}

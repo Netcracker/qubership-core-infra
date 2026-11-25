@@ -1,0 +1,29 @@
+{
+  "schema": "dependency-gate-findings/v1",
+  "adapter": {
+    "name": "go-library",
+    "ecosystem": "go",
+    "tool": "go-dep-check",
+    "status": "ok",
+    "checks": ["apidiff-exposed", "family-split"]
+  },
+  "revision": "head",
+  "findings": [
+    {
+      "check": "apidiff-exposed",
+      "package": "github.com/openshift/api/config/v1",
+      "version": "v0.0.0-20261001000000-abcdef012345",
+      "symbol": "ClusterVersionStatus.History",
+      "message": "incompatible change: field removed"
+    },
+    {
+      "check": "apidiff-exposed",
+      "package": "github.com/opensearch-project/opensearch-go/v4",
+      "version": "v4.6.0",
+      "from": "v4.5.0",
+      "symbol": "opensearchapi.SearchReq",
+      "message": "incompatible change in an exported type of our API",
+      "locations": [{ "file": "go.mod", "line": 7, "unit": "." }]
+    }
+  ]
+}

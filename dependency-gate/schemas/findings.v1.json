@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Netcracker/qubership-core-infra/dependency-gate/schemas/findings.v1.json",
+  "title": "Dependency gate adapter findings",
+  "description": "Raw findings of one adapter for one revision. Adapters know nothing about levels, exceptions or baselines.",
+  "type": "object",
+  "required": ["schema", "adapter", "revision", "findings"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "dependency-gate-findings/v1" },
+    "adapter": {
+      "type": "object",
+      "required": ["name", "status", "checks"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "ecosystem": {
+          "description": "Ecosystem of the findings that do not name their own; an adapter covering several ecosystems may omit it",
+          "enum": ["maven", "go"]
+        },
+        "tool": { "description": "Tool and version, for the report", "type": "string" },
+        "status": {
+          "description": "ok: findings are complete; error: the adapter could not finish (reason says why); skipped: nothing to check",
+          "enum": ["ok", "error", "skipped"]
+        },
+        "reason": { "type": "string" },
+        "checks": {
+          "description": "Checks that actually ran; an exception for a check that did not run is never reported as unused",
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "revision": {
+      "description": "head: the change under review (PR merge commit); base: its base, used as the baseline",
+      "enum": ["head", "base"]
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["check", "message"],
+        "additionalProperties": false,
+        "properties": {
+          "ecosystem": { "description": "Default: adapter.ecosystem; one of them is required", "enum": ["maven", "go"] },
+          "check": { "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+          "package": { "description": "groupId:artifactId or Go module/package path", "type": ["string", "null"] },
+          "version": { "type": ["string", "null"] },
+          "from": { "description": "Version before the change", "type": ["string", "null"] },
+          "symbol": { "description": "API symbol, e.g. for apidiff", "type": ["string", "null"] },
+          "vuln": { "description": "Advisory id (GHSA, CVE, GO-...)", "type": ["string", "null"] },
+          "license": { "description": "SPDX license id", "type": ["string", "null"] },
+          "message": { "type": "string", "minLength": 1 },
+          "note": { "type": ["string", "null"] },
+          "locations": { "type": "array", "items": { "$ref": "#/$defs/location" } }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "location": {
+      "type": "object",
+      "required": ["file"],
+      "additionalProperties": false,
+      "properties": {
+        "file": { "description": "Repository-relative path with / separators", "type": "string", "minLength": 1 },
+        "line": { "type": "integer", "minimum": 1 },
+        "unit": { "description": "Maven module or Go module the location belongs to", "type": "string" }
+      }
+    }
+  }
+}
