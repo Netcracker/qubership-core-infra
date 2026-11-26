@@ -1,3 +1,32 @@
+# Docker Images Cleanup Workflow
+#
+# A reusable workflow that deletes old versions of the container packages linked to the calling repository.
+# A version older than threshold-days is deleted unless one of its tags matches excluded-tags; latest is always kept,
+# and so are the platform images of every kept multi-arch image.
+#
+# Usage:
+#   on:
+#     schedule:
+#       - cron: "0 0 * * 0"
+#     workflow_dispatch:
+#       inputs:
+#         dry-run:
+#           type: boolean
+#           default: true
+#   jobs:
+#     cleanup:
+#       permissions: {}
+#       uses: Netcracker/qubership-core-infra/.github/workflows/docker-cleanup.yaml@v2.x.x
+#       with:
+#         dry-run: ${{ inputs.dry-run == true }}
+#       secrets:
+#         GH_RWD_PACKAGE_TOKEN: ${{ secrets.GH_RWD_PACKAGE_TOKEN }}
+#
+# Required secrets:
+#   - GH_RWD_PACKAGE_TOKEN: token with the read:packages and delete:packages scopes
+#
+# Dry-run is forced until the retention rules are approved, so the dry-run input has no effect yet.
+
 name: Docker Images Cleanup
 
 on:
@@ -31,8 +60,7 @@ jobs:
     name: Cleanup Docker images
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    permissions:
-      contents: read
+    permissions: {}
     concurrency:
       group: docker-cleanup-${{ github.repository }}
       cancel-in-progress: false
