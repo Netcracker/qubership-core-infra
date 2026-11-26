@@ -61,14 +61,15 @@ The permissions of a service are set in three places:
   contains the `ConsulACL` CR `cloud-core` with one binding rule for the auth method `applications-k8s-m2m`: an ACL
   token obtained with the Kubernetes token of a ServiceAccount from the Cloud Core namespace gets the role
   `<namespace>_<ServiceAccount name>_v2`. The ServiceAccount `default` gets no role.
-- **The service template in the Helm library `coretpl`** from the `qubership-core-bootstrap` repository. A Cloud Core
-  service chart that includes the template `coretpl.synchronizer.hooks` gets a `ConsulACL` CR with the role
-  `<namespace>_<SERVICE_NAME>_v2` and its policies. The role is bound to the ServiceAccount name, so a service gets
-  these permissions only if its pod runs under the ServiceAccount named `SERVICE_NAME`.
-- **The service's own `ConsulACL` CR.** A service that needs other permissions installs a `ConsulACL` CR with the role
-  `<namespace>_<SERVICE_NAME>_v2` in its own chart. `core-operator` does so and turns the `coretpl` template off with
-  the deployment parameter `CORE_TPL_MS_CONSULACL_ENABLED: false`. `core-legacy-api` does so too; its chart does not
-  include the `coretpl` template.
+- **The service template in the Helm library `coretpl`** from the `qubership-core-bootstrap` repository. The Cloud
+  Core service charts include the template `coretpl.bootstrap.hooks` next to `coretpl.synchronizer.hooks`, and each
+  gets a `ConsulACL` CR with the role `<namespace>_<SERVICE_NAME>_v2` and its policies. The role is bound to the
+  ServiceAccount name, so a service gets these permissions only if its pod runs under the ServiceAccount named
+  `SERVICE_NAME`. A service that does not use Consul turns the template off with the deployment parameter
+  `CORE_TPL_MS_CONSULACL_ENABLED: false`; `frontend-gateway` does so.
+- **The service's own `ConsulACL` CR.** A service that needs other permissions turns the `coretpl` template off with
+  `CORE_TPL_MS_CONSULACL_ENABLED: false` and installs a `ConsulACL` CR with the role `<namespace>_<SERVICE_NAME>_v2` in
+  its own chart. `core-operator` and `core-legacy-api` do so.
 
 A service chart installs a `ConsulKV` CR next to its `ConsulACL` CR. For that CR, the Consul ACL Configurator creates
 the empty folder keys of the service in Consul KV, keys that end with `/`: `config/<namespace>/<SERVICE_NAME>/`,
@@ -129,9 +130,9 @@ Permissions of the roles:
   `config-server-consul-token`.
 - The `cloud-core-configuration` chart installs the `ConsulACL` CR `cloud-core` with the binding rule and a `ConsulKV`
   CR with the namespace-wide folders.
-- `coretpl` 0.2.5: the `ConsulACL` and `ConsulKV` CR template of a service, the deployment parameter
-  `CORE_TPL_MS_CONSULACL_ENABLED`, and the helper templates `consulacl.enabled`, `consulacl.operatorNamespace`, and
-  `coretpl.consulAuthMode` for charts with their own `ConsulACL` CR.
+- `coretpl` 0.2.5: the template `coretpl.bootstrap.hooks` with the `ConsulACL` and `ConsulKV` CRs of a service, the
+  deployment parameter `CORE_TPL_MS_CONSULACL_ENABLED`, and the helper templates `consulacl.enabled`,
+  `consulacl.operatorNamespace`, and `coretpl.consulAuthMode` for charts with their own `ConsulACL` CR.
 - `cloud-core-local-dev` installs `qubership-consul` 0.15.6.
 - In environments with ACLs (`CONSUL_ACLS=true`), `cloud-core-local-dev` runs the `configserver` task and passes it the
   admin token of the installed Consul. Before, the task did not run in these environments, so CI did not check issuing
@@ -147,7 +148,8 @@ Permissions of the roles:
   every 5 seconds instead of failing.
 - The ACL token is valid for 30 minutes, and the client logs in again periodically. `core-legacy-api` takes the current
   token for every Consul request, so after a new login the requests carry the new token.
-- The chart installs its own `ConsulACL` CR. In the `k8s` mode the pod does not mount the Secret
+- The chart includes the `coretpl` templates, as the other service charts do, turns the `ConsulACL` template off, and
+  installs its own `ConsulACL` CR. In the `k8s` mode the pod does not mount the Secret
   `config-server-consul-token`.
 
 ### `qubership-core-core-operator`, [#241](https://github.com/Netcracker/qubership-core-core-operator/pull/241)
@@ -168,7 +170,7 @@ Permissions of the roles:
 
 - rest-utils with the changes from
   [qubership-core-lib-go-rest-utils#126](https://github.com/Netcracker/qubership-core-lib-go-rest-utils/pull/126);
-- `coretpl` 0.2.5: the service chart gets its `ConsulACL` CR from the template.
+- `coretpl` 0.2.5: the service chart includes `coretpl.bootstrap.hooks` and gets its `ConsulACL` CR from it.
 
 ### `qubership-core-test-apps`, [#251](https://github.com/Netcracker/qubership-core-test-apps/pull/251)
 
