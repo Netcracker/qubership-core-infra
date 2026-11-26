@@ -172,6 +172,12 @@ Permissions of the roles:
   [qubership-core-lib-go-rest-utils#126](https://github.com/Netcracker/qubership-core-lib-go-rest-utils/pull/126);
 - `coretpl` 0.2.5: the service chart includes `coretpl.bootstrap.hooks` and gets its `ConsulACL` CR from it.
 
+### `qubership-core-ingress-gateway` (`frontend-gateway`), [#75](https://github.com/Netcracker/qubership-core-ingress-gateway/pull/75)
+
+- The chart takes `coretpl` 0.2.5 and includes `coretpl.bootstrap.hooks`, as the other service charts do.
+  `frontend-gateway` does not use Consul, so the chart turns the template off with the deployment parameter
+  `CORE_TPL_MS_CONSULACL_ENABLED: false`.
+
 ### `qubership-core-test-apps`, [#251](https://github.com/Netcracker/qubership-core-test-apps/pull/251)
 
 - `core-legacy-api-integration-tests` run in three environments: Consul without ACLs in `legacy`, Consul with ACLs in
