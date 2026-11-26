@@ -1,0 +1,69 @@
+name: Docker Images Cleanup
+
+on:
+  workflow_call:
+    inputs:
+      dry-run:
+        description: "Print the versions that would be deleted without deleting them"
+        type: boolean
+        default: false
+      debug:
+        description: "Print debug logs of the cleanup action"
+        type: boolean
+        default: false
+      threshold-days:
+        description: "Delete versions older than this many days"
+        type: number
+        default: 8
+      excluded-tags:
+        description: "Comma-separated tag patterns that are never deleted; latest is always kept"
+        type: string
+        default: "lts-*-snapshot"
+    secrets:
+      GH_RWD_PACKAGE_TOKEN:
+        description: "Token with read:packages and delete:packages scopes"
+        required: true
+
+permissions: {}
+
+jobs:
+  cleanup:
+    name: Cleanup Docker images
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    concurrency:
+      group: docker-cleanup-${{ github.repository }}
+      cancel-in-progress: false
+    steps:
+      - name: Summary
+        env:
+          REQUESTED_DRY_RUN: ${{ inputs.dry-run }}
+          DEBUG_LOGS: ${{ inputs.debug }}
+          THRESHOLD_DAYS: ${{ inputs.threshold-days }}
+          EXCLUDED_TAGS: ${{ inputs.excluded-tags }}
+        run: |
+          {
+            echo "## Docker images cleanup (POC)"
+            echo ""
+            echo "| Parameter | Value |"
+            echo "| --- | --- |"
+            echo "| Repository | \`${GITHUB_REPOSITORY}\` |"
+            echo "| Requested dry-run | \`${REQUESTED_DRY_RUN}\` |"
+            echo "| Effective dry-run | \`true\` (forced in the POC) |"
+            echo "| Threshold days | \`${THRESHOLD_DAYS}\` |"
+            echo "| Excluded tags | \`${EXCLUDED_TAGS}\` |"
+            echo "| Debug | \`${DEBUG_LOGS}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run container package cleanup
+        uses: netcracker/qubership-workflow-hub/actions/container-package-cleanup@cdfcd0a8abd7ba80d7a04a4e9debfb4e24995f1a # v3.0.1
+        with:
+          package-type: container
+          threshold-days: ${{ inputs.threshold-days }}
+          excluded-tags: ${{ inputs.excluded-tags }}
+          dry-run: "true"
+          debug: ${{ inputs.debug }}
+        env:
+          PACKAGE_TOKEN: ${{ secrets.GH_RWD_PACKAGE_TOKEN }}
