@@ -157,7 +157,8 @@ Permissions of the roles:
 - The temporary setting `quarkus.consul-source-config.m2m.enabled=false` is removed from `application.properties`.
   With it, `core-operator` called Consul without an ACL token and could not write the Composite structure on Consul with
   ACLs. Now it logs in to Consul depending on the mode, as the other services do.
-- The chart turns the `coretpl` template off and installs its own `ConsulACL` CR.
+- The chart includes the `coretpl` templates, as the other service charts do, turns the `ConsulACL` template off, and
+  installs its own `ConsulACL` CR.
 
 ### Other Cloud Core services
 
