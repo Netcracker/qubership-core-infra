@@ -252,5 +252,12 @@ com.netcracker.cloud:core-internal-bom:1.0.9
 com.netcracker.cloud:core-internal-boms:1.0.9
 com.netcracker.cloud:core-quarkus-internal-bom:1.0.9
 com.netcracker.cloud:core-spring-internal-bom:1.0.9
+com.example:aggregator:1.0.13
+com.example:api:1.0.13
+com.example:reactor-aggregator-it:1.0.13
+com.example:reactor-aggregator-it-parallel:1.0.13
+com.example:service:1.0.13
 com.netcracker.cloud.plugins:core-maven-plugins:1.0.13
+com.netcracker.cloud.plugins:httproutes-generator-common:1.0.13
 com.netcracker.cloud.plugins:httproutes-generator-maven-plugin:1.0.13
+com.netcracker.cloud.plugins:httproutes-generator-spring-maven-plugin:1.0.13
