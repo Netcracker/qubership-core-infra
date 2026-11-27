@@ -112,6 +112,9 @@ Permissions of the roles:
 - The client treats a `401` login response with the body `ACL support disabled` as a login without an ACL token and
   logs `Consul ACLs are disabled: working without a Consul token`. Without this, Go services that log in to Consul
   would not work on Consul with ACLs disabled.
+- The `consul-propertysource` package adds the `IsACLDisabled(statusCode, body)` function. It reports whether a Consul
+  HTTP response is that `401` with the body `ACL support disabled`, for code that calls the Consul HTTP API without the
+  client of the library. The `configserver` task uses it.
 
 ### `qubership-core-java-libs`, [#251](https://github.com/Netcracker/qubership-core-java-libs/pull/251)
 
