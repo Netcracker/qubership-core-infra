@@ -131,8 +131,8 @@ Permissions of the roles:
 - The `cloud-core-configuration` chart installs the `ConsulACL` CR `cloud-core` with the binding rule and a `ConsulKV`
   CR with the namespace-wide folders.
 - `coretpl` 0.2.5: the template `coretpl.bootstrap.hooks` with the `ConsulACL` and `ConsulKV` CRs of a service, the
-  deployment parameter `CORE_TPL_MS_CONSULACL_ENABLED`, and the helper templates `consulacl.enabled`,
-  `consulacl.operatorNamespace`, and `coretpl.consulAuthMode` for charts with their own `ConsulACL` CR.
+  deployment parameter `CORE_TPL_MS_CONSULACL_ENABLED`, and the helper templates `coretpl.consulacl.enabled`,
+  `coretpl.consulacl.operatorNamespace`, and `coretpl.consulAuthMode` for charts with their own `ConsulACL` CR.
 - `cloud-core-local-dev` installs `qubership-consul` 0.15.6.
 - In environments with ACLs (`CONSUL_ACLS=true`), `cloud-core-local-dev` runs the `configserver` task and passes it the
   admin token of the installed Consul. Before, the task did not run in these environments, so CI did not check issuing
