@@ -1,0 +1,94 @@
+# Docker Images Cleanup Workflow
+#
+# A reusable workflow that deletes old versions of the container packages linked to the calling repository.
+# A version older than threshold-days is deleted unless one of its tags matches excluded-tags; latest is always kept,
+# and so are the platform images of every kept multi-arch image.
+#
+# Usage:
+#   on:
+#     schedule:
+#       - cron: "0 0 * * 0"
+#     workflow_dispatch:
+#       inputs:
+#         dry-run:
+#           type: boolean
+#           default: true
+#   jobs:
+#     cleanup:
+#       permissions: {}
+#       uses: Netcracker/qubership-core-infra/.github/workflows/docker-cleanup.yaml@v2.x.x
+#       with:
+#         dry-run: ${{ inputs.dry-run == true }}
+#       secrets:
+#         GH_RWD_PACKAGE_TOKEN: ${{ secrets.GH_RWD_PACKAGE_TOKEN }}
+#
+# Required secrets:
+#   - GH_RWD_PACKAGE_TOKEN: token with the read:packages and delete:packages scopes
+
+name: Docker Images Cleanup
+
+on:
+  workflow_call:
+    inputs:
+      dry-run:
+        description: "Print the versions that would be deleted without deleting them"
+        type: boolean
+        default: false
+      debug:
+        description: "Print debug logs of the cleanup action"
+        type: boolean
+        default: false
+      threshold-days:
+        description: "Delete versions older than this many days"
+        type: number
+        default: 8
+      excluded-tags:
+        description: "Comma-separated tag patterns that are never deleted; latest is always kept"
+        type: string
+        default: "lts-*-snapshot"
+    secrets:
+      GH_RWD_PACKAGE_TOKEN:
+        description: "Token with read:packages and delete:packages scopes"
+        required: true
+
+permissions: {}
+
+jobs:
+  cleanup:
+    name: Cleanup Docker images
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions: {}
+    concurrency:
+      group: docker-cleanup-${{ github.repository }}
+      cancel-in-progress: false
+    steps:
+      - name: Summary
+        env:
+          DRY_RUN: ${{ inputs.dry-run }}
+          DEBUG_LOGS: ${{ inputs.debug }}
+          THRESHOLD_DAYS: ${{ inputs.threshold-days }}
+          EXCLUDED_TAGS: ${{ inputs.excluded-tags }}
+        run: |
+          {
+            echo "## Docker images cleanup"
+            echo ""
+            echo "| Parameter | Value |"
+            echo "| --- | --- |"
+            echo "| Repository | \`${GITHUB_REPOSITORY}\` |"
+            echo "| Dry-run | \`${DRY_RUN}\` |"
+            echo "| Threshold days | \`${THRESHOLD_DAYS}\` |"
+            echo "| Excluded tags | \`${EXCLUDED_TAGS}\` |"
+            echo "| Debug | \`${DEBUG_LOGS}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run container package cleanup
+        uses: netcracker/qubership-workflow-hub/actions/container-package-cleanup@cdfcd0a8abd7ba80d7a04a4e9debfb4e24995f1a # v3.0.1
+        with:
+          package-type: container
+          threshold-days: ${{ inputs.threshold-days }}
+          excluded-tags: ${{ inputs.excluded-tags }}
+          dry-run: ${{ inputs.dry-run }}
+          debug: ${{ inputs.debug }}
+        env:
+          PACKAGE_TOKEN: ${{ secrets.GH_RWD_PACKAGE_TOKEN }}
