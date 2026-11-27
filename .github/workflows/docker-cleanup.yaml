@@ -24,8 +24,6 @@
 #
 # Required secrets:
 #   - GH_RWD_PACKAGE_TOKEN: token with the read:packages and delete:packages scopes
-#
-# Dry-run is forced until the retention rules are approved, so the dry-run input has no effect yet.
 
 name: Docker Images Cleanup
 
@@ -67,19 +65,18 @@ jobs:
     steps:
       - name: Summary
         env:
-          REQUESTED_DRY_RUN: ${{ inputs.dry-run }}
+          DRY_RUN: ${{ inputs.dry-run }}
           DEBUG_LOGS: ${{ inputs.debug }}
           THRESHOLD_DAYS: ${{ inputs.threshold-days }}
           EXCLUDED_TAGS: ${{ inputs.excluded-tags }}
         run: |
           {
-            echo "## Docker images cleanup (POC)"
+            echo "## Docker images cleanup"
             echo ""
             echo "| Parameter | Value |"
             echo "| --- | --- |"
             echo "| Repository | \`${GITHUB_REPOSITORY}\` |"
-            echo "| Requested dry-run | \`${REQUESTED_DRY_RUN}\` |"
-            echo "| Effective dry-run | \`true\` (forced in the POC) |"
+            echo "| Dry-run | \`${DRY_RUN}\` |"
             echo "| Threshold days | \`${THRESHOLD_DAYS}\` |"
             echo "| Excluded tags | \`${EXCLUDED_TAGS}\` |"
             echo "| Debug | \`${DEBUG_LOGS}\` |"
@@ -91,7 +88,7 @@ jobs:
           package-type: container
           threshold-days: ${{ inputs.threshold-days }}
           excluded-tags: ${{ inputs.excluded-tags }}
-          dry-run: "true"
+          dry-run: ${{ inputs.dry-run }}
           debug: ${{ inputs.debug }}
         env:
           PACKAGE_TOKEN: ${{ secrets.GH_RWD_PACKAGE_TOKEN }}
