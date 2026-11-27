@@ -28,6 +28,14 @@ Spring Boot 4 is built on Spring Framework 7, which in turn requires Jakarta EE 
 - Spring Security 7 (bundled with Boot 4) may include breaking changes — consult the Spring Security migration guide if your service uses it.
 - Spring Data, Spring Cloud, and other Spring ecosystem libraries must all be upgraded to versions compatible with Boot 4.
 
+### 1.1 Jackson compatibility with Quarkus
+
+Spring Boot 4 uses Jackson 3 by default. The Quarkus 3 extensions we use, including `quarkus-rest-jackson` and `quarkus-rest-client-jackson`, still integrate with Jackson 2. Jackson 3 uses `tools.jackson` for databind, so its mapper and modules cannot replace the `com.fasterxml.jackson.databind` types expected by Jackson 2 code. See the [Spring Boot migration guide](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide#upgrading-jackson) and the [Quarkus REST JSON guide](https://quarkus.io/guides/rest-json/#json).
+
+Our shared Java libraries currently use Jackson 2 so the same artifacts can run in Spring Boot and Quarkus applications. For example, the MaaS client declares `com.fasterxml.jackson.core:jackson-databind`, and the core internal BOM manages Jackson 2 versions. See the [MaaS client POM](https://github.com/Netcracker/qubership-core-java-libs/blob/main/maas-client/client/pom.xml) and the [core internal BOM](https://github.com/Netcracker/qubership-core-java-libs/blob/main/core-internal-boms/core-internal-bom/pom.xml).
+
+When upgrading a Spring application, keep Jackson 2 on the runtime classpath for libraries that use it. Both versions can coexist, so the application can still use Boot's default Jackson 3 mapper for its own JSON handling. If a Spring component needs a Jackson 2 `ObjectMapper` bean, Boot 4 can auto-configure one through the deprecated `org.springframework.boot:spring-boot-jackson2` module. The legacy REST client already declares this dependency. See the [Spring Boot JSON reference](https://docs.spring.io/spring-boot/4.0/reference/features/json.html#features.json.jackson2) and the [legacy REST client POM](https://github.com/Netcracker/qubership-core-java-libs/blob/main/core-rest-libraries/restlegacy/restclient/pom.xml).
+
 ---
 
 ## 2. Application Bootstrap Changes
